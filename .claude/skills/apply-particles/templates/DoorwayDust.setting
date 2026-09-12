@@ -1,0 +1,124 @@
+{
+	Tools = ordered() {
+		Group1 = GroupOperator {
+			CtrlWZoom = false,
+			Inputs = ordered() {
+				Input1 = InstanceInput {
+					SourceOp = "DoorwayMerge",
+					Source = "Background",
+				}
+			},
+			Outputs = {
+				Output1 = InstanceOutput {
+					SourceOp = "DoorwayMerge",
+					Source = "Output",
+				}
+			},
+			ViewInfo = GroupInfo {
+				Pos = { 1375, 7.5606 },
+				Flags = {
+					AllowPan = false,
+					AutoSnap = true,
+					RemoveRouters = true
+				},
+				Size = { 1006, 66.3636, 503, 24.2424 },
+				Direction = "Horizontal",
+				PipeStyle = "Direct",
+				Scale = 1,
+				Offset = { -1375, -7.5606 }
+			},
+			Tools = ordered() {
+				DoorwayEmitter = pEmitter {
+					ID = 3,
+					Inputs = {
+						Number = Input { Value = 4, },
+						Lifespan = Input { Value = 200, },
+						TemporalDistribution = Input { Value = 1, },
+						VelocityControls = Input { Value = 1, },
+						Velocity = Input { Value = 0.025, },
+						VelocityVariance = Input { Value = 0.01, },
+						Angle = Input { Value = -30, },
+						AngleVariance = Input { Value = 15, },
+						Style = Input { Value = FuID { "ParticleStyleBlob" }, },
+						Region = Input { Value = FuID { "RectRgn" }, },
+						["ParticleStyle.ColorControls"] = Input { Value = 1, },
+						["ParticleStyle.Green"] = Input { Value = 0.78, },
+						["ParticleStyle.Blue"] = Input { Value = 0.4, },
+						["ParticleStyle.Size"] = Input { Value = 0.4, },
+						["ParticleStyle.SizeOverLife"] = Input {
+							SourceOp = "pEmitter1SizeOverLife",
+							Source = "Value",
+						},
+						["ParticleStyle.BlurOverLife"] = Input {
+							SourceOp = "pEmitter1BlurOverLife2D",
+							Source = "Value",
+						},
+						["RectRgn.Width"] = Input { Value = 0.11, },
+						["RectRgn.Height"] = Input { Value = 0.15, },
+						["RectRgn.Translate.X"] = Input { Value = -0.278901200369344, },
+						["RectRgn.Translate.Y"] = Input { Value = 0.05, }
+					},
+					ViewInfo = OperatorInfo { Pos = { 935, 16.197 } },
+				},
+				DoorwayRender = pRender {
+					Inputs = {
+						_MotionBlurWarning = Input { Disabled = true, },
+						GlobalOut = Input { Value = 119, },
+						Width = Input { Value = 2752, },
+						Height = Input { Value = 1536, },
+						UseFrameFormatSettings = Input { Value = 1, },
+						["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },
+						OutputMode = Input {
+							Value = FuID { "TwoD" },
+							Disabled = true,
+						},
+						["MaterialID.MaterialID"] = Input { Value = 1, },
+						["ObjectID.ObjectID"] = Input { Value = 1, },
+						Input = Input {
+							SourceOp = "DoorwayEmitter",
+							Source = "Output",
+						}
+					},
+					ViewInfo = OperatorInfo { Pos = { 1595, 16.197 } },
+				},
+				DoorwayMerge = Merge {
+					Inputs = {
+						Background = Input {
+							SourceOp = "DoorwayGlow",
+							Source = "Output",
+						},
+						Foreground = Input {
+							SourceOp = "DoorwayRender",
+							Source = "Output",
+						},
+						ApplyMode = Input { Value = FuID { "Screen" }, },
+						PerformDepthMerge = Input { Value = 0, },
+						ReferenceSize = Input { Value = 1, }
+					},
+					ViewInfo = OperatorInfo { Pos = { 1815, 16.197 } },
+				}
+			},
+		},
+		pEmitter1SizeOverLife = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0.5, RH = { 0.3, 0.5 }, Flags = { Linear = true } },
+					[1] = { 0.5, LH = { 0.7, 0.5 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			NameSet = true,
+		},
+		pEmitter1BlurOverLife2D = LUTBezier {
+			KeyColorSplines = {
+				[0] = {
+					[0] = { 0.5, RH = { 0.3, 0.5 }, Flags = { Linear = true } },
+					[1] = { 0.5, LH = { 0.7, 0.5 }, Flags = { Linear = true } }
+				}
+			},
+			SplineColor = { Red = 0, Green = 0, Blue = 0 },
+			CtrlWZoom = false,
+			NameSet = true,
+		}
+	}
+}

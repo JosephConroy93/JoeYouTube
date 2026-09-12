@@ -1,0 +1,16 @@
+# Whitelist: only the pipeline "core" is versioned.
+# content/ (source PDFs, scripts, generated images, audio) and research/ stay local.
+*
+!.gitignore
+!.gitattributes
+!CLAUDE.md
+!WORKFLOW.md
+!CHANGELOG.md
+!.mcp.json
+!.gitmodules
+!.claude/
+!.claude/**
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+!tools/
+!tools/**
