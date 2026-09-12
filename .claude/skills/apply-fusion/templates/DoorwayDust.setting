@@ -83,10 +83,10 @@
 				},
 				DoorwayMerge = Merge {
 					Inputs = {
-						Background = Input {
-							SourceOp = "DoorwayGlow",
-							Source = "Output",
-						},
+						-- Background is deliberately unconnected: the group's Input1
+						-- exposes it, so the plate (MediaIn1 or an upstream tool)
+						-- connects at the group level. A Glow, if wanted, is a
+						-- separate tool built per scene (see SKILL.md).
 						Foreground = Input {
 							SourceOp = "DoorwayRender",
 							Source = "Output",
