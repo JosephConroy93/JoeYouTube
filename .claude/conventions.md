@@ -103,7 +103,7 @@ Index (`scene-prompts.md`): `| chapter | file | scenes | status |` with status
 `status` is exactly one of: `submitted` · `fetched` · `validated (n/m)` ·
 `failed` · `superseded`. Free text goes in `notes`. Footer lines:
 `FINALIZED <date>` (finalize-scenes) and `CLOSED <date>` (close-video).
-Pharaoh's Servant's log predates this schema and is kept as-is.
+A log in the older 6-column shape is read-only for `gemini-batch.ps1`: if such a video needs further submissions, start a fresh 8-column log for it (or migrate the old one) first.
 
 ## `scene-timing.md`
 

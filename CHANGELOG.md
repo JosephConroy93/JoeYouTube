@@ -6,6 +6,24 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 
 ---
 
+## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
+
+Retro + plan: `research/artifacts/retro-2026-09-12-refactor-plan.md`. Branch `refactor/core-pruning`, one commit per group; `main` = pre-refactor baseline.
+
+- **Source control**: project root is a git repo; whitelist tracks only the core (`.claude/`, `WORKFLOW.md`, `CLAUDE.md`, `CHANGELOG.md`, `.mcp.json`, `tools/`); `davinci-resolve-mcp` is a submodule pinned to v2.213.2. Why: version the mechanics, not 600 MB of content.
+- **`.claude/conventions.md`** (new): `<series>/<slug>` invocation contract, folder layout, `series.md`/`video.md` schemas, fixed batch-log status enum, pinned `scene-timing.md` and `ken-burns-plan.md` schemas, verification rule, documentation rule. Why: five skills each described the same files slightly differently.
+- **`.claude/formats/rank-ladder.md`, `explainer.md`** (new): script shape, register, runtime and Stage 2 rubric per format. `script-writer` keeps only the format-independent provenance discipline and loads a format by name. Why: one writer with format modules instead of a writer per series; the sourcing rules must not fork.
+- **`content/<series>/series.md`, `content/<series>/<slug>/video.md`** (new, untracked data): voice, style, chapter naming, mascot, fps, status. Every hardcoded `content/watcher-pov/...`, Jim/171 wpm, `level-NN`, mascot and Egypt rule left the agents and skills.
+- **All agents/skills pruned** to run-instructions (37k → ~11k words): history, dated confirmations, dead-tool comparisons (Sollo, Syntx, VidIQ voiceover, Claude-in-Chrome) removed; non-obvious constraints kept as one-line rules. `scene-prompter` Mode 1 now locks recurring locations as well as characters (location drift on the last video).
+- **Scripts extracted** so nothing is re-derived from prose: `align-scenes/scripts/align.py` (reproduces the last video's timing 198/198), `place-scenes/scripts/build_timeline.py` (reproduces the 39,813-frame timeline), `generate-scenes/scripts/gemini-batch.ps1`, `apply-fusion/scripts/apply_baseline.lua` + `capture-window.ps1` (untested until a one-scene run), `generate-voiceover/scripts/tts.ps1` and `close-video/scripts/close-video.ps1` (dry-run tested). `.ps1` files are CRLF + UTF-8 BOM, ASCII only (Windows PowerShell 5.1 parsing).
+- **`apply-ken-burns` + `apply-particles` → `apply-fusion`**: one owner for the Fusion node graph (Merge-before-Transform). `DoorwayDust.setting` fixed (dangling Glow reference).
+- **`generate-voiceover`** (new): ElevenLabs with-timestamps REST, −16 LUFS dual-mono 48 kHz WAV, alignment JSON for `align-scenes --source api`. Hosted ElevenLabs MCP is for auditioning voices only (a hosted server can't write files; narration through the context window is the token failure CLAUDE.md warns about). Creator tier ≈ £17/month ≈ £3.40/video.
+- **`close-video`** (new): archive-never-delete close-out; reconciles the batch log; first real run pending Pharaoh's Servant's publish.
+- **`finalize-scenes`**: `failed/` → `_archive/`, also sweeps `reference-images/`, writes `FINALIZED` footer. `validate-scenes` owns the four checks; `qc-checklist.md` holds per-video specifics only.
+- **`WORKFLOW.md`** rewritten as-is and renumbered Step 0–12: voiceover + alignment straight after script lock (hook clips cut to measured beats), visual pass, thumbnail after the edit with the research-guardrail gate, publish, close-out. Old Step 6/7 ordering notes resolved. `CLAUDE.md` rewritten: phase = production, pointers and rules only.
+- `content/prompt-hardening-log.md` moved to channel level (stub left at the old path). `plan-ken-burns` `dur` = hold until the next scene starts, matching the real build.
+- Going forward this file takes one line per change plus the why; diffs are in git.
+
 ## 2026-09-12
 
 - **`apply-particles` and `plan-ken-burns` gained a hard darkness gate for FX
