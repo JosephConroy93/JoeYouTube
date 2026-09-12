@@ -14,8 +14,9 @@ Under `content/<series>/<slug>/`:
 - `claude/scene-prompts.md` and the chapter files it names — `scene_id`,
   `scene_type`, `content_prompt`, `notes` (callbacks, locks).
 - `claude/script.md` — tone and beat; chapter headings mark act boundaries.
-- `claude/scene-timing.md` — `dur` = `end_seconds − start_seconds`; the
-  `segment` column marks audio joins. Row count must match the manifest,
+- `claude/scene-timing.md` — `dur` = next scene's `start_seconds` minus this
+  scene's (the image holds through the narration pause; the last scene in a
+  segment ends at the segment's end); the `segment` column marks audio joins. Row count must match the manifest,
   else stop and name the missing ids.
 - `scene-generation/<scene_id>.jpg` — **only via subagents** (below).
 - `series.md` / `video.md` for fps.

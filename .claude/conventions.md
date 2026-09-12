@@ -47,7 +47,7 @@ content/
         qc-checklist.md              per-video specifics only (locks, era list, text-card strings)
         batch-log.md
         voiceover-segments/NN-<label>.txt   exact text sent to TTS
-        transcripts/                 optional (whisper JSON)
+        transcripts/                 NN-<label>.alignment.json (TTS timestamps) and/or whisper JSON
         scene-timing.md
         ken-burns-plan.md
         style-previews/              disposable
