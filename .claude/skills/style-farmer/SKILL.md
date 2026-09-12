@@ -1,137 +1,91 @@
 ---
 name: style-farmer
-description: Pulls representative on-screen visual-style frames from competitor YouTube videos for comparative art-style analysis — grabbing only short clip windows via yt-dlp `--download-sections`, never the full video, then extracting a frame with ffmpeg. Saves each to `research/style-references/<channel-name>.png` and writes a short comparative note. Use when a video concept needs its visual-style lean checked against what competitors are actually rendering on screen (not just their title/thumbnail), when Joe references a style lean and asks how it'd land against competitors, or whenever a competitor's animation/render style needs capturing as a saved reference image.
+description: Pulls representative on-screen frames from named competitor YouTube videos for comparative visual-style analysis, downloading only short clip sections (never a full video) and extracting one frame each. Saves to research/style-references/ and logs an index row. Use when a concept's visual-style lean needs checking against what competitors actually render on screen, or when a competitor's render style needs capturing as a saved reference image.
 ---
 
-# Style farmer (competitor visual-style capture)
-
-## Why this exists
-
-Built 2026-09-03 after grabbing two competitor frames for the Roman legion
-marching concept the slow way: opened a live browser tab, played the video,
-screenshotted it — which doesn't produce a savable file — then, needing an
-actual file, defaulted to `yt-dlp` with no section flag, which would have
-pulled each competitor's **entire video** just to keep one frame. Joe caught
-it before it ran. The fix that shipped instead — `yt-dlp --download-sections`
-to fetch only a few seconds around a timestamp, then one `ffmpeg` frame pull —
-is the whole point of this skill: never re-derive it under time pressure,
-never default back to a full download.
+# Style farmer — competitor frame capture
 
 ## Hard rule
 
-**Every `yt-dlp` call in this skill downloads video, not the whole video.**
-If a call doesn't include `--download-sections`, stop — that's the exact
-mistake this skill exists to prevent. There is no step in this flow that
-needs the full file; a few seconds around one timestamp produces one frame.
+Every `yt-dlp` call that fetches video includes `--download-sections`. A
+call without it downloads the whole video; stop and fix it. No step here
+needs the full file — a few seconds around one timestamp yields one frame.
 
 ## Prerequisites
 
-- `yt-dlp` and `ffmpeg` on PATH — confirm with `which yt-dlp ffmpeg` before
-  starting, don't assume.
-- Know which competitor video(s) to pull from: a direct URL, or a
-  title + channel from prior research (a concept's `concepts.md` /
-  `research-*.md` "Competitive check" section, or a channel Joe names
-  directly). **This skill does not do competitive discovery itself** — that's
-  VidIQ's job in Step 1/3. This skill only captures what a video *looks like*
-  once you already know which video matters.
-- Default save location: `research/style-references/`. Use a different
-  folder only if Joe names one.
+- `yt-dlp` and `ffmpeg` on PATH: `which yt-dlp ffmpeg`.
+- Know which video(s) to pull: a URL, or a title + channel from a concept's
+  research file. This skill does no competitive discovery.
+- Output folder: `research/style-references/` unless the operator names
+  another.
+- Scratch: the session's absolute scratchpad directory, never a folder
+  inside the project.
 
 ## Per-video flow
 
-1. **Resolve the URL.** If you only have a title + channel, confirm the
-   right video before downloading anything:
+1. **Resolve the URL.** With only a title + channel:
    ```bash
    yt-dlp "ytsearch1:<title> <channel>" --print "%(title)s | %(channel)s | %(webpage_url)s" --no-warnings
    ```
-   Check the printed title/channel actually match what was asked for — search
-   can surface a wrong or near-duplicate video, and that's cheap to catch
-   here versus after downloading.
-
-2. **Get duration** (metadata only, no video bytes):
+   Confirm the printed title and channel match what was asked for before
+   downloading anything.
+2. **Get duration** (metadata only):
    ```bash
    yt-dlp --print duration --no-warnings "<url>"
    ```
-
-3. **Pick 2-3 sample timestamps** spread through the video body — roughly
-   25%, 50%, 75% of duration. Skip the first ~5% (intro bumper, sponsor read)
-   and last ~5% (outro/CTA) unless the video is short enough that this leaves
-   nothing.
-
-4. **Download a short clip window per timestamp** — a `~5` second window is
-   plenty for one clean frame:
+3. **Pick 2–3 timestamps** at roughly 25%, 50%, 75%. Skip the first and
+   last ~5% (bumper, sponsor read, outro) unless the video is too short for
+   that to leave anything.
+4. **Download a ~5 s window per timestamp**, one call each (easier to redo
+   a single bad timestamp):
    ```bash
    yt-dlp -f "best[height<=480]" --download-sections "*MM:SS-MM:SS" \
-     -o "_tmp/<label>.mp4" "<url>" --no-warnings --force-keyframes-at-cuts
+     -o "<scratch>/<label>.mp4" "<url>" --no-warnings --force-keyframes-at-cuts
    ```
-   `height<=480` keeps the clip small — this is a style/composition reference,
-   not a quality benchmark. Run one call per timestamp rather than stacking
-   multiple `--download-sections` flags in one call — simpler to reason about
-   and to redo a single bad timestamp without re-running the others.
-
+   `height<=480` is enough for a style/composition reference.
 5. **Extract one frame per clip:**
    ```bash
-   ffmpeg -y -i "_tmp/<label>.mp4" -frames:v 1 -q:v 2 "_tmp/<label>.png" -loglevel error
+   ffmpeg -y -i "<scratch>/<label>.mp4" -frames:v 1 -q:v 2 "<scratch>/<label>.png" -loglevel error
    ```
+6. **Read the candidates and pick one.** Reject frames on a burned-in
+   caption, mid-roll ad, logo bumper or title card; reroll a nearby second
+   (`MM:SS+2`) via steps 4–5 rather than settling.
+7. **Save and name** as `research/style-references/<Channel Name>.png`, or
+   `<Channel Name> - <label>.png` for several frames from one channel.
+   Strip `< > : " / \ | ? *` from the name.
+8. **Clean up** the scratch clips and frames. A just-read `.mp4` can hold a
+   Windows file lock briefly; if deletion fails once, retry a moment later
+   rather than looping.
 
-6. **Read each candidate frame and pick the best one.** Skip frames that land
-   on: a burned-in caption/subtitle line, a mid-roll ad, a channel
-   logo/bumper, or a title card — reroll to a nearby second (`MM:SS+2` or so)
-   and re-run steps 4-5 rather than settling for a bad frame just because a
-   timestamp guess landed wrong.
+## Comparative note — the deliverable
 
-7. **Save and name.** Move the chosen frame to
-   `research/style-references/<Channel Name>.png`. Sanitize the channel name
-   for Windows filenames — strip/replace `< > : " / \ | ? *`.
+Files alone are not the output.
 
-8. **Clean up.** Delete the `_tmp/` clip and frame files once the best one is
-   saved. A just-downloaded `.mp4` can still hold a Windows file lock
-   immediately after `ffmpeg` reads it — if `rm -rf _tmp` fails once, don't
-   loop-retry; a bare `rmdir _tmp` a moment later is enough, or just leave the
-   empty directory, it's harmless.
+- Classify each channel's production method in plain terms: painterly or
+  illustrated, photoreal AI video, 3D render, game-engine footage,
+  stick-figure or simple 2D, live action. Usually obvious from one frame,
+  and the biggest single differentiation signal.
+- Append one row per saved frame to `research/style-references/index.md`
+  (create it with the header if absent), matching its existing columns:
+  ```
+  | File | Channel | Video | Timestamp | Style | Date | Notes |
+  ```
+  `Video` is a markdown link, `Style` a one-line descriptor, `Notes` which
+  concept or question the pull served.
+- If the run served a specific concept, add a short note to that concept's
+  research file (competitive-check section) so the finding sits next to the
+  decision it informs.
 
-## Comparative analysis output
+## Batching
 
-Once frames are collected, actually compare them — that's the deliverable,
-not just the files:
-
-- Categorize each competitor's production method in plain terms: painterly/
-  illustrated, photoreal AI-video-generated, 3D cinematic render, repurposed
-  video-game-engine footage, stick-figure/simple 2D animation, live-action,
-  etc. This is usually visually obvious from one frame and matters more for
-  differentiation than any other single factor.
-- Log each pull to `research/style-references/index.md` (create it if it
-  doesn't exist yet) as one row: channel, video title + URL, timestamp
-  sampled, one-line style descriptor, date. This turns the folder into a
-  running index instead of a pile of unlabeled images, matching how
-  `content/SOURCES.md` works for research sources.
-- If this run was for a specific video concept, also append a short note
-  (or extend the existing "Competitive check" section) in that concept's
-  `research-*.md`, so the finding sits next to the decision it's informing
-  rather than only living in a side index.
-
-## Batching (more than ~3 competitor videos in one pass)
-
-Dispatch one `Agent` (general-purpose) per video, same pattern as
-`generate-scenes`: the subagent runs steps 1-8 for its one video and reports
-back only the saved file path + one-line style descriptor. Clip bytes and
-intermediate frame candidates never need to re-enter the parent conversation
-beyond the one chosen frame each subagent reads to make its pick. Don't
-parallelize past what's reasonable for local disk/bandwidth — 3-4 concurrent
-subagents is plenty.
+More than ~3 videos: one general-purpose subagent per video running steps
+1–8, returning only the saved path plus a one-line descriptor; 3–4
+concurrent at most.
 
 ## Gotchas
 
-- **Don't open a browser tab for this.** The earlier attempt used Claude
-  Browser to play the video and screenshot it — that produces an image in
-  the conversation, not a file on disk, and doesn't actually solve the
-  "save a frame" problem. Reach for a browser only as a last resort, if
-  `yt-dlp` can't reach a specific video (private/geo-blocked/deleted), and
-  say so explicitly rather than silently falling back to it.
-- **Confirm the search hit before downloading**, per step 1 — a wrong video
-  saved under the right channel name is a worse outcome than a slow search.
-- **A frame is a snapshot, not the full story.** One or two frames can miss
-  a channel that switches style mid-video (e.g. establishing shots vs.
-  character close-ups). If the first frame looks ambiguous or unrepresentative,
-  pull a second timestamp before writing the comparative note, rather than
-  generalizing from a single lucky/unlucky frame.
+- **Confirm the search hit** (step 1). A wrong video saved under the right
+  channel name is worse than a slow search.
+- **A frame is a snapshot.** A channel can switch style mid-video
+  (establishing shots versus close-ups). If the first frame looks ambiguous,
+  pull another timestamp before writing the note.
