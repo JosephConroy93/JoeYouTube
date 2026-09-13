@@ -67,7 +67,11 @@ result back to its row.
 
 Model and resolution: `illustrated` uses `gemini-3.1-flash-image` at 2K;
 `text-card` uses `gemini-3.1-flash-lite-image` at 1K; `gemini-3-pro-image`
-only via `-Model` after a review calls for escalation. One model per job,
+only via `-Model` after a review calls for escalation. Lite (1K only, no
+reference images, ~⅓ the price) may also be chosen per row via a `model`
+note in `notes` for medium/close character beats with simple backgrounds in
+flat cartoon styles; never for establishing shots, crowds, maps or fine
+props (validated on Eggline, see the Explainer Boss dossier). One model per job,
 so a mixed chapter is at least two jobs. Bodies are split at 14 MB (inline
 cap 20 MB); a single row over 14 MB aborts naming the row, so shrink its
 references. Reference files of 2 MB and up force several small jobs per
@@ -88,8 +92,11 @@ Then stop. Fetching is `get-scenes`; QC is `validate-scenes`.
 
 ## Cost
 
-Batch rate: about £0.037 per 2K image, £0.025 per 1K, plus a fraction of
-a penny per attached reference. A resubmission pays again.
+Batch rate (50% off list, verified against Google's pricing page): flash-image
+about £0.039 per 2K image, £0.026 per 1K; flash-lite-image about £0.013 per
+image, **1K only** (a 2K request is rejected) and no reference images; pro-image
+about £0.052 per 1K/2K. Plus a fraction of a penny per attached reference. A
+resubmission pays again.
 
 ## Boundaries
 

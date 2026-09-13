@@ -25,6 +25,7 @@ Retro + plan: `research/artifacts/retro-2026-09-12-refactor-plan.md`. Branch `re
 - **`generate-voiceover` live-tested** (one segment): fixed PowerShell 5.1 ffmpeg stderr handling (route through `cmd /c`), last-match parsing of ebur128 summaries, BOM-free alignment JSON, backtick-stripping config reader; added `--skip-generate` and `scripts/voices.ps1` (list/search/add voices). Series voice id recorded in `series.md`.
 - **`channel-farmer`** (new): one channel in → dossier, transcript breakdowns, competitor-index section, frames, a validated style-bible entry (≤10 Gemini images via `scripts/style-test.ps1`, live-tested), and a format module if needed. `style-farmer` gains `scripts/grab-frames.sh` (sectioned yt-dlp + ffmpeg, `YTDLP_EXTRA` for browser cookies). WORKFLOW Step 0 points at it.
 - **`channel-farmer` first real run** (The Explainer Boss): rules added — `vidiq_video_watch` misreports motion (use the frames pass or the operator); `/watch` on Windows needs `PYTHONUTF8=1` and leaks the cookie file into its work dir; yt-dlp config cookie path must use forward slashes; `style-farmer` uses `bv*` (video-only) since signed-in sessions get no muxed stream.
+- **Gemini pricing verified and lite tested**: batch flash 2K ≈ £0.039, 1K ≈ £0.026, lite ≈ £0.013 (1K only, 2K rejected). Lite passes on medium/close sparse-background scenes in flat styles, fails on dense wides; allowed per row for those beats only (`generate-scenes`).
 - Going forward this file takes one line per change plus the why; diffs are in git.
 
 ## 2026-09-12
