@@ -207,16 +207,17 @@ For each chapter, in order:
 The first chapter is also the video's pilot: look at its images before
 writing chapter 2 at all, not only at the failures.
 
-**Hook (first chapter only)**: when `video.md` sets `hook`, chapter 1's
-prompts also mark the hook shots and write `claude/hook-plan.md`. Once those
-stills are validated, run `generate-hook`: Veo animates each approved still,
-timed from the voiceover's character timestamps. The hook is Level 1's own
-opening animated, not a separate script, and it needs the stills first.
+**Hook shots**: when `video.md` sets `hook`, chapter 1's prompts also mark
+the hook shots and write `claude/hook-plan.md`. Their stills generate and
+validate with the rest of chapter 1. The hook is Level 1's own opening
+animated, not a separate script.
 
 After the last chapter: `finalize-scenes` (one canonical `<scene_id>.jpg` per
 scene, the rest to `_archive/`, `FINALIZED` footer), then `align-scenes`
-(needs every chapter's `script_bookmark`s and the voiceover). Set
-`status: generated`.
+(needs every chapter's `script_bookmark`s and the voiceover), then
+`generate-hook` (Veo animates the approved hook stills, timed from
+`scene-timing.md`; footage is never generated before every scene is
+validated). Set `status: generated`.
 
 ## Step 9 — Edit 🟢
 

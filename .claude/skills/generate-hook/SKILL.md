@@ -1,6 +1,6 @@
 ---
 name: generate-hook
-description: Builds a video's animated cold-open hook with Veo 3.1 image-to-video through the Gemini API — one 4–8 s clip per planned shot from an already-generated still, polled and downloaded by scripts/veo.ps1, then trimmed to the narration beats measured by align-scenes and prefixed with the 2 s black level card. Use after the hook stills are validated and the voiceover is aligned (WORKFLOW Step 9, before place-scenes).
+description: Builds a video's animated cold-open hook with Veo 3.1 image-to-video through the Gemini API — one 4–8 s clip per planned shot from an already-generated still, polled and downloaded by scripts/veo.ps1, then trimmed to the narration beats measured by align-scenes and prefixed with the 2 s black level card. Use at the end of Step 8, after every chapter's scenes are validated and align-scenes has run, before place-scenes.
 ---
 
 # generate-hook
@@ -18,10 +18,8 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
   cloth) and never restates the still's content; `duration_s` ∈ {4, 6, 8};
   `beat` is the verbatim script text the shot covers (used to cut it to the
   measured narration).
-- Beat timings: `claude/scene-timing.md` if `align-scenes` has run; otherwise
-  locate each `beat` in `claude/transcripts/<slug>_voice_01.alignment.json`
-  (character timestamps from `generate-voiceover`), so the hook can be made
-  as soon as chapter 1's stills are validated.
+- Beat timings: `claude/scene-timing.md`. Runs at the end of Step 8, after
+  every chapter is validated and `align-scenes` has run; never earlier.
 - `GEMINI_API_KEY` in the user environment.
 
 Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
