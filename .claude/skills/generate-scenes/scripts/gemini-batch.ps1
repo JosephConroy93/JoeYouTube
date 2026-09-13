@@ -48,7 +48,7 @@
   - submit -DryRun on real chapters, with -Chapter and with -SceneIds alone:
     exercised (stitch, character and generated-scene references, per-model
     grouping, 14 MB split, body JSON on disk).
-  - submit without -DryRun (the POST and the Add-LogRow that follows): # UNTESTED
+  - submit without -DryRun (the POST and the Add-LogRow that follows): exercised
   - a job ending FAILED / CANCELLED / EXPIRED (the `failed` branch): # UNTESTED
 #>
 [CmdletBinding()]
@@ -222,7 +222,11 @@ function Select-Rows($P) {
 
     $files = if ($Chapter) { @($Chapter) } else { Get-ChapterFiles $P }
     $all = @()
-    foreach ($f in $files) { $all += @(Read-ChapterRows $P $f | Where-Object { $_ }) }
+    foreach ($f in $files) {
+        # an index-derived list includes planned chapters, which have no file yet
+        if (-not $Chapter -and -not (Test-Path (Join-Path $P.ChapterDir ($f -replace '^.*[/\\]', '')))) { continue }
+        $all += @(Read-ChapterRows $P $f | Where-Object { $_ })
+    }
 
     if ($wantIds.Count -eq 0) { return $all }
     $picked = New-Object System.Collections.ArrayList

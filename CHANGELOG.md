@@ -35,6 +35,7 @@ Retro + plan: `research/artifacts/retro-2026-09-12-refactor-plan.md`. Branch `re
 - **Eggline allows hair and headwear** when a character's description gives them (bald stays the default); `series.md`/conventions gain an optional reused `protagonist`; scene-prompter re-dresses a series protagonist rather than redesigning it. Why: operator direction for future videos in this style.
 - **Decision: Eggline uses text locks, not reference images** (`research/artifacts/decision-eggline-text-locks.md`); noted on the Eggline style entry. scene-prompter Mode 1's costume-identity branch is not yet changed (awaiting operator). Why: blank heads have no likeness to drift, and references caused most of the Embalmer fixes.
 - Going forward this file takes one line per change plus the why; diffs are in git.
+- **`gemini-batch.ps1`: `-SceneIds` without `-Chapter` skips index chapters with no file yet.** Why: it read every chapter in the index, so the `chain-scenes` call form failed on Embalmer's planned levels 3–9 (found by scene-prompter, verified by dry run). The real POST and log append are now exercised (Embalmer level-01/02, 18 jobs).
 
 ## 2026-09-12
 

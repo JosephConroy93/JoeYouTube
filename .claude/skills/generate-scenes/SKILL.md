@@ -111,5 +111,5 @@ resubmission pays again.
 
 ## Test status
 
-The real POST and the log append after it: `# UNTESTED`. Dry-run
+Real POST, log append, dry-run
 submission, status, fetch and the log-row updates are exercised.
