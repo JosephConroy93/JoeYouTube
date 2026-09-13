@@ -110,7 +110,7 @@ if ($Step -in 'log','all') {
     $v = Get-Content $vm -Raw -Encoding UTF8
     if ($v -match '`published_id`\s*\|\s*\*\(unset\)\*') { Write-Warning "video.md: published_id is unset - publish before closing." }
     Write-Host ("{0}video.md: status -> closed" -f $tag)
-    if (-not $DryRun) { $v = [regex]::Replace($v, '(\|\s*`status`\s*\|\s*)`[^`]*`[^|]*', '${1}`closed`'); Set-Content -Path $vm -Value $v -Encoding UTF8 -NoNewline }
+    if (-not $DryRun) { $v = [regex]::Replace($v, '(\|\s*`status`\s*\|\s*)`[^`]*`[^|]*', '${1}`closed` '); Set-Content -Path $vm -Value $v -Encoding UTF8 -NoNewline }
   }
 }
 
