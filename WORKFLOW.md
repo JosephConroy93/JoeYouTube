@@ -57,7 +57,13 @@ exemplar image in `content/styles/examples/`.
    than about a week, ask before re-polling `vidiq_channel_videos` (log
    every title pulled).
 3. Check each survivor against live VidIQ outlier/breakout data for its
-   specific topic.
+   specific topic. `vidiq_outliers`' `keyword` is a semantic match on the
+   individual terms across titles and tags, not a phrase match: run one
+   strict query per phrase (`requireAllTitleTerms: true`, e.g. "silk road")
+   plus one or two narrower term clusters, never a single long string
+   ("silk road caravan" returned RV caravans). Note which words are polluted
+   by another meaning (caravan → RVs, embalmer → modern morticians) so Step 2
+   avoids them in the title.
 4. **Comment mining**: `vidiq_video_comments` (5 credits/call) on the 2–3
    strongest competitor videos; log which videos were mined in `concepts.md`
    so Step 3 never re-pulls them.
