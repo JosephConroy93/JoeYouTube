@@ -10,7 +10,7 @@
 param(
   [string] $Project = '',
   [ValidateSet('lite','standard','fast')] [string] $Model = 'lite',
-  [ValidateSet('720p','1080p')] [string] $Resolution = '1080p',
+  [ValidateSet('720p','1080p')] [string] $Resolution = '720p',
   [int]    $Shot = 0,
   [switch] $DryRun,
   # single-clip test mode
@@ -18,6 +18,7 @@ param(
   [string] $Prompt = '',
   [string] $Out = '',
   [ValidateSet(4,6,8)] [int] $Duration = 8,
+  [string] $Negative = '',   # negativePrompt: rejected by veo-3.1-lite; put negatives in the prompt text instead
   [string] $Root = ''
 )
 Set-StrictMode -Version Latest
@@ -34,12 +35,14 @@ $base = 'https://generativelanguage.googleapis.com/v1beta'
 $headers = @{ 'x-goog-api-key' = $apiKey; 'Content-Type' = 'application/json' }
 $scratch = Join-Path $env:TEMP 'veo-hook'; New-Item -ItemType Directory -Force $scratch | Out-Null
 
-function Build-Body([string] $imgPath, [string] $motion, [int] $dur, [string] $res) {
+function Build-Body([string] $imgPath, [string] $motion, [int] $dur, [string] $res, [string] $neg = $Negative) {
   $mime = if ($imgPath -match '\.png$') { 'image/png' } else { 'image/jpeg' }
   $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($imgPath))
   if ($res -eq '1080p' -and $dur -ne 8) { Write-Warning "1080p requires 8 s; forcing durationSeconds 8 (was $dur)"; $dur = 8 }
+  $params = @{ aspectRatio = '16:9'; durationSeconds = $dur; resolution = $res; personGeneration = 'allow_adult' }
+  if ($neg) { $params['negativePrompt'] = $neg }
   return (@{ instances = @(@{ prompt = $motion; image = @{ bytesBase64Encoded = $b64; mimeType = $mime } })
-             parameters = @{ aspectRatio = '16:9'; durationSeconds = $dur; resolution = $res; personGeneration = 'allow_adult' } } | ConvertTo-Json -Depth 8 -Compress)
+             parameters = $params } | ConvertTo-Json -Depth 8 -Compress)
 }
 function Submit([string] $body, [string] $label) {
   try { $r = Invoke-RestMethod -Method Post -Uri "$base/models/${modelId}:predictLongRunning" -Headers $headers -Body ([Text.Encoding]::UTF8.GetBytes($body)) }

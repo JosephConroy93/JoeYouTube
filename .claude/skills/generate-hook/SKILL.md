@@ -46,27 +46,26 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 - The image goes as `image: { bytesBase64Encoded, mimeType }`, not `inlineData` (400 otherwise).
 - `durationSeconds` must be a JSON number, not a string.
 - `personGeneration` must be `allow_adult`; `allow_all` is rejected.
-- Output is 24 fps H.264 MP4 (1280×720 at 720p); `place-scenes` re-renders it to the project fps, so nothing else needs to change.
+- `negativePrompt` is rejected by `veo-3.1-lite`: negatives go in the prompt text ("mouths closed, no talking, no lip movement, no change of expression").
+- Output is 24 fps H.264 MP4 with a generated audio track (1280×720 at 720p). Strip the audio; set the video's timeline to **24 fps** (`video.md` `fps`) so hook clips need no frame-rate conversion; `place-scenes` upscales 720p to 1080p.
 
 ## Rules
 
-- **1080p needs 8 s clips.** For 4–6 s shots either generate 8 s at 1080p and
-  trim, or generate 720p and upscale; default is 8 s at 1080p on `lite`
-  (≈ £0.50 per shot) so the cut has headroom.
+- **Default: lite at 720p.** 720p allows 4, 6 or 8 s clips cut to the beat; 1080p forces 8 s and costs half as much again. A 720p lite clip upscaled to 1080p held up on Eggline's flat colour.
 - Motion decays across the hook: real action and a tracking camera in
   shots 1–2, idle motion by the last shot. Cuts, never dissolves.
 - The still is the truth: a clip whose character or setting drifts from its
   still fails; regenerate with a tighter motion prompt, never accept.
-- **Motion-prompt discipline** (from the first live clip): confine every
+- **Motion-prompt discipline** (from the first live clips): confine every
   gesture to the joint that moves and say what stays put ("index finger taps
   the map twice; forearm stays on the table; other hand stays on the hip");
   lock faces explicitly ("mouths and brows stay exactly as drawn, no talking,
   no expression change") or the model invents speech and anger; ask for a
   "continuous, constant-speed push-in over the whole clip" or the push
   front-loads and stalls; never request an action the still already shows.
-- Cost per shot (Gemini pricing, £): lite 720p ≈ £0.04/s, lite 1080p ≈
-  £0.06/s, fast 1080p ≈ £0.09/s, standard 1080p ≈ £0.31/s. A 7-shot hook at
-  8 s on lite 1080p ≈ £3.45.
+- Cost (Gemini list price, £): lite 720p ≈ £0.04/s, lite 1080p ≈ £0.06/s,
+  fast 1080p ≈ £0.09/s, standard ≈ £0.31/s. A 7-shot hook of about 35 s on
+  lite 720p ≈ £1.30.
 
 ## Not this skill's job
 
@@ -76,4 +75,4 @@ grade note).
 
 ## Status
 
-🟡 Exercised live on one 4 s 720p lite clip (submit, poll, download, probe). Plan mode, beat trimming and the level card are UNTESTED until the Silk Road run.
+🟡 Exercised live on two 4 s 720p lite clips (gesture and walking; submit, poll, download, probe). Plan mode, beat trimming and the level card are UNTESTED until the Silk Road run.

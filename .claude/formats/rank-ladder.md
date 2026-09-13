@@ -72,6 +72,28 @@ script and say so.
 
 A script below either floor fails regardless of total.
 
+## Variant: nine-level
+
+Selected in `video.md` as `format: rank-ladder (nine-level)`. Everything
+above applies, with these overrides:
+
+- **Exactly 9 levels.** Level 1 is a 60–75 s cold open; Levels 2–8 are even
+  in length; Level 9 is a short epilogue or inversion.
+- **Callout**: "Level N. <Rank title>." — bare, and the first words of the
+  level. Age or stage surfaces inside the level, never in the callout.
+  (Edit renders a 2 s black card with the same text before each callout.)
+- **Per level**: the rung named → what the rung really is, deflated → one
+  incident → one aphorism → a **hand-off cliff** whose last line is the next
+  level's premise.
+- **Companion object** planted before 0:50 and returned in the last level;
+  its meaning changes each time it reappears.
+- **Ending**: reversal, then the cyclical image, **no spoken moral**.
+- **Hook**: no factual hook required in Level 1; a flash-forward stake or a
+  withheld reversal carries it. A sourced hard fact still lands inside the
+  first two levels.
+- **Runtime**: the video's `runtime_target` wins over the 20–25 minute
+  default. Length comes from beats, never padding.
+
 ## Mandatory reads before writing
 
 - `research/artifacts/script-craft-openings-and-retention.md`
