@@ -41,6 +41,11 @@ Coarse pass/fail on the whole image, one verdict per scene:
    texture, anything needing a zoomed crop: out of scope, not logged.
 4. **Nothing malformed**: extra or missing limbs, warped anatomy, garbled
    faces or hands, nonsensical composition.
+5. **Style holds**: judged against two of the style entry's `Source frames`
+   (attach them to every subagent group), never against earlier renders or
+   approved references, which can carry the same drift. Proportions, head
+   treatment, skin colour and line weight must match the source. A style
+   miss is a FAIL, not a note.
 
 Text-card rows additionally: an exact, character-for-character match to
 the quoted line; no second line or stray marks anywhere on the card.

@@ -107,6 +107,13 @@ location:
   Every attribute that must survive generation (a headwear colour, a garment,
   a roof type) gets a one-line **lock-line**, later copied into
   `qc-checklist.md`.
+- **The style owns proportions, head, face and skin.** A figure's locked
+  description gives relative silhouette ("the widest figure in the cast",
+  "noticeably taller and narrower"), costume and props only; never anatomy
+  (muscles, shoulders, chest, belly, legs), never head size or shape, never
+  skin colour. Every figure reference prompt ends with a pointer to the
+  style: "Draw the figure strictly in the house style's proportions and
+  colours." Anatomical language overrides a cartoon style's proportions.
 - **One subject per reference prompt.** One character (or one genuine
   ensemble as a compound asset), or one location — never a second
   independently-defined character, never an action between two named

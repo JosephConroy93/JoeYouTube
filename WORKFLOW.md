@@ -155,7 +155,11 @@ addenda.
    location and companion object** into `claude/character-bible.md`, with
    `claude/reference-prompts.txt`; render the reference images
    (`channel-farmer/scripts/style-test.ps1 -Prompts reference-prompts.txt`)
-   into `reference-images/` and audit them against the bible.
+   into `reference-images/`. Render three first and show them to the
+   operator beside the style's `Source frames` before rendering the rest.
+   Audit every reference (Sonnet) against the bible **and** the source
+   frames, never against other references. Any style deviation is a
+   regenerate, never a watch item.
 2. Choose the style: `preview-style` renders a few real scenes in candidate
    styles; set `style` in `video.md`.
 3. Set `status: prompted` once the bible and references pass.

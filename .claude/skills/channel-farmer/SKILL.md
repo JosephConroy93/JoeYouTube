@@ -47,10 +47,11 @@ subagents so frames and transcripts never enter the main thread.
 
 ## Phase D — style entry and validation (subagent + Gemini)
 
-1. From the frames and the description, write a new `## <StyleName>` entry in the style bible: two or three lines of plain description, then the blockquote with **STYLE:** and **NEGATIVE:** (same shape as the existing entries; no fixed palette unless the channel clearly has one; 16:9). Name it for the look, not the channel.
-2. `scripts/style-test.ps1 -Style <StyleName> -Out research/channels/<slug>/style-test/round-1 -Count 3`.
-3. Compare each render against the frames (production method, line treatment, palette, lighting, face treatment, background density). If two or more of the three miss, revise the entry once and render round 2 (another 3). Stop at the image cap regardless.
-4. Save the best render as `content/styles/examples/<StyleName>.jpg`, link it under the entry, and state the validation result in the entry's plain text: how many images, what matched, what still drifts.
+1. **Measure before writing** (subagent, Sonnet, pixel measurement not eyeballing) on at least 8 frames that show full figures, **including figures with bare arms or legs**: head-heights tall, head width vs shoulders, head shape, exposed-skin colour sampled against the head, outline stroke width on head vs body vs background, eyes, neck, hands, whether heads are tinted by scene light. If no study frame shows bare skin, grab frames that do before writing.
+2. Write the `## <StyleName>` entry from those numbers: plain description, the **STYLE:**/**NEGATIVE:** blockquote (same shape as existing entries; hard numbers for proportions; an explicit skin rule; no fixed palette unless the channel has one; 16:9), a `Source frames:` line listing 4–6 of the measured frames by path, and an `Identity:` line (`faces` or `costume`). Name it for the look, not the channel.
+3. `scripts/style-test.ps1 -Style <StyleName> -Out research/channels/<slug>/style-test/round-1 -Count 3`. The test prompts must include **one figure with bare arms and legs** and one wide shot, so skin and proportions are exercised, not hidden by clothing.
+4. **Judge renders against the source frames, never against other renders.** Build a side-by-side (render beside a source frame at the same height) and check the measured numbers on the render. If two or more miss, revise once and render round 2; stop at the image cap regardless.
+5. **Operator gate**: show the side-by-sides to the operator. The entry is not usable until the operator approves it against the channel's frames. Only then save the exemplar `content/styles/examples/<StyleName>.jpg` and record the validation result (images, measured numbers, what still drifts) in the entry.
 
 ## Phase E — dossier and format (main thread)
 

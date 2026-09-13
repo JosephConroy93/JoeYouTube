@@ -51,6 +51,10 @@ server is a submodule under `tools/`.
 
 - **Validate at small scale before trusting at full scale** — a few items,
   then the batch.
+- **Judge against the source, never against our own output.** Style checks
+  compare renders with the channel frames the style came from; an approved
+  render or reference is never the benchmark, because it can carry the same
+  drift. A flagged style deviation stops the batch.
 - **Nothing is done until a rendered or measured artefact proves it.** A
   `success` return or a readback alone is not proof (seven false-success
   checks in one session taught this).
