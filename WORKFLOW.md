@@ -88,7 +88,10 @@ factual authority.
 2. `vidiq_video_transcript` (5 credits/call) on existing videos on the
    subject to find the well-trodden angle. Check
    `research/artifacts/transcripts/index.md` first; after any pull write a
-   paraphrased breakdown there, never the verbatim transcript.
+   paraphrased breakdown there, never the verbatim transcript. If VidIQ is
+   down or a video has no captions, the free fallback is local: `yt-dlp
+   --skip-download --write-auto-subs` for captions, else `yt-dlp -f ba` for
+   the audio and `whisper --model base`; delete the audio afterwards.
 3. Comment mining, second use: what viewers keep asking or complaining is
    missing becomes beats.
 4. Record sources used in `sources.md` (series-level unless `video.md`
