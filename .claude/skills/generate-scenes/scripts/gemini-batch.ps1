@@ -40,7 +40,7 @@
                        fetch: write images to -OutDir, update no log row.
 .PARAMETER OutDir      DryRun output folder (default $env:TEMP\gemini-batch\<slug>)
 .PARAMETER Root        project root (default: four levels above this script)
-.PARAMETER RefMaxPx    submit: downscale each reference in memory to this long edge (JPEG q90) before inlining
+.PARAMETER RefMaxPx    submit: downscale each reference in memory to this long edge (JPEG q90) before inlining; default 1376 (1K), 0 = as on disk
 
 .NOTES
   Defaults: illustrated -> gemini-3.1-flash-image @ 2K; text-card ->
@@ -63,7 +63,7 @@
   - submit without -DryRun (the POST and the Add-LogRow that follows): exercised
   - a job ending FAILED / CANCELLED / EXPIRED (the `failed` branch): # UNTESTED
   - expand and prompt-block stitching: exercised on rewritten Embalmer rows.
-  - -RefMaxPx against a real render: # UNTESTED
+  - -RefMaxPx 1376: blind six-scene test, identity equal to full-size references (research/artifacts/reftest-2026-09-13)
 #>
 [CmdletBinding()]
 param(
@@ -78,7 +78,7 @@ param(
     [switch]$DryRun,
     [string]$OutDir,
     [string]$Root,
-    [int]$RefMaxPx
+    [int]$RefMaxPx = 1376   # 0 sends references as they are on disk
 )
 
 Set-StrictMode -Version Latest
