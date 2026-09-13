@@ -80,6 +80,7 @@ $raw = ($raw -split '(?m)^## Handoff notes')[0]
 $chunks = [System.Collections.Generic.List[string]]::new()
 $cur = [System.Text.StringBuilder]::new()
 foreach ($line in ($raw -split "`r?`n")) {
+  if ($line -match '^#\s') { continue }   # the document title (H1) is never spoken
   if ($line -match '^(#{1,6}\s|---\s*$)') {
     if ($cur.Length -gt 0) { $chunks.Add($cur.ToString().Trim()); $cur.Clear() | Out-Null }
     if ($line -match '^#{1,6}\s+(.*)$') { $cur.AppendLine($matches[1].Trim()) | Out-Null }  # spoken heading (e.g. "Level one, the chosen.")
@@ -119,7 +120,7 @@ for ($i = 0; $i -lt $segments.Count; $i++) {
 
 Write-Host ("Segments: {0}  (chars: {1})" -f $segments.Count, (($segments | ForEach-Object Length) -join ', '))
 for ($i = 0; $i -lt $segments.Count; $i++) {
-  Set-Content -Path (Join-Path $segDir "$($labels[$i]).txt") -Value $segments[$i] -Encoding UTF8 -NoNewline
+  [IO.File]::WriteAllText((Join-Path $segDir "$($labels[$i]).txt"), $segments[$i], (New-Object System.Text.UTF8Encoding($false)))
 }
 
 # ---------- generation ----------
