@@ -23,6 +23,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Script write / revise / score | `script-writer` agent + `.claude/formats/<format>.md` |
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
 | Timing | `align-scenes` (TTS timestamps, or whisper) |
+| Animated hook | Veo 3.1 via the Gemini API, `generate-hook` (from chapter 1's validated stills) |
 | Character/location bible, scene prompts | `scene-prompter` agent (bible once; prompts one chapter per generation loop) |
 | Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `chain-scenes` for continuity groups; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
@@ -206,6 +207,12 @@ For each chapter, in order:
 The first chapter is also the video's pilot: look at its images before
 writing chapter 2 at all, not only at the failures.
 
+**Hook (first chapter only)**: when `video.md` sets `hook`, chapter 1's
+prompts also mark the hook shots and write `claude/hook-plan.md`. Once those
+stills are validated, run `generate-hook`: Veo animates each approved still,
+timed from the voiceover's character timestamps. The hook is Level 1's own
+opening animated, not a separate script, and it needs the stills first.
+
 After the last chapter: `finalize-scenes` (one canonical `<scene_id>.jpg` per
 scene, the rest to `_archive/`, `FINALIZED` footer), then `align-scenes`
 (needs every chapter's `script_bookmark`s and the voiceover). Set
@@ -217,7 +224,8 @@ All in Resolve Studio through the MCP server. **Verification rule** (conventions
 nothing is done until a rendered or measured artefact proves it.
 
 1. `place-scenes`: decide fps, pre-render every visual to exact-frame
-   clips, cut hook clips to the measured beats, author and import the FCP7
+   clips, swap each hook still for its Veo clip, add the 2 s level cards,
+   author and import the FCP7
    XML, verify by readback and screenshot. Media is staged at the series
    `staging_path`, never inside OneDrive.
 2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on

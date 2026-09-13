@@ -170,6 +170,26 @@ style change is a one-line column edit (Mode 3), never a prompt rewrite.
   references; flag any row needing more in `notes` as a reason to recompose.
 - **Text-card rows** normally carry no reference; an empty cell is normal.
 
+### Hook shots and level cards
+
+When `video.md` sets `hook`, the **first chapter** marks the scenes covering
+the opening ~30 seconds of narration (after the level callout) as hook
+shots: at most 8, each an `illustrated` wide or medium scene with something
+that can move (a figure, water, flame, cloth, crowd), never a text-card.
+Each gets `hook: shot N` in `notes`, and one row in `claude/hook-plan.md`
+(schema in conventions.md): `motion_prompt` says only what moves, steers any
+emotion ("he mutters, frowning"), allows faces and mouths to move (audio is
+stripped), asks for a continuous constant-speed camera move, and never
+requests an action the still already shows; `duration_s` is 4, 6 or 8, the
+smallest that covers the scene's estimated narration; `beat` is the row's
+`script_bookmark`. The hook is not a separate script: it is Level 1's own
+opening, animated.
+
+In a `rank-ladder (nine-level)` video, level titles are **not** scene rows:
+the edit renders each "Level N. <Rank title>." card with ffmpeg over the
+first two seconds of that level's first scene. Start each level's first row
+at its callout.
+
 ### Standing content rules
 
 **Scenes are dressed to look good.** Every setting gets colour, texture,

@@ -10,14 +10,18 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
 
 ## Inputs
 
-- `claude/hook-plan.md` — one row per shot:
+- `claude/hook-plan.md` — written by `scene-prompter` Mode 2 with the first
+  chapter; one row per shot:
   `| shot | scene_id | motion_prompt | duration_s | beat |`
   `scene_id` names a validated still in `scene-generation/`; `motion_prompt`
   describes only what moves (camera push, a figure walking, water, flame,
   cloth) and never restates the still's content; `duration_s` ∈ {4, 6, 8};
   `beat` is the verbatim script text the shot covers (used to cut it to the
   measured narration).
-- `claude/scene-timing.md` — beat timings, once `align-scenes` has run.
+- Beat timings: `claude/scene-timing.md` if `align-scenes` has run; otherwise
+  locate each `beat` in `claude/transcripts/<slug>_voice_01.alignment.json`
+  (character timestamps from `generate-voiceover`), so the hook can be made
+  as soon as chapter 1's stills are validated.
 - `GEMINI_API_KEY` in the user environment.
 
 Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
@@ -29,14 +33,10 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
    motion prompt, `aspectRatio 16:9`, `durationSeconds`, `resolution` — then
    **poll** each operation until `done` and **download** the video URI to
    `hook/raw/shot-NN.mp4`. Requests run in parallel; poll every 15 s.
-2. **Cut to beats**: when `scene-timing.md` exists, trim each raw clip to the
-   measured length of its beat (never stretch; if the beat is longer than the
+2. **Cut to beats**: trim each raw clip to the measured length of its beat (never stretch; if the beat is longer than the
    clip, hold the last frame and report it) into `hook/shot-NN.mp4`; the
    last shot is never trimmed to fit.
-3. **Card**: render the 2 s black level card (`chapter.heading` from
-   `series.md`, white small hand-lettered capitals, centred) as
-   `hook/00-card.mp4` with ffmpeg `drawtext`.
-4. Report per shot: model, duration requested vs delivered, cost.
+3. Report per shot: model, duration requested vs delivered, cost.
 
 `--dry-run` writes the request JSON to the scratch dir and exits.
 `--shot N` regenerates one shot.

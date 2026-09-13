@@ -35,7 +35,8 @@ content/
       reference-images/<Name>.jpg    canonical character AND location references
       voiceovers/<slug>_voice_NN.mp3             raw TTS as delivered (source; never on the timeline); sorted order = playback order
       voiceovers/normalized/<slug>_voice_NN.wav  the timeline copy: −16 LUFS, true peak ≤ −1.5 dBFS, 48 kHz, dual-mono stereo
-      hook/*.mp4                     optional cold-open clips, cut AFTER alignment
+      hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)
+      hook/shot-NN.mp4               hook clip trimmed to its scene's narration
       thumbnails/
       scene-generation/<scene_id>.jpg    exactly one canonical image per scene after finalize
       scene-generation/_archive/         attempts, superseded, manual-edit sources
@@ -113,6 +114,14 @@ A log in the older 6-column shape is read-only for `gemini-batch.ps1`: if such a
 Seconds are **segment-relative**. `match` = `exact` · `fuzzy(NN%)` ·
 `interpolated` · `api` (from TTS timestamps). Row count must equal the
 manifest's; a mismatch aborts naming the missing ids.
+
+## `hook-plan.md`
+
+`| shot | scene_id | motion_prompt | duration_s | beat |`
+
+Written by `scene-prompter` Mode 2 with the first chapter when `video.md`
+sets `hook`. At most 8 rows; `duration_s` ∈ 4 · 6 · 8; `beat` is the scene's
+`script_bookmark`. Each clip replaces its scene's still in the edit.
 
 ## `ken-burns-plan.md`
 

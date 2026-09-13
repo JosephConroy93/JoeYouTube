@@ -44,12 +44,20 @@ verification rule: `.claude/conventions.md`.
    16:9, don't scale; upscale only sources below timeline resolution.
    Verify every output with `ffprobe -count_frames`. Run the batch in
    parallel, in the background.
-5. **Hook beats.** The hook plays under the first segment's opening
-   narration and ends where the first body scene starts. Cut each hook
-   clip where its own narration beat ends, read from the transcript's
-   word timings (a pause of roughly 0.8 s or more marks a beat); beats and
-   clips need not be 1:1 — the script's hook section says which clip
-   covers which. **Never trim the last clip to make the total fit.**
+5. **Hook clips.** Each row of `claude/hook-plan.md` names a `scene_id`;
+   its clip `hook/shot-NN.mp4` **replaces that scene's still** at the same
+   timeline position and duration (the plan is 1:1 with scenes; there is no
+   separate hook script). Trim to the scene's measured duration; if the clip
+   is shorter, hold its last frame. **Never trim the last hook clip to make a
+   total fit.** (Older videos with a separate hook section: cut each clip at
+   its own narration beat from the word timings.)
+5b. **Level cards** (`rank-ladder (nine-level)` videos): for each level,
+   render a 2 s black card with the level heading from `script.md` in small
+   white hand-lettered capitals, centred (ffmpeg `drawtext`, exact text,
+   project fps, frame-exact), and place it over the first two seconds of that
+   level's first scene. `build_timeline.py` does not yet insert cards: add a
+   `--cards` option (or place them by hand on V2) before the first edit of
+   such a video.
    Conform each to the project fps with the same ffmpeg form (no `-loop`)
    into `<staging>/hook/`; any `start_frame`/`end_frame` given to the API
    is in **source** frames at the clip's native rate.
