@@ -8,8 +8,9 @@
   .\tts.ps1 -Project watcher-pov/my-video [-Segment 3] [-DryRun] [-MaxChars 4500] [-Seed 12345]
 
 .STATUS
-  UNTESTED against the live API (no key present when written). Exercised
-  only with -DryRun. First live run: one segment.
+  Live-tested on one 3,273-character segment (generate + normalise + alignment).
+  Untested: a full multi-segment run and the -Segment regeneration path with a
+  stored seed.
 
 .NOTES
   Reads ELEVENLABS_API_KEY from the user environment (conventions.md).
@@ -21,12 +22,15 @@ param(
   [Parameter(Mandatory)] [string] $Project,     # <series>/<slug>
   [int]    $Segment  = 0,                        # 0 = all
   [switch] $DryRun,
+  [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
   [int]    $MaxChars = 4500,
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+# ffmpeg writes everything to stderr; PowerShell 5.1 turns that into errors under Stop, so route through cmd.
+function Run-Ff([string] $cmdline) { $out = cmd /c "$cmdline 2>&1"; return (($out | ForEach-Object { "$_" }) -join "`n") }
 if (-not $Root) { $Root = (Resolve-Path (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '..\..\..\..')).Path }
 
 # ---------- paths ----------
@@ -48,7 +52,7 @@ function Read-ConfigTable([string] $path) {
   $h = @{}
   if (-not (Test-Path $path)) { return $h }
   foreach ($line in Get-Content $path -Encoding UTF8) {
-    if ($line -match '^\|\s*`([^`]+)`\s*\|\s*(.*?)\s*\|\s*$') { $h[$matches[1]] = $matches[2] }
+    if ($line -match '^\|\s*`([^`]+)`\s*\|\s*(.*?)\s*\|\s*$') { $h[$matches[1]] = ($matches[2] -replace '`','').Trim() }
   }
   return $h
 }
@@ -140,31 +144,40 @@ foreach ($i in $todo) {
     continue
   }
 
+  $mp3 = Join-Path $voDir "$label.mp3"
+  if ($SkipGenerate) {
+    if (-not (Test-Path $mp3)) { throw "SkipGenerate: no MP3 at $mp3" }
+    Write-Host "Normalising existing $label..."
+  } else {
   Write-Host "Generating $label ($($segments[$i].Length) chars)..."
   $resp = Invoke-RestMethod -Method Post -Uri $uri -Headers @{ 'xi-api-key' = $apiKey; 'Content-Type' = 'application/json' } -Body ([Text.Encoding]::UTF8.GetBytes($json))
   if (-not $resp.audio_base64) { throw "No audio_base64 in response for $label" }
-  $mp3 = Join-Path $voDir "$label.mp3"
   [IO.File]::WriteAllBytes($mp3, [Convert]::FromBase64String($resp.audio_base64))
-  $resp.alignment | ConvertTo-Json -Depth 4 -Compress | Set-Content -Path (Join-Path $alignDir "$label.alignment.json") -Encoding UTF8
+  [IO.File]::WriteAllText((Join-Path $alignDir "$label.alignment.json"), ($resp.alignment | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding($false)))
+  }
 
   # ---------- normalise ----------
-  $measure = & ffmpeg -hide_banner -i $mp3 -af ebur128=peak=true -f null - 2>&1 | Out-String
-  $lufs = [double]([regex]::Match($measure, 'I:\s+(-?[\d.]+) LUFS').Groups[1].Value)
+  $measure = Run-Ff "ffmpeg -hide_banner -i `"$mp3`" -af ebur128=peak=true -f null -"
+  $mm = [regex]::Matches($measure, 'I:\s+(-?[\d.]+) LUFS'); if ($mm.Count -eq 0) { throw "ebur128 measure failed:`n$measure" }
+  $m = $mm[$mm.Count - 1]
+  $lufs = [double]$m.Groups[1].Value
   $gain = [math]::Round(-16 - $lufs, 2)
   $wav = Join-Path $normDir "$label.wav"
-  & ffmpeg -hide_banner -loglevel error -y -i $mp3 -af "volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50" -ar 48000 -ac 2 -c:a pcm_s24le $wav
-  $check = & ffmpeg -hide_banner -i $wav -af "ebur128=peak=true" -f null - 2>&1 | Out-String
-  $chk = [regex]::Match($check, 'I:\s+(-?[\d.]+) LUFS').Groups[1].Value
-  $tp  = [regex]::Match($check, 'Peak:\s+(-?[\d.]+) dBFS').Groups[1].Value
-  $lra = [regex]::Match($check, 'LRA:\s+(-?[\d.]+) LU').Groups[1].Value
-  $rms = & ffmpeg -hide_banner -i $wav -af "channelsplit=channel_layout=stereo[l][r];[l]astats=measure_overall=RMS_level:measure_perchannel=none[l2];[r]astats=measure_overall=RMS_level:measure_perchannel=none[r2];[l2][r2]amerge" -f null - 2>&1 | Select-String 'RMS level dB' | ForEach-Object { ($_ -split ':')[-1].Trim() }
-  $dur = (& ffprobe -v error -show_entries format=duration -of csv=p=0 $wav)
+  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+  if (-not (Test-Path $wav)) { throw "normalise failed for $label" }
+  $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
+  $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
+  $tm = [regex]::Matches($check, 'Peak:\s+(-?[\d.]+) dBFS'); $tp = $tm[$tm.Count - 1].Groups[1].Value
+  $lm = [regex]::Matches($check, 'LRA:\s+(-?[\d.]+) LU');     $lra = $lm[$lm.Count - 1].Groups[1].Value
+  $rmsOut = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af astats=measure_overall=none:measure_perchannel=RMS_level -f null -"
+  $rms = [regex]::Matches($rmsOut, 'RMS level dB:\s+(-?[\d.]+)') | ForEach-Object { $_.Groups[1].Value }
+  $dur = (Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$wav`"").Trim()
   Write-Host ("  {0}: gain {1:+0.00;-0.00} dB -> I {2} LUFS, TP {3} dBFS, LRA {4} LU, RMS L/R {5}, {6:N1}s" -f $label, $gain, $chk, $tp, $lra, ($rms -join '/'), [double]$dur)
 }
 
 if (-not $DryRun) {
   $total = 0.0
-  Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double](& ffprobe -v error -show_entries format=duration -of csv=p=0 $_.FullName) }
+  Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double]((Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$($_.FullName)`"").Trim()) }
   Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel)
   Write-Host "Now: log the voice in voice-register.md and video.md; then scene-prompter Mode 2, then align-scenes --source api."
 }

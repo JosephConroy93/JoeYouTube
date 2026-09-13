@@ -69,5 +69,7 @@ placing audio on the timeline (`place-scenes`).
 
 ## Status
 
-🟡 Script written from the documented API; first real run should be one
-segment with `--dry-run` checked first, then a live single segment.
+🟡 Live-tested on one segment (generate, alignment, normalise). Full
+multi-segment run and `align-scenes --source api` still to be exercised on the
+next video. `scripts/voices.ps1` lists account voices, searches the shared
+library and adds a library voice; `--skip-generate` re-normalises existing MP3s.
