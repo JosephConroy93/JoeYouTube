@@ -68,7 +68,7 @@ foreach ($p in $promptList) {
   $text = "$p`n`nSTYLE: $styleText`n`nNEGATIVE: $negText`n`n$universal"
   $body = @{ contents = @(@{ parts = @(@{ text = $text }) }); generationConfig = @{ responseModalities = @('TEXT','IMAGE'); imageConfig = @{ imageSize = $Resolution } } } | ConvertTo-Json -Depth 8 -Compress
   $base = if ($target) { Join-Path $Out ([IO.Path]::GetFileNameWithoutExtension($target)) } else { Join-Path $Out ('{0}-{1:D2}' -f ($Style -replace '[^A-Za-z0-9]+','-'), $n) }
-  if (-not $DryRun -and $target -and (Test-Path "$base.jpg" -or Test-Path "$base.png")) { Write-Host "  skip $target (exists)"; continue }
+  if (-not $DryRun -and $target -and ((Test-Path "$base.jpg") -or (Test-Path "$base.png"))) { Write-Host "  skip $target (exists)"; continue }
   if ($DryRun) { [IO.File]::WriteAllText("$base.request.json", $body, (New-Object Text.UTF8Encoding($false))); Write-Host "[dry-run] wrote $base.request.json ($($text.Length) chars)"; continue }
   Write-Host ("Rendering {0}/{1} with {2} @ {3}..." -f $n, $promptList.Count, $Model, $Resolution)
   $resp = Invoke-RestMethod -Method Post -Uri $uri -Headers @{ 'x-goog-api-key' = $apiKey; 'Content-Type' = 'application/json' } -Body ([Text.Encoding]::UTF8.GetBytes($body))
