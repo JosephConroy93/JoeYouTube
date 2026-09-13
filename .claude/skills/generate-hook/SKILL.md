@@ -57,6 +57,13 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
   shots 1–2, idle motion by the last shot. Cuts, never dissolves.
 - The still is the truth: a clip whose character or setting drifts from its
   still fails; regenerate with a tighter motion prompt, never accept.
+- **Motion-prompt discipline** (from the first live clip): confine every
+  gesture to the joint that moves and say what stays put ("index finger taps
+  the map twice; forearm stays on the table; other hand stays on the hip");
+  lock faces explicitly ("mouths and brows stay exactly as drawn, no talking,
+  no expression change") or the model invents speech and anger; ask for a
+  "continuous, constant-speed push-in over the whole clip" or the push
+  front-loads and stalls; never request an action the still already shows.
 - Cost per shot (Gemini pricing, £): lite 720p ≈ £0.04/s, lite 1080p ≈
   £0.06/s, fast 1080p ≈ £0.09/s, standard 1080p ≈ £0.31/s. A 7-shot hook at
   8 s on lite 1080p ≈ £3.45.
