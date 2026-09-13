@@ -23,6 +23,7 @@ param(
   [int]    $Segment  = 0,                        # 0 = all
   [switch] $DryRun,
   [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
+  [double] $Speed = 1.0,                        # ElevenLabs voice_settings.speed (0.7-1.2); != 1 suffixes the label with -sNNN
   [int]    $MaxChars = 4500,
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
@@ -126,13 +127,14 @@ $endpointBase = 'https://api.elevenlabs.io/v1/text-to-speech'
 $todo = if ($Segment -gt 0) { @($Segment - 1) } else { 0..($segments.Count - 1) }
 foreach ($i in $todo) {
   $label = $labels[$i]
+  if ($Speed -ne 1.0) { $label = ('{0}-s{1}' -f $label, [int][math]::Round($Speed * 100)) }
   $body = @{
     text          = $segments[$i]
     model_id      = $voiceModel
     seed          = $Seed
     previous_text = $(if ($i -gt 0) { $segments[$i - 1].Substring([math]::Max(0, $segments[$i - 1].Length - 600)) } else { $null })
     next_text     = $(if ($i -lt $segments.Count - 1) { $segments[$i + 1].Substring(0, [math]::Min(600, $segments[$i + 1].Length)) } else { $null })
-    voice_settings = @{ stability = 0.5; similarity_boost = 0.75; style = 0; use_speaker_boost = $true; speed = 1.0 }
+    voice_settings = @{ stability = 0.5; similarity_boost = 0.75; style = 0; use_speaker_boost = $true; speed = $Speed }
   }
   $json = $body | ConvertTo-Json -Depth 5 -Compress
   $uri  = "$endpointBase/$voiceId/with-timestamps?output_format=mp3_44100_128"
