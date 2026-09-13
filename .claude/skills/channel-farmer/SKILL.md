@@ -60,6 +60,9 @@ Format decision: if the channel's structure is `rank-ladder` or `explainer`, nam
 
 ## Rules
 
+- `vidiq_video_watch` describes *content* well and *motion* badly: it reported rigged animation on a body that is stills with Ken Burns. Motion classification comes from the frames pass (measure: a uniform scale between two frames of one shot = Ken Burns; local change with a static background = image-to-video) or from the operator, never from the walkthrough.
+- `/watch` on Windows needs `PYTHONUTF8=1` (its focused-mode line prints a non-cp1252 character) and copies the yt-dlp cookie file into its working directory: delete the work dir when done. Keep the yt-dlp config's cookie path in forward slashes.
+
 - Never store a transcript verbatim; breakdowns only.
 - Frames are references for describing a style, not assets to reuse.
 - The style entry must be reproducible from its own text: a validation that only works with a reference image attached is a failure.
@@ -67,4 +70,4 @@ Format decision: if the channel's structure is `rank-ladder` or `explainer`, nam
 
 ## Status
 
-🟡 Scripts proven (frame grab on one video with the yt-dlp cookie config, one Gemini render). No full run yet.
+🟢 First full run done (The Explainer Boss, 2026-09-13): ~50 VidIQ credits, 6 Gemini images, dossier + Eggline entry + three breakdowns + 36 frames. Audience pass skipped that run.
