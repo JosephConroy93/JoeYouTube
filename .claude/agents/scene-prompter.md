@@ -31,18 +31,33 @@ Inputs by mode:
 1. **Research file** `research-<slug>.md` (all modes) — sole factual
    authority for names, physical/institutional detail and fact-check flags.
    **Missing → stop and say so.** Never improvise from general knowledge.
+   **Read sections, not the whole file**: the fact-check section, "what not
+   to overstate", the visual-reference notes and any visual-reference
+   addendum, plus (Mode 2) the rung or beat sections for the chapter being
+   written. Source appendices and treatments are not inputs.
 2. **Approved script** `claude/script.md` (Mode 2+) — treated as correct;
-   visualised, never re-litigated.
+   visualised, never re-litigated. Mode 1 reads it whole; **Mode 2 reads
+   only the chapter being written** (its level sections, plus the last
+   paragraph of the chapter before for continuity). Handoff notes are not
+   an input.
 3. **Character bible** `claude/character-bible.md` (Mode 2+) — this agent's
-   Mode 1 output: characters *and* recurring locations.
-4. **`content/prompt-hardening-log.md`** (Mode 2+) — read the PROMOTED
-   entries before writing any prompt; each is a standing rule. **Before
-   every chapter**, also read every entry dated since the previous chapter
-   of this video was written, promoted or not: the previous chapter's
-   generation results are this chapter's rules. Scan the unpromoted tail
-   for patterns worth designing around.
-5. **`content/styles/style-bible.md`** — only to confirm a supplied `style`
-   names a real entry.
+   Mode 1 output: characters, recurring locations and objects. Mode 2 reads
+   the bible's shared preamble and **only the entries that appear in the
+   chapter being written**; Mode 1 keeps a one-line index table at the top
+   of the bible (ID, name, filename, levels it appears in) to make that a
+   lookup.
+4. **`content/prompt-hardening-rules.md`** (Mode 2+, every chapter) — the
+   promoted rules, validation calibration and watch list, one line each.
+   Every rule is binding; watch-list lines dated since this video's previous
+   chapter are this chapter's cautions. Open `content/prompt-hardening-log.md`
+   (the incident archive) only for a specific entry whose backstory a rule
+   needs; never read it whole.
+5. **`content/styles/style-bible.md`** — confirm a supplied `style` names a
+   real entry by its `## <Style>` heading (grep, not a read); read only that
+   entry's section when writing a prompt needs its wording.
+6. **Not inputs**: other videos' character bibles and manifests, the mascot's
+   design history, skill scripts. The series mascot is read only through
+   the `mascot` block in `series.md` and the one bible file it names.
 
 A bible entry with no reference image in `reference-images/` → flag it and
 stop for that character or location; other rows proceed. **No web tools, by
@@ -150,8 +165,8 @@ style change is a one-line column edit (Mode 3), never a prompt rewrite.
 
 ### Standing content rules
 
-From PROMOTED entries in `content/prompt-hardening-log.md`; re-read it, as
-it may carry newer rules than this list.
+From `content/prompt-hardening-rules.md`; re-read it before each chapter,
+as it carries newer rules than this list.
 
 - Every on-screen figure, including unnamed one-line walk-ons, gets at least
   a minimal era-appropriate physical descriptor. The model does not infer
@@ -384,7 +399,7 @@ positional reference, using this template:
   row's pipe count** — check before reporting the pass complete.
 
 Report per dependent row what was rewritten; a later QC failure on one is a
-`prompt-hardening-log.md` entry, not a silent retry.
+hardening-log entry and watch-list line, not a silent retry.
 
 ## Sourcing
 

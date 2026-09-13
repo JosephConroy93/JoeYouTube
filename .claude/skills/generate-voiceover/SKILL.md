@@ -27,7 +27,7 @@ ElevenLabs MCP and the id is written to `series.md`.
    until a segment reaches ~4,500 characters (well inside the model's
    per-request limit; enough context for continuity). Strip markdown, level
    callouts stay as spoken text. Write each segment to
-   `claude/voiceover-segments/NN-<label>.txt` — this file is the exact text
+   `claude/voiceover-segments/<slug>_voice_NN.txt` — this file is the exact text
    sent, so a filename/content mismatch is detectable later.
 2. **Generate** each segment with
    `POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps`
@@ -35,21 +35,25 @@ ElevenLabs MCP and the id is written to `series.md`.
    `next_text` set to the neighbouring segments for continuity, a fixed
    `seed` (stored in `video.md` `notes`) so a regenerated segment matches
    the others, `output_format` `mp3_44100_128`. Save the decoded audio to
-   `voiceovers/NN-<label>.mp3` and the alignment (`characters`,
+   `voiceovers/<slug>_voice_NN.mp3` and the alignment (`characters`,
    `character_start_times_seconds`, `character_end_times_seconds`) to
-   `claude/transcripts/NN-<label>.alignment.json` for `align-scenes --source api`.
+   `claude/transcripts/<slug>_voice_NN.alignment.json` for `align-scenes --source api`.
 3. **Normalise** each file: measure with `ebur128`, apply gain to
    **−16 LUFS integrated** with `alimiter` (`level=disabled`, otherwise it
    raises rather than tames), true peak ≤ −1.5 dBFS, export
    **48 kHz dual-mono stereo WAV** (`-ac 2` from the mono source) to
-   `voiceovers/normalized/NN-<label>.wav`. Re-measure and print integrated
+   `voiceovers/normalized/<slug>_voice_NN.wav`. Re-measure and print integrated
    LUFS, true peak, loudness range and **per-channel RMS** (both channels
    must be within 0.1 dB of each other). A large loudness-range collapse
    means over-compression: back the gain off.
 4. Print each segment's duration and total runtime; append the voice used
    to `content/<series>/voice-register.md` and `video.md`.
 
-`--segment NN` regenerates one segment only (same seed). `--dry-run` writes
+`--segment NN` regenerates one segment only (same seed). Speed comes from
+`voice.speed` in `video.md` or `series.md` unless `--speed` is given; `--tag
+x` suffixes test takes (`<slug>_voice_NN_x`) so they never overwrite the real
+segment. The raw MP3 is the source of record; only the normalised WAV goes
+to the timeline. `--dry-run` writes
 the segment texts and the request JSON to the scratch dir without calling
 the API.
 

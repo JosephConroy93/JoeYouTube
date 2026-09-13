@@ -13,15 +13,15 @@ this file says what it reads, writes, and what must be true.
 
 - `claude/scene-prompts.md` and the chapter files it names, in index
   order — `scene_id` and `script_bookmark` per row.
-- `voiceovers/NN-<label>.mp3` — sorted filename order is playback order.
+- `voiceovers/<slug>_voice_NN.mp3` — sorted filename order is playback order.
   A `claude/voiceover-segments/*.txt` with no matching audio is ignored
   and reported.
 - Timing source, one of:
-  - `api`: `claude/transcripts/NN-<label>.alignment.json` from
+  - `api`: `claude/transcripts/<slug>_voice_NN.alignment.json` from
     `generate-voiceover` (`characters`, `character_start_times_seconds`,
     `character_end_times_seconds`), converted to word timestamps in the
     script. Missing files abort.
-  - `whisper` (default): `claude/transcripts/NN-<label>.json`. A segment
+  - `whisper` (default): `claude/transcripts/<slug>_voice_NN.json`. A segment
     without one is transcribed by the `whisper` CLI with `--model tiny
     --word_timestamps True --output_format json` — only the timing
     matters, not the spelling. Run the script in the background; a

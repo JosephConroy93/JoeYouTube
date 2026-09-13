@@ -26,10 +26,13 @@ Read before writing, in this order:
 2. **The format module** — `.claude/formats/<format>.md`, where `<format>`
    is an explicit `format=` argument if given, else `video.md`'s `format`,
    else `series.md`'s. It supplies register, opening, structure, ending,
-   runtime, the Stage 2 rubric and its own mandatory reads. Read those too.
+   runtime, the Stage 2 rubric and its own mandatory reads. Read those too,
+   only the sections the module names.
 3. **`series.md`** — `voice.*`, `wpm_measured`, `cta`, and
    `concepts_location` (whether `concepts.md`/`sources.md` sit at series or
-   slug level). Read the concept decision and sources list from there.
+   slug level). From `concepts.md` read **only this video's concept
+   section** (find its heading with grep); from `sources.md` only this
+   video's section. Never read a series-level file whole.
 
 This agent has no web tools by design. A missing fact is a gap to flag for
 research, never something to go and find mid-script.

@@ -71,7 +71,9 @@ Files alone are not the output.
   stick-figure or simple 2D, live action. Usually obvious from one frame,
   and the biggest single differentiation signal.
 - Append one row per saved frame to `research/style-references/index.md`
-  (create it with the header if absent), matching its existing columns:
+  (create it with the header if absent; append, don't read the whole index;
+  grep it for the channel name to avoid duplicates), matching its existing
+  columns:
   ```
   | File | Channel | Video | Timestamp | Style | Date | Notes |
   ```

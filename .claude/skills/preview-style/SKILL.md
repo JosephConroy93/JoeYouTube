@@ -41,8 +41,9 @@ skill reads `content_prompt`, never writes it.
    the text-card exact-text rule to each image yourself, and say in the
    report that this is a manual application of that checklist: no
    `batch-log.md` rows exist for a preview, so the skill is not invoked.
-6. **Log fails** to `content/prompt-hardening-log.md` in its existing entry
-   format. Report and stop; no automatic retry.
+6. **Log fails** as `validate-scenes` does: a full entry in
+   `content/prompt-hardening-log.md` and one watch-list line in
+   `content/prompt-hardening-rules.md`. Report and stop; no automatic retry.
 
 ## Boundaries
 

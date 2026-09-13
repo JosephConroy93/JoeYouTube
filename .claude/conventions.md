@@ -21,7 +21,8 @@ No agent or skill contains a literal series name, slug, voice name or era.
 
 ```
 content/
-  prompt-hardening-log.md            channel-level: image-model failure modes → promoted rules
+  prompt-hardening-rules.md          channel-level: promoted rules + watch list, one line each (read every chapter)
+  prompt-hardening-log.md            channel-level incident archive behind the rules (read on demand)
   styles/style-bible.md              named STYLE/NEGATIVE presets + universal negatives
   styles/examples/<Style>.jpg        one exemplar per style (never inside a video folder)
   <series>/
@@ -32,8 +33,8 @@ content/
       video.md
       research-<slug>.md             sole factual authority for the script
       reference-images/<Name>.jpg    canonical character AND location references
-      voiceovers/NN-<label>.mp3      raw TTS; sorted filename order = playback order
-      voiceovers/normalized/NN-<label>.wav   −16 LUFS, 48 kHz, dual-mono stereo
+      voiceovers/<slug>_voice_NN.mp3             raw TTS as delivered (source; never on the timeline); sorted order = playback order
+      voiceovers/normalized/<slug>_voice_NN.wav  the timeline copy: −16 LUFS, true peak ≤ −1.5 dBFS, 48 kHz, dual-mono stereo
       hook/*.mp4                     optional cold-open clips, cut AFTER alignment
       thumbnails/
       scene-generation/<scene_id>.jpg    exactly one canonical image per scene after finalize
@@ -46,8 +47,8 @@ content/
         scene-prompts/<chapter>.md   ≤25 scenes per file; filenames come from the index
         qc-checklist.md              per-video specifics only (locks, era list, text-card strings)
         batch-log.md
-        voiceover-segments/NN-<label>.txt   exact text sent to TTS
-        transcripts/                 NN-<label>.alignment.json (TTS timestamps) and/or whisper JSON
+        voiceover-segments/<slug>_voice_NN.txt       exact text sent to TTS
+        transcripts/<slug>_voice_NN.alignment.json   TTS character timestamps (whisper JSON uses the same stem)
         scene-timing.md
         ken-burns-plan.md
         style-previews/              disposable

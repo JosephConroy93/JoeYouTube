@@ -13,6 +13,9 @@ Layout, schemas and status words: `.claude/conventions.md`. Project path
 - `claude/qc-checklist.md`: locked character and location descriptions,
   the period-violation list, text-card strings. Read once per run.
 - `claude/batch-log.md` has a row at `fetched`; otherwise say so and stop.
+  Read only the rows in scope (grep by status or batch id), never the whole
+  log; read a scene's `content_prompt` and `notes` from its chapter row, not
+  the whole chapter file.
 - Images at `scene-generation/<scene_id>.jpg`, or the highest-numbered
   `<scene_id>.attempt-N.jpg` when one exists; check the latest attempt.
 
@@ -54,10 +57,14 @@ scene to Opus, never a whole batch.
 
 ## Writing results
 
-- Every failure: one entry in `content/prompt-hardening-log.md` in that
-  file's entry format (what the prompt asked for, what the image showed,
-  which check failed, why it matters); a recurrence is noted on the
-  existing entry.
+- Every failure: one entry in `content/prompt-hardening-log.md` (the
+  incident archive) in that file's entry format (what the prompt asked for,
+  what the image showed, which check failed, why it matters), **and** one
+  line in the Watch list of `content/prompt-hardening-rules.md`. A
+  recurrence is noted on the existing entry and its watch-list line.
+- Promotion (the operator's or the driving session's call, never automatic):
+  the watch-list line moves to Rules with the next R-number and the log
+  entry is marked PROMOTED.
 - The row: `status` = `validated (n/m)`, failed ids and checks in `notes`.
   Any review writes this, an operator's direct review included; a row left
   at `fetched` reads as unreviewed.

@@ -121,10 +121,11 @@ factual authority.
 ## Step 5 — Voiceover and timing 🟡 (new position: straight after script lock)
 
 1. `generate-voiceover <series>/<slug>`: splits the script into segments,
-   writes `claude/voiceover-segments/NN-<label>.txt`, calls ElevenLabs
-   with the series voice, saves `voiceovers/NN-<label>.mp3` plus the
+   writes `claude/voiceover-segments/<slug>_voice_NN.txt`, calls ElevenLabs
+   with the series voice, saves `voiceovers/<slug>_voice_NN.mp3` (raw, kept as source) plus the
    character-timestamp alignment, then normalises to **−16 LUFS, true peak
-   ≤ −1.5 dBFS, 48 kHz, dual-mono stereo WAV** in `voiceovers/normalized/`.
+   ≤ −1.5 dBFS, 48 kHz, dual-mono stereo WAV** in `voiceovers/normalized/` (the only copy that
+   goes on the timeline).
    Log the voice in `voice-register.md` and `video.md`.
 2. Listen to one segment before generating the rest.
 3. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
@@ -181,9 +182,11 @@ For each chapter, in order:
 4. **Validate**: `validate-scenes` (four checks in 5–8-image subagent
    groups, writes `validated (n/m)`). The operator may review the images
    directly instead; either way the row gets `validated (n/m)`.
-5. **Harden**: every failure is logged to `content/prompt-hardening-log.md`.
-   A failure that recurs, or that the next chapter's scenes would obviously
-   repeat, is **promoted** now, before step 1 of the next chapter.
+5. **Harden**: every failure gets a full entry in
+   `content/prompt-hardening-log.md` and one line in the watch list of
+   `content/prompt-hardening-rules.md`. A failure that recurs, or that the
+   next chapter's scenes would obviously repeat, is **promoted** into the
+   rules now, before step 1 of the next chapter.
 6. **Fix**: a one-off render fluke → resubmit the scene id via
    `generate-scenes`; a prompt problem → `scene-prompter` Mode 3 on the
    failed rows, then resubmit. Nothing retries automatically. A chapter is

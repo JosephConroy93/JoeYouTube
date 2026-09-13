@@ -97,4 +97,5 @@ above applies, with these overrides:
 ## Mandatory reads before writing
 
 - `research/artifacts/script-craft-openings-and-retention.md`
-- `research/artifacts/narration-registers.md` (register A, immersive-dry)
+- `research/artifacts/narration-registers.md` — only §1 "Read this first" and
+  §3 "A. Immersive-dry"

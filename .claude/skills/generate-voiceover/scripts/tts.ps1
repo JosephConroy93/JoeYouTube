@@ -23,7 +23,8 @@ param(
   [int]    $Segment  = 0,                        # 0 = all
   [switch] $DryRun,
   [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
-  [double] $Speed = 1.0,                        # ElevenLabs voice_settings.speed (0.7-1.2); != 1 suffixes the label with -sNNN
+  [double] $Speed = 0,                          # ElevenLabs voice_settings.speed (0.7-1.2); 0 = series.md/video.md voice.speed, else 1.0
+  [string] $Tag = '',                           # optional test suffix: <slug>_voice_NN_<tag>
   [int]    $MaxChars = 4500,
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
@@ -110,12 +111,14 @@ foreach ($c in $chunks) {
 if ($buf) { $segments.Add($buf.Trim()) }
 if ($segments.Count -eq 0) { throw "Script produced no segments" }
 
-# labels: first 3 words of the segment, kebab
+# labels: <slug>_voice_NN (sorted filename order = playback order)
 $labels = @()
 for ($i = 0; $i -lt $segments.Count; $i++) {
-  $first = (($segments[$i] -split '\s+') | Select-Object -First 3) -join ' '
-  $lab = ($first.ToLower() -replace '[^a-z0-9]+', '-').Trim('-')
-  $labels += ('{0:D2}-{1}' -f ($i + 1), $lab)
+  $labels += ('{0}_voice_{1:D2}' -f $slug, ($i + 1))
+}
+if ($Speed -eq 0) {
+  $cfgSpeed = if ($vid['voice.speed']) { $vid['voice.speed'] } else { $cfg['voice.speed'] }
+  $Speed = if ($cfgSpeed) { [double]$cfgSpeed } else { 1.0 }
 }
 
 Write-Host ("Segments: {0}  (chars: {1})" -f $segments.Count, (($segments | ForEach-Object Length) -join ', '))
@@ -128,7 +131,7 @@ $endpointBase = 'https://api.elevenlabs.io/v1/text-to-speech'
 $todo = if ($Segment -gt 0) { @($Segment - 1) } else { 0..($segments.Count - 1) }
 foreach ($i in $todo) {
   $label = $labels[$i]
-  if ($Speed -ne 1.0) { $label = ('{0}-s{1}' -f $label, [int][math]::Round($Speed * 100)) }
+  if ($Tag) { $label = ('{0}_{1}' -f $label, $Tag) }
   $body = @{
     text          = $segments[$i]
     model_id      = $voiceModel
@@ -181,6 +184,6 @@ foreach ($i in $todo) {
 if (-not $DryRun) {
   $total = 0.0
   Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double]((Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$($_.FullName)`"").Trim()) }
-  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel)
+  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed)
   Write-Host "Now: log the voice in voice-register.md and video.md; then scene-prompter Mode 2, then align-scenes --source api."
 }

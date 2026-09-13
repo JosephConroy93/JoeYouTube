@@ -20,8 +20,8 @@ shared with `get-scenes`.
 - Every reference named in a row's `characters_present / reference_images`
   cell has an audited file in `reference-images/` (or, for a generated-scene
   reference, its canonical `scene-generation/<scene_id>.jpg`).
-- `content/prompt-hardening-log.md` read before submitting or resubmitting
-  any prompt.
+- `content/prompt-hardening-rules.md` read before submitting or
+  resubmitting any prompt.
 - `GEMINI_API_KEY` set per conventions.md. The script reads it; never echo
   it or write it anywhere.
 

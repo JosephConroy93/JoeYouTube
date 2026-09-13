@@ -54,4 +54,5 @@ summary list.
 
 ## Mandatory reads before writing
 
-- `research/artifacts/narration-registers.md` (register B, forensic-empathic)
+- `research/artifacts/narration-registers.md` — only §1 "Read this first" and
+  §3 "B. Forensic-empathic"

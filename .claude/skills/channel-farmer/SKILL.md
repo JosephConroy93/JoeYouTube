@@ -30,7 +30,7 @@ subagents so frames and transcripts never enter the main thread.
 ## Phase A — data (main thread, cheap)
 
 1. Resolve the channel (`vidiq_channel_search` by handle if only a name is known).
-2. If `competitor-titles-index.md` already has a section pulled within a week, reuse it; otherwise pull `vidiq_channel_videos` popular + recent (long) and write/refresh the section with today's date.
+2. Grep `competitor-titles-index.md` for this channel's heading and read only that section; if it was pulled within a week, reuse it; otherwise pull `vidiq_channel_videos` popular + recent (long) and write/refresh the section with today's date.
 3. `vidiq_channel_stats`, `vidiq_channel_performance_trends`, `vidiq_outliers` with `channelIds`.
 4. Choose **three study videos**: the top breakout, the most-viewed, and a recent typical upload (median views). Record ids, titles, durations.
 

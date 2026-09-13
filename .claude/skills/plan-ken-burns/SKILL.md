@@ -11,8 +11,10 @@ Invocation: `<series>/<slug>` — see `.claude/conventions.md`.
 
 Under `content/<series>/<slug>/`:
 
-- `claude/scene-prompts.md` and the chapter files it names — `scene_id`,
-  `scene_type`, `content_prompt`, `notes` (callbacks, locks).
+- `claude/scene-prompts.md` and the chapter files it names — extract the
+  `scene_id`, `scene_type` and `notes` columns with a one-line script rather
+  than reading the files; read a row's `content_prompt` only for an
+  Elevated or FX candidate.
 - `claude/script.md` — tone and beat; chapter headings mark act boundaries.
 - `claude/scene-timing.md` — `dur` = next scene's `start_seconds` minus this
   scene's (the image holds through the narration pause; the last scene in a
