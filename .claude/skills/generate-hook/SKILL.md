@@ -46,8 +46,8 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 - The image goes as `image: { bytesBase64Encoded, mimeType }`, not `inlineData` (400 otherwise).
 - `durationSeconds` must be a JSON number, not a string.
 - `personGeneration` must be `allow_adult`; `allow_all` is rejected.
-- `negativePrompt` is rejected by `veo-3.1-lite`: negatives go in the prompt text ("mouths closed, no talking, no lip movement, no change of expression").
-- Output is 24 fps H.264 MP4 with a generated audio track (1280×720 at 720p). Strip the audio; set the video's timeline to **24 fps** (`video.md` `fps`) so hook clips need no frame-rate conversion; `place-scenes` upscales 720p to 1080p.
+- `negativePrompt` is rejected by `veo-3.1-lite`: any negative (no new characters, no text, background stays still) goes in the prompt text.
+- Output is 24 fps H.264 MP4 with a generated audio track (1280×720 at 720p). **Always strip the audio** (`ffmpeg -i in.mp4 -map 0:v -c copy -an out.mp4`, lossless); set the video's timeline to **24 fps** (`video.md` `fps`) so hook clips need no frame-rate conversion; `place-scenes` upscales 720p to 1080p.
 
 ## Rules
 
@@ -59,8 +59,10 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 - **Motion-prompt discipline** (from the first live clips): confine every
   gesture to the joint that moves and say what stays put ("index finger taps
   the map twice; forearm stays on the table; other hand stays on the hip");
-  lock faces explicitly ("mouths and brows stay exactly as drawn, no talking,
-  no expression change") or the model invents speech and anger; ask for a
+  let faces live: mouth movement and changing expressions are welcome (the
+  operator prefers them) because the clip's audio is always stripped, but
+  steer the emotion when it matters ("he mutters, frowning") or the model
+  picks one, e.g. anger; ask for a
   "continuous, constant-speed push-in over the whole clip" or the push
   front-loads and stalls; never request an action the still already shows.
 - Cost (Gemini list price, £): lite 720p ≈ £0.04/s, lite 1080p ≈ £0.06/s,
