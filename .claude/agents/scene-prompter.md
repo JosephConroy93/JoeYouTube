@@ -172,6 +172,14 @@ style change is a one-line column edit (Mode 3), never a prompt rewrite.
 
 ### Standing content rules
 
+**Scenes are dressed to look good.** Every setting gets colour, texture,
+light and set dressing (textiles, lamps, pottery, plants, decoration, props
+in use, background life) even where the historical record is plain; the
+narration carries the accuracy, the image carries the atmosphere. Avoid only
+the immersion-breakers listed in the research file's visual-dressing
+addendum. A bare, empty or monochrome setting is a failed prompt unless the
+script calls for emptiness.
+
 From `content/prompt-hardening-rules.md`; re-read it before each chapter,
 as it carries newer rules than this list.
 

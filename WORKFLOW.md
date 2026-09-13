@@ -137,17 +137,24 @@ factual authority.
 Hook clips (Step 9) are cut to the measured narration beats, never
 generated before the voiceover exists.
 
-## Step 6 — Visual reference pass 🟡
+## Step 6 — Visual dressing pass 🟡
 
-Research covers what the script may *say*; nothing yet covers what a scene
-may *show*. Scan the locked script for animals, garments, objects, building
-decoration and anything else where "era-appropriate" is not precise enough
-for an image model. For each, check the research file for its appearance;
-if absent, do a sourced lookup (WebSearch/WebFetch — `scene-prompter` has
-no web tools) and append a caveated visual-reference addendum to the
-research file. Visual only: a contradiction with a narration claim is a
-Step 3 gap, flag it back. Point `video.md`'s `visual_guardrails` at the
-addenda.
+**Scenes are there to look good.** Narration stays strictly sourced; the
+image does not have to be a reconstruction. This pass gathers what makes
+the world *visually rich and recognisable*: colour, textiles, lamps and
+light, decoration, markets, plants, animals, weather, crowds, the iconic
+things a viewer associates with the setting. Where the true record is plain,
+dress it anyway, as a film production designer would.
+
+Scan the locked script for what scenes will show. For each setting and
+recurring figure, append to the research file a short visual-dressing
+addendum: the look to aim for (palette, materials, props, set dressing), and
+a **short list of immersion-breakers only**: anachronisms a general viewer
+would notice (a modern object, the wrong continent's animal, armour from the
+wrong empire). Accuracy nit-picks a general viewer would not notice are not
+guardrails. Visual only: a contradiction with a narration claim is a Step 3
+gap, flag it back. Point `video.md`'s `visual_guardrails` at the addendum.
+Dispatch on Sonnet (routing table).
 
 ## Step 7 — Bible and style 🟢 (once per video)
 
