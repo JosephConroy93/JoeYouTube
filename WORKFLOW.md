@@ -23,7 +23,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Script write / revise / score | `script-writer` agent + `.claude/formats/<format>.md` |
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
 | Timing | `align-scenes` (TTS timestamps, or whisper) |
-| Character/location bible, scene prompts | `scene-prompter` agent |
+| Character/location bible, scene prompts | `scene-prompter` agent (bible once; prompts one chapter per generation loop) |
 | Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `chain-scenes` for continuity groups; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
 | Thumbnail | Gemini image generation; VidIQ for technical checks only |
@@ -127,9 +127,9 @@ factual authority.
    ≤ −1.5 dBFS, 48 kHz, dual-mono stereo WAV** in `voiceovers/normalized/`.
    Log the voice in `voice-register.md` and `video.md`.
 2. Listen to one segment before generating the rest.
-3. `align-scenes <series>/<slug>` runs **after Step 7** has produced the
-   manifest (it needs `script_bookmark`s); it is listed here because the
-   audio it needs exists from this point. With API timestamps no
+3. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
+   chapter's manifest exists (it needs all the `script_bookmark`s); it is
+   listed here because the audio it needs exists from this point. With API timestamps no
    transcription is needed; whisper remains the fallback.
 4. Set `status: voiced`.
 
@@ -148,39 +148,54 @@ research file. Visual only: a contradiction with a narration claim is a
 Step 3 gap, flag it back. Point `video.md`'s `visual_guardrails` at the
 addenda.
 
-## Step 7 — Bible and scene prompts 🟢
+## Step 7 — Bible and style 🟢 (once per video)
 
-1. `scene-prompter` Mode 1 (DEFINE): lock every recurring **character and
-   location** into `claude/character-bible.md`; generate and audit the
-   reference images into `reference-images/`.
+1. `scene-prompter` Mode 1 (DEFINE): lock every recurring **character,
+   location and companion object** into `claude/character-bible.md`, with
+   `claude/reference-prompts.txt`; render the reference images
+   (`channel-farmer/scripts/style-test.ps1 -Prompts reference-prompts.txt`)
+   into `reference-images/` and audit them against the bible.
 2. Choose the style: `preview-style` renders a few real scenes in candidate
    styles; set `style` in `video.md`.
-3. `scene-prompter` Mode 2 (GENERATE), one chapter at a time ("next N",
-   "the rest"): `claude/scene-prompts.md` index, chapter files (≤25 scenes),
-   and `claude/qc-checklist.md` (per-video specifics only). Visual gaps are
-   flagged in `notes`, never invented.
-4. Run `align-scenes` now. Set `status: prompted`.
+3. Set `status: prompted` once the bible and references pass.
 
-## Step 8 — Scene generation 🟢
+## Step 8 — Scene prompts and generation, one chapter per loop 🟢
 
-Per chapter: `generate-scenes` (submit, one batch, stops) → later
-`get-scenes` (one status check, files images, never loops) →
-`validate-scenes` (four checks in 5–8-image subagent groups, writes
-`validated (n/m)`, logs failures to `content/prompt-hardening-log.md`).
+**Prompts are never written ahead of the images they learn from.** Each
+chapter runs the whole loop before the next chapter's prompts exist, so a
+failure found in chapter N is a rule in chapter N+1 rather than a revision
+across files already written.
 
-- **The operator may review fetched images directly** instead of paying
-  for an automated pass; either way the row gets `validated (n/m)`.
-- **On a failure, decide before resubmitting**: a one-off render fluke →
-  resubmit the scene id via `generate-scenes`; a repeatable prompt problem
-  → `scene-prompter` Mode 3 first; a promoted pattern → add it to the
-  hardening log's PROMOTED rules. Nothing retries automatically.
-- Chapters with consistency-linked groups (same location or held pairing
-  across separate requests) go through `chain-scenes` instead of a plain
-  submit; an already-validated image from an earlier chapter can be the
-  seed.
-- When every row is validated: `finalize-scenes` leaves exactly one
-  `<scene_id>.jpg` per scene, sweeps the rest into `_archive/`, and writes
-  the `FINALIZED` footer. Set `status: generated`.
+For each chapter, in order:
+
+1. **Prompts**: `scene-prompter` Mode 2 for this chapter only. It re-reads
+   the hardening log first, including every entry added since the last
+   chapter, and writes the chapter file (≤25 scenes) plus index row; the
+   first chapter also writes `claude/qc-checklist.md` (per-video specifics
+   only). Visual gaps are flagged in `notes`, never invented.
+2. **Submit**: `generate-scenes` for the chapter, or `chain-scenes` when the
+   chapter has consistency-linked groups (same location or held pairing
+   across separate requests; an already-validated image from an earlier
+   chapter can be the seed).
+3. **Fetch**: `get-scenes` (one status check; run again later if pending).
+4. **Validate**: `validate-scenes` (four checks in 5–8-image subagent
+   groups, writes `validated (n/m)`). The operator may review the images
+   directly instead; either way the row gets `validated (n/m)`.
+5. **Harden**: every failure is logged to `content/prompt-hardening-log.md`.
+   A failure that recurs, or that the next chapter's scenes would obviously
+   repeat, is **promoted** now, before step 1 of the next chapter.
+6. **Fix**: a one-off render fluke → resubmit the scene id via
+   `generate-scenes`; a prompt problem → `scene-prompter` Mode 3 on the
+   failed rows, then resubmit. Nothing retries automatically. A chapter is
+   closed when every row is validated.
+
+The first chapter is also the video's pilot: look at its images before
+writing chapter 2 at all, not only at the failures.
+
+After the last chapter: `finalize-scenes` (one canonical `<scene_id>.jpg` per
+scene, the rest to `_archive/`, `FINALIZED` footer), then `align-scenes`
+(needs every chapter's `script_bookmark`s and the voiceover). Set
+`status: generated`.
 
 ## Step 9 — Edit 🟢
 

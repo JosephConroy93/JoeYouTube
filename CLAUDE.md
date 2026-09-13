@@ -52,6 +52,21 @@ server is a submodule under `tools/`.
 - Deletion of anything under `content/` is the operator's manual step;
   skills archive, they don't delete.
 
+## Model routing
+
+Pin the model on every subagent dispatch (`model` on the Agent call, or
+`model:` in an agent's frontmatter). The main session stays on the model
+the operator chose.
+
+| Model | Work | Why |
+|---|---|---|
+| **Opus** | `script-writer` (write, revise, score); `scene-prompter` (bible, scene prompts, revisions, chain groups); Step 3 research synthesis; any call where a lookup contradicts the script | Judgment: contested sources, tone, consistency across a whole video. Errors here cost the most downstream. |
+| **Sonnet** | Step 6 visual lookups; transcript breakdowns and comment mining; `channel-farmer` data, frame and `/watch` passes; image QC against a checklist (`validate-scenes`, reference-image audits, `plan-ken-burns` image confirmation); style-render comparisons | Structured search-and-summarise or checklist work against a precise brief. |
+| **Haiku** | Batch-log reconciliation, archiving, status polls, word counts, file inventories | Pure mechanics. |
+
+Escalate a single disputed item one tier up; never re-run a whole batch on
+a bigger model because one result looked wrong.
+
 ## Token hygiene
 
 Every turn re-sends the whole conversation, so a heavy payload left in

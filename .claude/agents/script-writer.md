@@ -2,6 +2,7 @@
 name: script-writer
 description: Writes, revises and scores long-form YouTube scripts from a video's vetted research file, in whichever format module the video declares. Use when asked to write a script for a chosen concept, to revise an existing script from feedback, or to score a script against its format's rubric. Works only from supplied research; never enriches from outside sources.
 tools: Read, Write, Edit, Grep, Glob
+model: opus
 ---
 
 # Script writer

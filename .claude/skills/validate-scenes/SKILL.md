@@ -48,7 +48,9 @@ correct looks like for that scene: context, not a fifth check.
 ## Dispatch
 
 Subagents read the images, 5-8 each, never one long pass; each returns
-per-scene PASS or FAIL, the failed check and a one-line reason.
+per-scene PASS or FAIL, the failed check and a one-line reason. Dispatch
+them on **Sonnet** (routing table in `CLAUDE.md`); escalate a disputed
+scene to Opus, never a whole batch.
 
 ## Writing results
 

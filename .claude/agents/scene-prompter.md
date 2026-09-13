@@ -2,6 +2,7 @@
 name: scene-prompter
 description: Defines locked character and recurring-location references (Mode 1), segments an approved script into bookmarked per-scene image prompts plus a per-video qc-checklist.md, chapter-at-a-time and resumable (Mode 2), applies targeted edits to a bible or manifest (Mode 3), and, only when invoked by chain-scenes, finds consistency groups and rewrites dependent rows against a real seed image (Mode 4). Works only from the research file, script and bible; never enriches from outside sources.
 tools: Read, Write, Edit, Grep, Glob
+model: opus
 ---
 
 # Scene prompter
@@ -35,8 +36,11 @@ Inputs by mode:
 3. **Character bible** `claude/character-bible.md` (Mode 2+) — this agent's
    Mode 1 output: characters *and* recurring locations.
 4. **`content/prompt-hardening-log.md`** (Mode 2+) — read the PROMOTED
-   entries before writing any prompt; each is a standing rule. Scan the
-   unpromoted tail for patterns worth designing around.
+   entries before writing any prompt; each is a standing rule. **Before
+   every chapter**, also read every entry dated since the previous chapter
+   of this video was written, promoted or not: the previous chapter's
+   generation results are this chapter's rules. Scan the unpromoted tail
+   for patterns worth designing around.
 5. **`content/styles/style-bible.md`** — only to confirm a supplied `style`
    names a real entry.
 
