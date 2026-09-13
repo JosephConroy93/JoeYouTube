@@ -29,6 +29,7 @@ content/
     series.md
     concepts.md  sources.md          series-level unless video.md says otherwise
     mascot/                          optional series-level characters (bible + refs)
+    protagonist/                     optional reused "you" figure: base entry + references
     <slug>/
       video.md
       research-<slug>.md             sole factual authority for the script
@@ -67,6 +68,7 @@ A key/value table. Keys:
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
 | `chapter.unit`, `chapter.heading`, `chapter.file` | e.g. `level`, `Level N, the <role>.`, `level-NN.md` |
+| `protagonist` | optional: a reused series "you" figure (`content/<series>/protagonist/` holds its base bible entry and references); scene-prompter Mode 1 re-dresses it per video instead of defining a new one |
 | `mascot.bible`, `mascot.reference`, `mascot.cameo` | optional; `cameo` = `manual` (operator picks the row at QC) or `none` |
 | `cta` | `none` or the house CTA text/placement |
 | `concepts_location` | `series` or `slug` |

@@ -107,6 +107,8 @@ location:
   Every attribute that must survive generation (a headwear colour, a garment,
   a roof type) gets a one-line **lock-line**, later copied into
   `qc-checklist.md`.
+- **Reused protagonist**: if `series.md` sets `protagonist`, start from its base entry in `content/<series>/protagonist/` and define only this video's costume stages; never redesign the figure.
+- **Hair and headwear** are allowed when the story fits and, in costume-identity styles, are the strongest marker a figure can carry. Give them deliberately and lock them like any garment.
 - **The style owns proportions, head, face and skin.** A figure's locked
   description gives relative silhouette ("the widest figure in the cast",
   "noticeably taller and narrower"), costume and props only; never anatomy
