@@ -16,8 +16,19 @@
   fetch   Same GET; for a SUCCEEDED job decodes every result to
           scene-generation/<scene_id>.jpg (or .attempt-N.jpg if the file
           exists) and marks the row `fetched`.
+  expand  Prints each selected row's content_prompt after prompt-block
+          expansion (claude/prompt-blocks.md). Posts nothing, logs nothing.
 
-.PARAMETER Action      submit | status | fetch
+  Prompt blocks: a content_prompt token [[ID]] is replaced by that block's
+  text; {ref} in the text becomes " shown in the <Nth> attached reference
+  image" when the row's reference cell attaches (ID) as imageN, else nothing
+  (a variant block ID.variant binds to ID's reference).
+  A token at a sentence start is capitalised. The guards of every block used
+  are appended as one preservation sentence, then the `_closing` block on
+  illustrated rows (skipped when its text is already in the prompt). An
+  unknown token fails the row.
+
+.PARAMETER Action      submit | status | fetch | expand
 .PARAMETER Project     <series>/<slug>
 .PARAMETER Chapter     chapter filename from the manifest index (e.g. chapter-03.md)
 .PARAMETER SceneIds    explicit scene ids (full id or 3-digit prefix), comma-separated
@@ -29,6 +40,7 @@
                        fetch: write images to -OutDir, update no log row.
 .PARAMETER OutDir      DryRun output folder (default $env:TEMP\gemini-batch\<slug>)
 .PARAMETER Root        project root (default: four levels above this script)
+.PARAMETER RefMaxPx    submit: downscale each reference in memory to this long edge (JPEG q90) before inlining
 
 .NOTES
   Defaults: illustrated -> gemini-3.1-flash-image @ 2K; text-card ->
@@ -50,10 +62,12 @@
     grouping, 14 MB split, body JSON on disk).
   - submit without -DryRun (the POST and the Add-LogRow that follows): exercised
   - a job ending FAILED / CANCELLED / EXPIRED (the `failed` branch): # UNTESTED
+  - expand and prompt-block stitching: exercised on rewritten Embalmer rows.
+  - -RefMaxPx against a real render: # UNTESTED
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('submit', 'status', 'fetch')][string]$Action,
+    [Parameter(Mandatory = $true)][ValidateSet('submit', 'status', 'fetch', 'expand')][string]$Action,
     [Parameter(Mandatory = $true)][string]$Project,
     [string]$Chapter,
     [string[]]$SceneIds,
@@ -63,7 +77,8 @@ param(
     [string]$Notes,
     [switch]$DryRun,
     [string]$OutDir,
-    [string]$Root
+    [string]$Root,
+    [int]$RefMaxPx
 )
 
 Set-StrictMode -Version Latest
@@ -160,6 +175,7 @@ function Resolve-Project([string]$ProjectArg, [string]$RootArg) {
         Index      = Join-Path $claude 'scene-prompts.md'
         ChapterDir = Join-Path $claude 'scene-prompts'
         Log        = Join-Path $claude 'batch-log.md'
+        Blocks     = Join-Path $claude 'prompt-blocks.md'
         RefDir     = Join-Path $videoDir 'reference-images'
         SceneDir   = Join-Path $videoDir 'scene-generation'
         StyleBible = Join-Path $RootArg 'content\styles\style-bible.md'
@@ -218,7 +234,7 @@ function Read-ChapterRows($P, [string]$File) {
 function Select-Rows($P) {
     $wantIds = @()
     if ($SceneIds) { $wantIds = @($SceneIds | ForEach-Object { $_.Split(',') } | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
-    if (-not $Chapter -and $wantIds.Count -eq 0) { Fail 'submit needs -Chapter <file> and/or -SceneIds a,b,c.' }
+    if (-not $Chapter -and $wantIds.Count -eq 0) { Fail "$Action needs -Chapter <file> and/or -SceneIds a,b,c." }
 
     $files = if ($Chapter) { @($Chapter) } else { Get-ChapterFiles $P }
     $all = @()
@@ -272,6 +288,57 @@ function Get-StyleBlock($Bible, [string]$Name) {
     return $block
 }
 
+# ---------------------------------------------------------------- prompt blocks
+$Ordinals = @('', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth')
+
+function Read-PromptBlocks($P) {
+    $blocks = @{}
+    if (-not (Test-Path $P.Blocks)) { return $blocks }
+    foreach ($line in Get-Content -LiteralPath $P.Blocks -Encoding UTF8) {
+        $c = Split-TableRow $line
+        if ($null -eq $c -or $c.Count -lt 2) { continue }
+        $id = ($c[0] -replace '`', '').Trim()
+        if ($id -notmatch '^[A-Za-z_][\w.-]*$' -or $id -eq 'block') { continue }
+        $guard = if ($c.Count -ge 3) { $c[2].Trim() } else { '' }
+        $blocks[$id] = [pscustomobject]@{ Text = $c[1].Trim(); Guard = $guard }
+    }
+    return $blocks
+}
+
+function Expand-Prompt($Blocks, $Row) {
+    $text = $Row.content_prompt.Trim()
+    $pos = @{}
+    foreach ($e in [regex]::Matches([string]$Row.refs, 'image(\d+)\s*=\s*[^;(]*\(([^)]+)\)')) { $pos[$e.Groups[2].Value.Trim()] = [int]$e.Groups[1].Value }
+    $guards = New-Object System.Collections.ArrayList
+    $attached = $false
+    $sb = New-Object System.Text.StringBuilder
+    $last = 0
+    foreach ($m in [regex]::Matches($text, '\[\[([A-Za-z_][\w.-]*)\]\]')) {
+        $id = $m.Groups[1].Value
+        if (-not $Blocks.ContainsKey($id)) { Fail "row $($Row.scene_id): prompt block [[$id]] is not defined in prompt-blocks.md." }
+        $b = $Blocks[$id]
+        $refId = $id -replace '\..*$', ''   # a variant block ID.variant binds to ID's reference
+        $ref = if ($pos.ContainsKey($refId)) { $attached = $true; " shown in the $($Ordinals[$pos[$refId]]) attached reference image" } else { '' }
+        $piece = $b.Text.Replace('{ref}', $ref)
+        $before = $text.Substring(0, $m.Index)
+        if ($before.Trim() -eq '' -or $before -match '[.!?]\s+$') { $piece = $piece.Substring(0, 1).ToUpper() + $piece.Substring(1) }
+        [void]$sb.Append($text.Substring($last, $m.Index - $last)).Append($piece)
+        $last = $m.Index + $m.Length
+        if ($b.Guard -and -not $guards.Contains($b.Guard)) { [void]$guards.Add($b.Guard) }
+    }
+    [void]$sb.Append($text.Substring($last))
+    $out = $sb.ToString().Trim()
+    if ($guards.Count -gt 0) {
+        $lead = if ($attached) { "Preserve every attached reference image's exact colouring and locked attributes" } else { 'Keep these locked attributes exactly' }
+        $out += " ${lead}: $($guards -join '; '). Do not reinterpret, recolour, invent or substitute any of them."
+    }
+    if ($Row.scene_type -eq 'illustrated' -and $Blocks.ContainsKey('_closing')) {
+        $closing = $Blocks['_closing'].Text
+        if (-not $out.Contains($closing)) { $out += " $closing" }
+    }
+    return $out
+}
+
 # ---------------------------------------------------------------- reference images
 function Find-CanonicalScene($P, [string]$Prefix) {
     $m = @(Get-ChildItem -LiteralPath $P.SceneDir -File -ErrorAction SilentlyContinue |
@@ -314,7 +381,32 @@ function Resolve-References($P, [string]$Cell) {
     return @($out)
 }
 
+function Get-ReferenceBytes([string]$Path) {
+    if (-not $RefMaxPx) { return , [IO.File]::ReadAllBytes($Path) }
+    Add-Type -AssemblyName System.Drawing
+    $img = [System.Drawing.Image]::FromFile($Path)
+    try {
+        $long = [Math]::Max($img.Width, $img.Height)
+        if ($long -le $RefMaxPx) { return , [IO.File]::ReadAllBytes($Path) }
+        $w = [int][Math]::Round($img.Width * $RefMaxPx / $long); $h = [int][Math]::Round($img.Height * $RefMaxPx / $long)
+        $bmp = New-Object System.Drawing.Bitmap($w, $h)
+        $g = [System.Drawing.Graphics]::FromImage($bmp)
+        $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+        $g.DrawImage($img, 0, 0, $w, $h)
+        $g.Dispose()
+        $codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+        $ep = New-Object System.Drawing.Imaging.EncoderParameters(1)
+        $ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, [long]90)
+        $ms = New-Object IO.MemoryStream
+        $bmp.Save($ms, $codec, $ep)
+        $bmp.Dispose()
+        return , $ms.ToArray()
+    } finally { $img.Dispose() }
+}
+
 function Get-MimeType([string]$Path) {
+    if ($RefMaxPx) { return 'image/jpeg' }
     switch ([IO.Path]::GetExtension($Path).ToLower()) {
         '.png' { 'image/png' }
         default { 'image/jpeg' }
@@ -391,6 +483,7 @@ function Invoke-Submit($P) {
     $rows = @(Select-Rows $P | Where-Object { $_ })
     if ($rows.Count -eq 0) { Fail 'no manifest rows selected.' }
     $bible = Get-StyleText $P
+    $blocks = Read-PromptBlocks $P
 
     # one model/resolution per row; group rows into jobs by that pair
     $groups = [ordered]@{}
@@ -413,13 +506,13 @@ function Invoke-Submit($P) {
         $items = New-Object System.Collections.ArrayList   # {Json, Size, Row}
         foreach ($r in $groups[$key]) {
             $sb = Get-StyleBlock $bible $r.style
-            $text = "$($r.content_prompt.Trim()) STYLE: $($sb.Style) NEGATIVE: $($sb.Negative) $($bible.Universal)"
+            $text = "$(Expand-Prompt $blocks $r) STYLE: $($sb.Style) NEGATIVE: $($sb.Negative) $($bible.Universal)"
             $parts = New-Object System.Collections.ArrayList
             [void]$parts.Add(@{ text = $text })
             $refPaths = @()
             if ($r.scene_type -ne 'text-card') { $refPaths = @(Resolve-References $P $r.refs | Where-Object { $_ }) }
             foreach ($rp in $refPaths) {
-                $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($rp))
+                $b64 = [Convert]::ToBase64String((Get-ReferenceBytes $rp))
                 [void]$parts.Add(@{ inline_data = @{ mime_type = (Get-MimeType $rp); data = $b64 } })
             }
             $request = @{
@@ -476,6 +569,17 @@ function Invoke-Submit($P) {
             }
             Write-Output "SUBMITTED  $name  $summary"
         }
+    }
+}
+
+# ---------------------------------------------------------------- expand
+function Invoke-Expand($P) {
+    $rows = @(Select-Rows $P | Where-Object { $_ })
+    if ($rows.Count -eq 0) { Fail 'no manifest rows selected.' }
+    $blocks = Read-PromptBlocks $P
+    foreach ($r in $rows) {
+        Write-Output "=== $($r.scene_id)  [$($r.refs)]"
+        Write-Output (Expand-Prompt $blocks $r)
     }
 }
 
@@ -611,4 +715,5 @@ switch ($Action) {
     'submit' { Invoke-Submit $P }
     'status' { Invoke-StatusOrFetch $P $false }
     'fetch'  { Invoke-StatusOrFetch $P $true }
+    'expand' { Invoke-Expand $P }
 }

@@ -185,7 +185,9 @@ For each chapter, in order:
    the hardening log first, including every entry added since the last
    chapter, and writes the chapter file (≤25 scenes) plus index row; the
    first chapter also writes `claude/qc-checklist.md` (per-video specifics
-   only). Visual gaps are flagged in `notes`, never invented.
+   only). Locked subjects are `[[ID]]` tokens from `claude/prompt-blocks.md`.
+   Visual gaps are flagged in `notes`, never invented. Then run
+   `check-manifest.py` on the chapter; a FAIL goes back to Mode 3.
 2. **Submit**: `generate-scenes` for the chapter, or `chain-scenes` when the
    chapter has consistency-linked groups (same location or held pairing
    across separate requests; an already-validated image from an earlier

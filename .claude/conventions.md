@@ -45,6 +45,7 @@ content/
       claude/
         script.md
         character-bible.md           characters and recurring locations
+        prompt-blocks.md             the text each [[ID]] token expands to at submit
         scene-prompts.md             index: chapter → file → range → status
         scene-prompts/<chapter>.md   ≤25 scenes per file; filenames come from the index
         qc-checklist.md              per-video specifics only (locks, era list, text-card strings)
@@ -98,7 +99,29 @@ Index (`scene-prompts.md`): `| chapter | file | scenes | status |` with status
 - `script_bookmark` = the verbatim script text the scene covers (parse the
   cell by column boundary, never by quote pair).
 - `style` = a bare style-bible entry name; never expanded text.
+- `content_prompt` may carry `[[ID]]` tokens from `prompt-blocks.md`; the
+  full text sent is `gemini-batch.ps1 -Action expand`'s output.
 - Chain groups and scene-specific QC flags go in `notes`.
+- `check-manifest.py` (in `generate-scenes/scripts/`) passes with no FAIL
+  before any chapter is submitted.
+
+## `prompt-blocks.md`
+
+`| block | text | guard |`, one row per bible entry (plus variants and
+`_closing`), written by scene-prompter.
+
+- `block` = the bible ID (`CH-01a`, `LOC-02`), or `ID.variant` for a second
+  wording of the same entry (`CH-01a.13`), which binds to `ID`'s reference.
+- `text` = the noun phrase, `{ref}`, then the locked description in
+  parentheses: `the tall man{ref} (…)`. `{ref}` becomes ` shown in the
+  <Nth> attached reference image` when the row attaches that ID, else
+  nothing, so one block serves referenced and text-lock-only rows.
+- `guard` = the attributes to preserve, as a possessive phrase (`the tall
+  man's white kilt with its madder-red hem border`). The guards of every
+  block a row uses are joined into one preservation sentence.
+- `_closing` = one sentence appended to every `illustrated` row (the style's
+  figure line), unless its text is already in the prompt.
+- No `|` inside a cell.
 
 ## `batch-log.md`
 

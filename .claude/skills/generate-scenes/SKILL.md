@@ -22,6 +22,11 @@ shared with `get-scenes`.
   reference, its canonical `scene-generation/<scene_id>.jpg`).
 - `content/prompt-hardening-rules.md` read before submitting or
   resubmitting any prompt.
+- `python .claude/skills/generate-scenes/scripts/check-manifest.py <series>/<slug> --chapter <file>`
+  reports no FAIL. A FAIL goes back to `scene-prompter` Mode 3; WARN lines
+  are the driving session's call.
+- Every `[[ID]]` token in the selected rows has a block in
+  `claude/prompt-blocks.md`.
 - `GEMINI_API_KEY` set per conventions.md. The script reads it; never echo
   it or write it anywhere.
 
@@ -46,7 +51,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .claude/skills/generate-
 ```
 
 `-DryRun -OutDir <dir>` writes the request bodies and posts nothing; use it
-on a new chapter shape or after a manifest edit. `-Model` and `-Resolution`
+on a new chapter shape or after a manifest edit. `-Action expand` prints
+each selected row's prompt after block expansion, nothing else.
+`-RefMaxPx <n>` shrinks every reference in memory to that long edge before
+inlining (fewer, smaller jobs; the model's per-image token budget is fixed,
+so it does not change cost). `-Model` and `-Resolution`
 override every selected row (escalation only). `-Root` overrides the
 project root (default: four levels above the script).
 
@@ -59,7 +68,10 @@ image" phrasing is the only binding, so order is everything. About four
 references is the practical ceiling, five on the pro model. Text-card rows
 carry no references.
 
-Text = `content_prompt` + `STYLE: <style block>` + `NEGATIVE: <style
+Text = `content_prompt` with its `[[ID]]` tokens expanded (block text,
+attachment ordinal from the reference cell, the blocks' guards as one
+preservation sentence, then `_closing`; rules in conventions.md) +
+`STYLE: <style block>` + `NEGATIVE: <style
 negatives>` + the style bible's universal negatives, each style looked up
 once per run. `generationConfig` = `responseModalities [TEXT, IMAGE]` and
 `imageConfig.imageSize`. `metadata.key` = `scene_id`, the only link from a
@@ -67,8 +79,9 @@ result back to its row.
 
 Model and resolution: `illustrated` uses `gemini-3.1-flash-image` at 2K;
 `text-card` uses `gemini-3.1-flash-lite-image` at 1K; `gemini-3-pro-image`
-only via `-Model` after a review calls for escalation. Lite (1K only, no
-reference images, ~⅓ the price) may also be chosen per row via a `model`
+only via `-Model` after a review calls for escalation. Lite (1K only, ~⅓ the price;
+Google lists up to 14 reference images, not yet tested with references in
+this pipeline) may also be chosen per row via a `model`
 note in `notes` for medium/close character beats with simple backgrounds in
 flat cartoon styles; never for establishing shots, crowds, maps or fine
 props (validated on Eggline, see the Explainer Boss dossier). Flash at 1K
@@ -97,9 +110,9 @@ Then stop. Fetching is `get-scenes`; QC is `validate-scenes`.
 
 Batch rate (50% off list, verified against Google's pricing page): flash-image
 about £0.039 per 2K image, £0.026 per 1K; flash-lite-image about £0.013 per
-image, **1K only** (a 2K request is rejected) and no reference images; pro-image
-about £0.052 per 1K/2K. Plus a fraction of a penny per attached reference. A
-resubmission pays again.
+image, **1K only** (a 2K request is rejected); pro-image about £0.052 per
+1K/2K. A reference image costs about £0.0002 per request whatever its pixel
+size (fixed per-image token budget). A resubmission pays again.
 
 ## Boundaries
 

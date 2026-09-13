@@ -14,8 +14,9 @@ Layout, schemas and status words: `.claude/conventions.md`. Project path
   the period-violation list, text-card strings. Read once per run.
 - `claude/batch-log.md` has a row at `fetched`; otherwise say so and stop.
   Read only the rows in scope (grep by status or batch id), never the whole
-  log; read a scene's `content_prompt` and `notes` from its chapter row, not
-  the whole chapter file.
+  log; read a scene's `notes` from its chapter row, not the whole chapter file,
+  and its prompt as sent from `gemini-batch.ps1 -Action expand -Project
+  <series>/<slug> -SceneIds <ids>` (rows carry `[[ID]]` tokens).
 - Images at `scene-generation/<scene_id>.jpg`, or the highest-numbered
   `<scene_id>.attempt-N.jpg` when one exists; check the latest attempt.
 

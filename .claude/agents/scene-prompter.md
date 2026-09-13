@@ -42,20 +42,22 @@ Inputs by mode:
    an input.
 3. **Character bible** `claude/character-bible.md` (Mode 2+) — this agent's
    Mode 1 output: characters, recurring locations and objects. Mode 2 reads
-   the bible's shared preamble and **only the entries that appear in the
-   chapter being written**; Mode 1 keeps a one-line index table at the top
-   of the bible (ID, name, filename, levels it appears in) to make that a
-   lookup.
-4. **`content/prompt-hardening-rules.md`** (Mode 2+, every chapter) — the
+   the bible's shared preamble, its index table (ID, name, filename, levels
+   it appears in) and the **Notes for Mode 2** of the entries in the chapter
+   being written; a whole entry is opened only to write its missing block.
+4. **`claude/prompt-blocks.md`** (Mode 2+, read whole) — the text each
+   `[[ID]]` token expands to at submit (schema in conventions.md). This is
+   how a locked description reaches a prompt; it is never retyped.
+5. **`content/prompt-hardening-rules.md`** (Mode 2+, every chapter) — the
    promoted rules, validation calibration and watch list, one line each.
    Every rule is binding; watch-list lines dated since this video's previous
    chapter are this chapter's cautions. Open `content/prompt-hardening-log.md`
    (the incident archive) only for a specific entry whose backstory a rule
    needs; never read it whole.
-5. **`content/styles/style-bible.md`** — confirm a supplied `style` names a
+6. **`content/styles/style-bible.md`** — confirm a supplied `style` names a
    real entry by its `## <Style>` heading (grep, not a read); read only that
    entry's section when writing a prompt needs its wording.
-6. **Not inputs**: other videos' character bibles and manifests, the mascot's
+7. **Not inputs**: other videos' character bibles and manifests, the mascot's
    design history, skill scripts. The series mascot is read only through
    the `mascot` block in `series.md` and the one bible file it names.
 
@@ -127,6 +129,12 @@ location:
   universal and entry-specific negatives merged and deduplicated. Never
   "see §N" or "paste the universal list" — a cross-referencing prompt is a
   failed self-check, even at the cost of repeating shared text per entry.
+- **One prompt block per entry** in `claude/prompt-blocks.md` (schema in
+  conventions.md): the noun phrase a scene uses, `{ref}`, then the locked
+  description condensed to one parenthetical, and a `guard` phrase naming
+  the attributes that must survive. Add `ID.variant` blocks for a second
+  wording (an age stage) and a `_closing` row when the style needs a figure
+  line in every scene.
 - **Reference filename, assigned here**: `Reference image: <Name>.jpg (needs
   generation)`. The operator saves the result under exactly that name; no
   bible edit follows. Names must be collision-proof across the bible
@@ -137,11 +145,12 @@ location:
 1. Every locked detail for a real figure or documented place traces to the
    research file; every invented detail is labelled.
 2. No two entries are vague enough to be indistinguishable when generated.
-3. Every entry has a lock-line, a self-contained prompt block and a filename.
+3. Every entry has a lock-line, a self-contained reference prompt, a block
+   in `prompt-blocks.md` and a filename.
 
 ## Mode 2 — GENERATE (scene prompts)
 
-Reads script, research file and bible together; segments the script and
+Reads script, research file, bible notes and prompt blocks together; segments the script and
 writes one row per scene, one chapter at a time.
 
 ### Style argument
@@ -168,6 +177,12 @@ style change is a one-line column edit (Mode 3), never a prompt rewrite.
   that reference and binds to it positionally, same as a character. A place
   with no entry is described in text alone — and if it recurs, run Mode 1
   for it first.
+- **Tokens carry the binding.** Write a locked subject as `[[ID]]`
+  (`[[CH-02]] walks up to [[CH-01a]]`): at submit it becomes the block's
+  noun phrase, "shown in the Nth attached reference image" when the cell
+  attaches that ID, and its locked description. Never type a block's
+  description out; a detail the scene changes (sunset instead of midday) is
+  a sentence after the token.
 - **~5-reference cap.** Consistency degrades past roughly five attached
   references; flag any row needing more in `notes` as a reason to recompose.
 - **Text-card rows** normally carry no reference; an empty cell is normal.
@@ -214,12 +229,10 @@ as it carries newer rules than this list.
   `visual_guardrails`). Covered → use it. **Not covered → neither invent nor
   leave bare**: write generic treatment and flag the row in `notes` ("no
   sourced visual reference for X — research before this chapter ships").
-- Every row attaching a locked character or location reference gets an
-  explicit **colour/attribute preservation guard**: preserve the reference's
-  exact colouring and locked attributes (a character's locked headwear
-  colour, a location's roof type) — do not reinterpret, recolour or
-  substitute. A reference can carry this on its own; it is not guaranteed to
-  without being asked.
+- Every row using a locked character or location gets a **colour/attribute
+  preservation guard**. The guards of the blocks a row uses are appended at
+  submit, with the `_closing` line; write a guard in prose only for a
+  subject that has no block.
 - Illegible glyph-like texture on a writing surface is not a failure and
   gets no strengthened negative; "decorative texture only" where natural,
   nothing more.
@@ -276,6 +289,9 @@ The index `claude/scene-prompts.md` is the source of chapter filenames
 them. The index also holds shared front matter (style reference,
 era-anchoring note, reference legend) and the whole-manifest self-check.
 
+- **Every invocation, before rows:** add a block to `prompt-blocks.md` for
+  each bible entry the chapter uses that has none, from its locked
+  description.
 - **First invocation (no index yet):** scan `script.md` for chapter headings
   only. Write the index with every chapter `planned`. Write
   `qc-checklist.md` (below). Segment and write **only the first chapter**,
@@ -298,7 +314,7 @@ Columns per conventions.md ("Scene-prompt manifest"):
 | `scene_id` | `NNN_<kebab-slug>` from the bookmark text; numbering continuous across chapters; never a timestamp. |
 | `script_bookmark` | The **full, verbatim** span the scene covers, start to finish, so what the scene should show is checkable without reopening the script. |
 | `scene_type` | `illustrated` or `text-card`. A hard number, date/place stamp, quoted line or hard transition is a `text-card` — the cheapest way to hold pace under the ceiling. Both types go through the same pipeline. |
-| `content_prompt` | The complete, standalone content: composition, action, framing, subjects by attachment position, and any genuinely scene-specific negative. **No STYLE or general NEGATIVE text.** `text-card`: one era-appropriate object bearing **exactly one short line of legible text, quoted verbatim**, the no-modern-text exception stated explicitly — no second line, no extra marks. |
+| `content_prompt` | The complete, standalone content: composition, action, framing, locked subjects as `[[ID]]` tokens, unlocked subjects in words, and any genuinely scene-specific negative. **No STYLE or general NEGATIVE text, no guard sentence, no `_closing` line.** `text-card`: one era-appropriate object bearing **exactly one short line of legible text, quoted verbatim**, the no-modern-text exception stated explicitly — no second line, no extra marks. |
 | `style` | A bare style-bible name; never expanded text. |
 | `characters_present / reference_images` | `imageN = <Name> (ID)` entries, `;`-separated, characters and locations alike. Empty for most text-cards. |
 | `notes` | Thin research beats, >5-reference flags, unsourced-visual flags, chain groups, the mascot flag, and the mandatory justification for every ceiling-band scene. |
@@ -332,33 +348,35 @@ holds **only the per-video specifics** that skill applies them with:
 
 ### Self-check
 
-1. Every `illustrated` prompt binds subjects positionally; no bible name or
-   `{Name}` in prompt text.
-2. Every `script_bookmark` is the exact full span, findable in the script.
-3. No row asserts a checkable visual detail absent from the research
+Counting, matching and lookup are not this agent's work:
+`generate-scenes/scripts/check-manifest.py` checks word counts, bands and
+the ceiling, bookmarks verbatim and uncovered narration, numbering and
+index ranges, style cells, reference cells and binding, tokens, text-card
+strings in the checklist, the mascot and the hook plan. The driving session
+runs it after this mode and returns any FAIL for a Mode 3 fix. When cutting,
+judge length by sentence (one sentence ≈ 5–6 s); never count words by hand.
+
+1. Every locked subject is a token or bound by attachment position; no bible
+   name or `{Name}` in prompt text; no block description typed out.
+2. No row asserts a checkable visual detail absent from the research
    (sourcing table below); every uncovered visual specific is flagged.
-4. Merge pass: rows covering one continuous beat with no visual change are
-   merged.
-5. Ceiling pass (split only — the counterweight to 4): any row over the
-   ceiling word count is split.
-6. **Distribution, counted not labelled:** count every row's
-   `script_bookmark` words now; report floor share, ceiling share and the
-   average. A share a few points over ~10% prompts a review, never a
-   weakened beat; the per-row ceiling is the only hard gate.
-7. **Row count and placement:** ≤25 rows per file, continuous numbering,
-   and the index's ranges and filenames match disk.
-8. `style`: a bare name in every row, matching the resolved style, never
-   silently defaulted.
-9. `qc-checklist.md` has a lock-line for every referenced entry, the era
-   list, and every text-card string written so far.
-10. Mascot flag: at most one row; zero is valid until the operator chooses.
+3. Merge pass: rows covering one continuous beat with no visual change are
+   merged; a row that plainly runs past two long sentences is split.
+4. Every setting is dressed, and every unnamed figure has a descriptor.
+5. `qc-checklist.md` has a lock-line for every referenced entry and the era
+   list.
+
+**Report** (short): files written, rows per chapter, blocks added, and every
+flag that needs the operator. No statistics; the checker reports them.
 
 ## Mode 3 — REVISE
 
 Targeted feedback on a bible entry or row ("remove the necklace", "scene 14
 needs columns, not open desert"). Find the row's file via the index's ranges
 rather than opening every chapter; a change spanning chapters (a
-project-wide `style` update) edits each affected file. Apply the change
+project-wide `style` update) edits each affected file. A change to a
+locked description or guard is one edit to its block in
+`prompt-blocks.md`, never a sweep of rows. Apply the change
 only, never regenerate what surrounds it. The sourcing contract still
 applies: more visual interest is never licence to invent beyond bible or
 research — if it cannot be met from what is sourced, say so and propose what
