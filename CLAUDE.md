@@ -68,3 +68,8 @@ context is paid for on every later message.
   ~150k tokens and nothing undocumented remains. Clearing is near-free;
   compacting is not.
 - Don't delegate cheap text-only calls; the overhead isn't worth it.
+- **Long subagent tasks write their deliverable file first and update it as
+  they go.** A status line or summary claiming work is done means nothing
+  until the file it points to exists: a research pass once wrote "research
+  complete" into `concepts.md` and was cut off before the research file was
+  ever created.
