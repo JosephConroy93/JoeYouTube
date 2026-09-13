@@ -34,7 +34,7 @@ i=0
 for s in "${secs[@]}"; do
   i=$((i+1)); e=$((s+4))
   clip="$scratch/$i.mp4"
-  yt-dlp $extra -f "best[height<=720]" --download-sections "*${s}-${e}" --force-keyframes-at-cuts \
+  yt-dlp $extra -f "bv*[height<=720]/b[height<=720]/bv*/b" --download-sections "*${s}-${e}" --force-keyframes-at-cuts \
          -o "$clip" "$url" --no-warnings --quiet || { echo "WARN: download failed at ${s}s" >&2; continue; }
   png="$out/$(printf '%s-%02d-%s.png' "$label" "$i" "$(fmt "$s")")"
   ffmpeg -y -ss 1 -i "$clip" -frames:v 1 -q:v 2 "$png" -loglevel error

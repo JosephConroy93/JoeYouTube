@@ -44,10 +44,10 @@ spelled out.
 4. **Download a ~5 s window per timestamp**, one call each (easier to redo
    a single bad timestamp):
    ```bash
-   yt-dlp -f "best[height<=480]" --download-sections "*MM:SS-MM:SS" \
+   yt-dlp -f "bv*[height<=720]/b[height<=720]/bv*/b" --download-sections "*MM:SS-MM:SS" \
      -o "<scratch>/<label>.mp4" "<url>" --no-warnings --force-keyframes-at-cuts
    ```
-   `height<=480` is enough for a style/composition reference.
+   `bv*` takes the video-only stream (signed-in sessions get no muxed `best`); 720p is enough for a style reference.
 5. **Extract one frame per clip:**
    ```bash
    ffmpeg -y -i "<scratch>/<label>.mp4" -frames:v 1 -q:v 2 "<scratch>/<label>.png" -loglevel error

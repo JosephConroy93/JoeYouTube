@@ -67,4 +67,4 @@ Format decision: if the channel's structure is `rank-ladder` or `explainer`, nam
 
 ## Status
 
-🟡 Scripts tested (frame grab on one video, one Gemini render). No full run yet.
+🟡 Scripts proven (frame grab on one video with the yt-dlp cookie config, one Gemini render). No full run yet.
