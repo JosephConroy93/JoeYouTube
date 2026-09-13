@@ -119,8 +119,8 @@ Index (`scene-prompts.md`): `| chapter | file | scenes | status |` with status
 - `guard` = the attributes to preserve, as a possessive phrase (`the tall
   man's white kilt with its madder-red hem border`). The guards of every
   block a row uses are joined into one preservation sentence.
-- `_closing` = one sentence appended to every `illustrated` row (the style's
-  figure line), unless its text is already in the prompt.
+- `_closing` = the style's figure lines, appended to every `illustrated` row
+  sentence by sentence, skipping any sentence the prompt already holds.
 - No `|` inside a cell.
 
 ## `batch-log.md`

@@ -24,8 +24,8 @@
   image" when the row's reference cell attaches (ID) as imageN, else nothing
   (a variant block ID.variant binds to ID's reference).
   A token at a sentence start is capitalised. The guards of every block used
-  are appended as one preservation sentence, then the `_closing` block on
-  illustrated rows (skipped when its text is already in the prompt). An
+  are appended as one preservation sentence, then each sentence of the
+  `_closing` block on illustrated rows that the prompt does not already hold. An
   unknown token fails the row.
 
 .PARAMETER Action      submit | status | fetch | expand
@@ -333,8 +333,10 @@ function Expand-Prompt($Blocks, $Row) {
         $out += " ${lead}: $($guards -join '; '). Do not reinterpret, recolour, invent or substitute any of them."
     }
     if ($Row.scene_type -eq 'illustrated' -and $Blocks.ContainsKey('_closing')) {
-        $closing = $Blocks['_closing'].Text
-        if (-not $out.Contains($closing)) { $out += " $closing" }
+        # sentence by sentence, so a row already carrying part of the closing gains only the rest
+        foreach ($sentence in [regex]::Split($Blocks['_closing'].Text, '(?<=[.!?])\s+')) {
+            if ($sentence -and -not $out.Contains($sentence)) { $out += " $sentence" }
+        }
     }
     return $out
 }
