@@ -23,6 +23,7 @@ Retro + plan: `research/artifacts/retro-2026-09-12-refactor-plan.md`. Branch `re
 - **`WORKFLOW.md`** rewritten as-is and renumbered Step 0–12: voiceover + alignment straight after script lock (hook clips cut to measured beats), visual pass, thumbnail after the edit with the research-guardrail gate, publish, close-out. Old Step 6/7 ordering notes resolved. `CLAUDE.md` rewritten: phase = production, pointers and rules only.
 - `content/prompt-hardening-log.md` moved to channel level (stub left at the old path). `plan-ken-burns` `dur` = hold until the next scene starts, matching the real build.
 - **`generate-voiceover` live-tested** (one segment): fixed PowerShell 5.1 ffmpeg stderr handling (route through `cmd /c`), last-match parsing of ebur128 summaries, BOM-free alignment JSON, backtick-stripping config reader; added `--skip-generate` and `scripts/voices.ps1` (list/search/add voices). Series voice id recorded in `series.md`.
+- **`channel-farmer`** (new): one channel in → dossier, transcript breakdowns, competitor-index section, frames, a validated style-bible entry (≤10 Gemini images via `scripts/style-test.ps1`, live-tested), and a format module if needed. `style-farmer` gains `scripts/grab-frames.sh` (sectioned yt-dlp + ffmpeg, `YTDLP_EXTRA` for browser cookies). WORKFLOW Step 0 points at it.
 - Going forward this file takes one line per change plus the why; diffs are in git.
 
 ## 2026-09-12

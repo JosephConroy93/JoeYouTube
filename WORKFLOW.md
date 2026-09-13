@@ -18,6 +18,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Job | Tool |
 |---|---|
 | Research, titles, competitor data, comments, transcripts | VidIQ MCP (`vidiq_*`) |
+| Emulating or checking a channel (dossier, style entry, format module) | `channel-farmer` (calls `style-farmer`, `/watch`, VidIQ, Gemini) |
 | Competitor visual style frames | `style-farmer` |
 | Script write / revise / score | `script-writer` agent + `.claude/formats/<format>.md` |
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
@@ -31,6 +32,10 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 ---
 
 ## Step 0 — Series setup (once per series) 🟡
+
+To build a series around a channel worth emulating, run `channel-farmer`
+first: it produces the style entry, the format module and a `series.md`
+proposal this step then adopts.
 
 Create `content/<series>/series.md` (schema in conventions.md): default
 format, voice, style policy, chapter naming, mascot block, CTA policy,

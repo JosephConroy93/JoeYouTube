@@ -23,6 +23,11 @@ needs the full file — a few seconds around one timestamp yields one frame.
 
 ## Per-video flow
 
+`scripts/grab-frames.sh <url> <out-dir> <label> [MM:SS,MM:SS | auto:N]` does
+steps 2–5 in one call (4 s windows at ≤720p, one PNG per timestamp) and is
+what `channel-farmer` invokes. The manual steps below are the same thing
+spelled out.
+
 1. **Resolve the URL.** With only a title + channel:
    ```bash
    yt-dlp "ytsearch1:<title> <channel>" --print "%(title)s | %(channel)s | %(webpage_url)s" --no-warnings
