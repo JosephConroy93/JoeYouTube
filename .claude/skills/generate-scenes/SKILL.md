@@ -71,7 +71,10 @@ only via `-Model` after a review calls for escalation. Lite (1K only, no
 reference images, ~⅓ the price) may also be chosen per row via a `model`
 note in `notes` for medium/close character beats with simple backgrounds in
 flat cartoon styles; never for establishing shots, crowds, maps or fine
-props (validated on Eggline, see the Explainer Boss dossier). One model per job,
+props (validated on Eggline, see the Explainer Boss dossier). Flash at 1K
+sits in the same bracket: same style, ~half the 1080p sharpness of 2K, no
+sharper than lite under a Ken Burns push — use it on the same shot types
+only. One model per job,
 so a mixed chapter is at least two jobs. Bodies are split at 14 MB (inline
 cap 20 MB); a single row over 14 MB aborts naming the row, so shrink its
 references. Reference files of 2 MB and up force several small jobs per
