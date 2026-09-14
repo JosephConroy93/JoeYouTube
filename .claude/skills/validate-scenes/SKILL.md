@@ -37,7 +37,10 @@ One verdict per image, coarse, at the size a viewer sees:
    detail on any figure (a faint nose curve, a brow crease, a doubled
    mouth mark) and a short neck like the source frames' own are notes, not
    regenerates; a fully drawn face (nose with nostrils, ears, irised eyes)
-   fails. References are stricter: a reference with any nose line is
+   fails. Face rules apply to figures only: a mask, statue or carving
+   keeps its own modelled face. A figure rendered with no face at all
+   fails. White skin running into white linen is not a costume change.
+   References are stricter: a reference with any nose line is
    re-rendered, because every scene that attaches it copies it.
 3. **Malformed**: extra or missing limbs, warped anatomy, garbled hands,
    nonsense composition.
