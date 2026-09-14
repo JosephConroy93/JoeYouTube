@@ -156,11 +156,11 @@ sets `hook`. At most 8 rows; `duration_s` ∈ 4 · 6 · 8; `beat` is the scene's
 
 ## `ken-burns-plan.md`
 
-`| # | scene_id | dur | zoom | ease | fx | transition | note |`
+`| # | scene_id | dur | zoom | ease | transition | note |`
 
 `zoom` = `Static` · `In` · `Out` · `Pan <dir> (x,y)→(x,y)` · `Focal (x,y)`.
 Coordinates are fractions with origin top-left; `apply-fusion` does the Fusion
-Y-flip. `fx` names a particle preset or is blank; `transition` = `sweep` or blank.
+Y-flip. `transition` = `sweep` or blank.
 
 ## Verification rule (every Resolve step)
 

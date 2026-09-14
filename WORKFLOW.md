@@ -203,13 +203,13 @@ nothing is done until a rendered or measured artefact proves it.
    screenshot. Media is staged at the series
    `staging_path`, never inside OneDrive.
 2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
-   nearly every scene, Elevated on ≤10% with confirmed targets, FX
-   suggestions capped at 5, Static only on text-cards, no transitions
+   nearly every scene, Elevated on ≤10% with confirmed targets, Static
+   only on text-cards, no transitions
    (`video.md`'s `transitions` turns black sweeps on, for chapter ends,
    once proven on the locked Resolve version). **The operator edits the
    plan** — pacing and emphasis stay human.
-3. `apply-fusion`: motion and particles from the plan; render-verify each
-   effect once and drop any that is invisible.
+3. `apply-fusion`: motion from the plan; render-verify one scene of each
+   motion type before the batch. No particle effects.
 4. Grade hook clips only (CDL matched by measurement, per `place-scenes`);
    the body stays ungraded.
 5. **Spot SFX only**: a short sound for an action on screen (a pot
@@ -219,7 +219,7 @@ nothing is done until a rendered or measured artefact proves it.
    filenames; add each sound used to `sfx-index.md` so the library grows
    from what worked. Bake levels well under the voice.
 6. Render. Measure the render: integrated LUFS **and per-channel RMS**,
-   frame spot-checks at hook, title cards and FX scenes. Watch it through.
+   frame spot-checks at hook, level cards and Elevated scenes. Watch it through.
    Set `status: edited`.
 
 Automate the mechanical (sequencing, sync, loudness, export); keep the

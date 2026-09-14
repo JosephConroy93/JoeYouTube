@@ -111,6 +111,6 @@ the reference — a readback of the CDL values is not verification.
 
 ## Not this skill's job
 
-Motion and particles (`plan-ken-burns`, `apply-fusion`), the hook→body
+Motion (`plan-ken-burns`, `apply-fusion`), the hook→body
 transition, captions, SFX beds, final loudness, export, or judging whether
 a measured duration reads well.

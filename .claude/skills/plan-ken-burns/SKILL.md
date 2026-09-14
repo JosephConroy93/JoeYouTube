@@ -1,6 +1,6 @@
 ---
 name: plan-ken-burns
-description: Plans per-scene Ken Burns motion, particle-FX candidates and black-sweep transitions for a video whose scenes are generated and timed, writing `ken-burns-plan.md` for `apply-fusion` (or the operator) to execute. Three tiers — Baseline zoom (default), Elevated pan/focal zoom on a confirmed off-centre target (≤10%), FX flags (≤5, suggestion-only); Static is text-cards only. Delegates every image read to subagents. Never touches Resolve.
+description: Plans per-scene Ken Burns motion and black-sweep transitions for a video whose scenes are generated and timed, writing `ken-burns-plan.md` for `apply-fusion` (or the operator) to execute. Two tiers — Baseline zoom (default) and Elevated pan/focal zoom on a confirmed off-centre target (≤10%); Static is text-cards only; no particle effects. Delegates every image read to subagents. Never touches Resolve.
 ---
 
 # plan-ken-burns
@@ -14,7 +14,7 @@ Under `content/<series>/<slug>/`:
 - `claude/scene-prompts.md` and the chapter files it names — extract the
   `scene_id`, `scene_type` and `notes` columns with a one-line script rather
   than reading the files; read a row's `content_prompt` only for an
-  Elevated or FX candidate.
+  Elevated candidate.
 - `claude/script.md` — tone and beat; chapter headings mark act boundaries.
 - `claude/scene-timing.md` — `dur` = next scene's `start_seconds` minus this
   scene's (the image holds through the narration pause; the last scene in a
@@ -26,31 +26,29 @@ Under `content/<series>/<slug>/`:
 Writes `claude/ken-burns-plan.md`: legend, one table per chapter, closing
 summary. Columns exactly as `conventions.md`:
 
-`| # | scene_id | dur | zoom | ease | fx | transition | note |`
+`| # | scene_id | dur | zoom | ease | transition | note |`
 
 - `zoom`: `Static` · `In` · `Out` · `Pan <dir> (x,y)→(x,y)` · `Focal (x,y)`.
   Coordinates are fractions, origin **top-left**; `apply-fusion` does the
   Fusion Y-flip — never pre-convert.
 - `ease`: `L` / `EI` / `EO`; blank for Static.
-- `fx`: a particle template name (e.g. `DoorwayDust`) or blank.
 - `transition`: `sweep` or blank.
-- `note`: required for Static, Pan, Focal, any `fx`, any `sweep`, any
-  caution flag; blank otherwise.
+- `note`: required for Static, Pan, Focal, any `sweep`, any caution flag;
+  blank otherwise.
 
 The plan is a draft: the operator watches the cut and overrides it.
 
-## Three tiers
+## Two tiers
 
 | Tier | What | Cap | Executed by |
 |---|---|---|---|
-| **Baseline** (default) | In or Out zoom, centre pivot | none — expect ~85%+ | `apply-fusion` batch script, or the Dynamic Zoom panel |
+| **Baseline** (default) | In or Out zoom, centre pivot | none — expect ~90%+ | `apply-fusion` batch script, or the Dynamic Zoom panel |
 | **Elevated** | `Pan` or `Focal` on a target confirmed in the real image | ≤10% | `apply-fusion`, per scene |
-| **FX flag** (additive) | particle/glow suggestion on top of any motion tier | flat 5 | `apply-fusion`, per scene, after its luma gate — suggestion only here |
 
-Static is reserved for `scene_type = text-card`; nothing else qualifies. If
-text-cards exceed ~10% of scenes, flag it rather than motion-ising them.
-Precedence: FX flag > Elevated > Static — a scene that earns a more
-deliberate treatment is never demoted later.
+Static is reserved for `scene_type = text-card` and for hook-clip rows
+(scenes replaced by `hook-plan.md` footage, which already moves); nothing
+else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
+motion-ising them. No particle, glow or other overlay effects.
 
 ## Dynamic Zoom preset rule
 
@@ -62,26 +60,18 @@ this — their `ease` is a curve shape.
 
 ## Candidate discovery
 
-1. **Luma ranking (subagent, mechanical).** Rank every scene image by mean
-   luma (`ffmpeg -v error -i <jpg> -vf "scale=1:1,format=gray" -f rawvideo -
-   | od -An -tu1`, ÷255). FX candidates come only from the darkest handful:
-   particles are Screen-merged and cannot show on a high-key image.
-2. **Text shortlist (no images).** From script and prompts:
+1. **Text shortlist (no images).** From script and prompts:
    - an important detail described off-centre or half-hidden → Focal;
    - elements that read in sequence across the frame, or any wide
      composition with room to travel → Pan;
-   - a light/fire source (doorway, window, torch, brazier) **and** a dark
-     luma rank → FX;
    - scenes either side of a `segment` boundary, and callback pairs named
      in `notes` → check as Elevated.
    The shortlist is larger than the caps.
-3. **Image confirmation (subagents, 5–8 scenes each; never in the main
-   context).** Each returns a compact verdict per scene: confirm/reject;
-   for Elevated the target point(s) as top-left fractions; for FX one line
-   on what is visible, the mean luma **along the intended particle path**
-   (reject > 0.40), and whether an existing template plausibly fits.
-4. **Selection.** Rank confirmed candidates, apply caps, precedence, then
-   the variance rules. Unpicked candidates fall back to Baseline.
+2. **Image confirmation (subagents, 5–8 scenes each; never in the main
+   context).** Each returns a compact verdict per scene: confirm/reject and
+   the target point(s) as top-left fractions.
+3. **Selection.** Rank confirmed candidates, apply the cap, then the
+   variance rules. Unpicked candidates fall back to Baseline.
 
 ## Per-scene rules
 
@@ -91,7 +81,7 @@ this — their `ease` is a curve shape.
   pull-back; `EO` for genuine release.
 - **Vary direction — no uniform centre-zoom.** Never the same
   direction + ease more than 3–4 scenes running unless the content demands
-  it; spread Elevated/FX scenes out rather than clustering them.
+  it; spread Elevated scenes out rather than clustering them.
 - **Horizontal pans.** The operator prefers a slow, full-duration lateral
   pan with no animated zoom; weigh it as a favoured Elevated option on any
   scene wide enough to carry it, keep `y1 = y2`, and write the direction in
@@ -117,9 +107,8 @@ it on one cut first. Check a sweep stacked on an Elevated hold still reads.
 ## Summary paragraph
 
 Close the file with one paragraph: Baseline vs Static counts (Static under
-~10%?); Elevated count against ~10%; FX flags listed by `#` (≤5, with
-path-luma readings); sweep count against ~1 in 10; every scene carrying a
-caution note.
+~10%?); Elevated count against ~10%; sweep count against ~1 in 10; every
+scene carrying a caution note.
 
 ## Does not
 

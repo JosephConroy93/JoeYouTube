@@ -35,6 +35,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **`validate-scenes` is QC-lite**: three checks, `validated (n/m)`, one resubmit then a rewrite; a rule only on a third recurrence. `qc-checklist.md` gone; hardening rules' maintenance section rewritten. Why: the per-failure ceremony cost more than the failures.
 - **Text-cards are blank carriers**; the word is drawn at the edit (`place-scenes` 5c, `overlay:` note). Why: the model typeset one word wrong twice in two ways.
 - `gemini-batch.ps1` reads `cast.md` (legacy `prompt-blocks.md` fallback) and refuses rows with no prompt; `check-manifest.py` accepts `beats` chapters and checks overlay notes instead of checklist strings.
+- **Particle FX struck** (`plan-ken-burns`, `apply-fusion`, WORKFLOW Step 9, conventions): FX tier, `fx` plan column, luma gate and the DoorwayDust template removed; hook-clip rows plan as Static. Why: the particles had no visible effect on the Pharaoh's Servant render and aren't worth the effort yet.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 

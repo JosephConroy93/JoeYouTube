@@ -1,6 +1,6 @@
 ---
 name: apply-fusion
-description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve Studio through the `davinci-resolve` MCP server — Baseline zoom as one Lua batch, Elevated pan/focal zoom per scene, and particle FX (pEmitter → pRender → Merge) on scenes that pass the luma gate. Verifies with a window capture first and an ffmpeg-measured render last. Never imports media, builds timelines, or decides motion.
+description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve Studio through the `davinci-resolve` MCP server — Baseline zoom as one Lua batch, Elevated pan/focal zoom per scene. No particle effects. Verifies with a window capture first and an ffmpeg-measured render last. Never imports media, builds timelines, or decides motion.
 ---
 
 # apply-fusion
@@ -11,12 +11,10 @@ Invocation: `<series>/<slug>` — see `.claude/conventions.md`.
 
 Under `content/<series>/<slug>/`:
 
-- `claude/ken-burns-plan.md` — `| # | scene_id | dur | zoom | ease | fx |
+- `claude/ken-burns-plan.md` — `| # | scene_id | dur | zoom | ease |
   transition | note |`. Coordinates are top-left fractions; **this skill
   does the Y-flip, `fusion_y = 1 − py`**.
 - `series.md` / `video.md` — fps, `staging_path`.
-- `scene-generation/<scene_id>.jpg` — only through ffmpeg for the luma gate,
-  never read into context.
 
 Writes `<staging_path>\ken-burns-spec.json` (the batch input). Nothing else
 in the project changes; the plan stays the record of what was applied.
@@ -38,14 +36,13 @@ in the project changes; the plan stays the record of what was applied.
 
 ## Order of work
 
-1. Parse the plan into Baseline (`In`/`Out`, blank `fx`), Elevated (`Pan`,
-   `Focal`), FX rows, and sweeps. Sweeps are the operator's (or
+1. Parse the plan into Baseline (`In`/`Out`), Elevated (`Pan`, `Focal`),
+   Static (skipped) and sweeps. Sweeps are the operator's (or
    `TimelineItem.AddTransition` on Resolve 21.1+, proven on one cut first)
    — not built here.
-2. Luma-gate every FX row before building anything (below).
-3. Prove on one scene: one-record spec through the Lua, capture, inspect.
-4. Baseline batch. 5. Elevated, per scene. 6. FX, per scene. 7. Verify;
-   ask before a full render.
+2. Prove on one scene: one-record spec through the Lua, capture, inspect.
+3. Baseline batch. 4. Elevated, per scene. 5. Verify; ask before a full
+   render.
 
 ## Baseline zoom — one Lua batch
 
@@ -102,52 +99,6 @@ and KB → MediaOut1**. Missing the first connection keyframes fine and shows
   unverified. On the first pan, capture the viewer (or render and view the
   first and last frames) and record the mapping here.
 
-## FX — per scene, gated
-
-**Luma gate.** Screen can only brighten; over a pale backdrop particles are
-invisible, not faint. Rank every scene by mean luma first (`ffmpeg -v error
--i <jpg> -vf "scale=1:1,format=gray" -f rawvideo - | od -An -tu1`, ÷255) and
-suspect any candidate not near the dark end. Then measure **along the
-particle path**, not at the emitter — crop a box from the emitter along the
-drift direction and grey-average it. < 0.40 build; 0.40–0.50 render-verify
-before trusting; > 0.50 reject. If nothing clears, say so and build nothing:
-an invisible sim still costs full Fusion render time.
-
-Build:
-
-- Raw primitives, not `group_settings_load` (it needs an existing named
-  `GroupOperator`). `templates/` files are value references only.
-- `add_tool` **pEmitter → pRender → Merge** (`Screen`; background = plate,
-  foreground = pRender) → MediaOut1. `auto_arrange` after any multi-tool
-  build or the nodes stack on one spot.
-- **With motion on the same scene, the Merge sits BEFORE the Transform**:
-  MediaIn1 → Merge → KB → MediaOut1, so particles travel with the plate.
-  Consequences: `Size` multiplies particle size and apparent velocity; the
-  emitter must stay inside the crop window for the whole move; on-screen
-  motion is drift plus camera.
-- Style `ParticleStyleBlob`, not `ParticleStyleLine` (streaks read as
-  shooting stars). `ParticleStyle.Size` default is invisible — start
-  ~0.3–0.4 and tune visibly.
-- **Cone principle**: a small near-point region at the true physical origin
-  plus nonzero `AngleVariance` (~15–22). A wide region with
-  `AngleVariance 0` is a flat band. `Angle` = mean direction;
-  `Velocity × Lifespan` = travel.
-- Region rotation is `RectRgn.Rotate.Z`. `RectRgn.Angle` and `Rotation`
-  exist and silently no-op — when a plausible input does nothing,
-  `probe_fusion_tool include_inputs` for the full list.
-- **Travel budget `Velocity × Lifespan ≤ ~0.4`** (dust `0.004 × 110`,
-  embers `0.003 × 60`).
-- Coordinates: `RectRgn.Translate.X = x − 0.5`, `Translate.Y = 0.5 − y`;
-  **`Angle 90 = up`**, no sign flip. If a position or direction looks wrong,
-  pin `Velocity` (~0.0005) and read the region indicator in the viewer
-  before touching the maths.
-- Ease in: keyframe the Merge's `Blend` 0 → 1 over ~1 s. All emitter
-  inputs are scalars via `set_input` — no Point3D trap. A `Glow` (Fast
-  Gaussian) is optional; its `Blend` is per-scene.
-- Be wary of particles on a scene whose pan is the feature.
-- **Render-verify each FX scene once** (first and last frames of a short
-  render) and drop any effect invisible on a high-key backdrop.
-
 ## Verification
 
 Per `conventions.md`: a `success` return or a readback is not proof.
@@ -171,8 +122,8 @@ Per `conventions.md`: a `success` return or a readback is not proof.
 ## Does not
 
 - Import media, create or edit timelines — `place-scenes`.
-- Decide motion or FX — `plan-ken-burns`; the operator overrides on
-  playback.
+- Decide motion — `plan-ken-burns`; the operator overrides on playback.
+- Build particle, glow or other overlay effects.
 - Build sweeps, captions or loudness.
 - Read scene images into context; if the real composition contradicts the
   plan, trust the image.
