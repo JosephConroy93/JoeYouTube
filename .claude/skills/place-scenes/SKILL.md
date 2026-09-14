@@ -55,11 +55,11 @@ verification rule: `.claude/conventions.md`.
    trims it to the scene's frames, or holds its last frame when shorter; the
    staging `hook/` folder stays empty. **Never trim the last hook clip to make
    a total fit.**
-5b. **Level cards** (`rank-ladder (nine-level)` videos): `prerender.py`
-   renders a 2 s black card per level with the `## Level N. <Rank>.` heading
+5b. **Chapter cards**: `prerender.py` renders a 2 s black card per chapter
+   with its `## ` heading (`Level N. <Rank>.` or `Chapter N. <Name>.`)
    from `script.md` in small white hand-lettered capitals (Ink Free), centred;
    `build_timeline.py --cards` places each on V2 over the first two seconds
-   of that level's first scene.
+   of that chapter's first scene.
 5c. **Text-card words**: a `text-card` row's carrier image is generated
    blank; `prerender.py` draws its `overlay: "<word>"` (from the row's
    `notes`) in hand-lettered ink-dark type, centred, or at `--overlay-pos`

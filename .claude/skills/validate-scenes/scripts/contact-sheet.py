@@ -1,6 +1,6 @@
-"""Contact sheet of one level's scene images, for the operator's per-level look.
+"""Contact sheet of one chapter's scene images, for the operator's per-chapter look.
 
-    python contact-sheet.py <series>/<slug> --chapter level-03.md [--latest] [--out <file>] [--root <project root>]
+    python contact-sheet.py <series>/<slug> --chapter chapter-03.md [--latest] [--out <file>] [--root <project root>]
 
 Tiles every scene id in the chapter file at 480 px wide, labelled with the
 three-digit id, in manifest order. `--latest` shows each scene's highest

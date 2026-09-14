@@ -94,6 +94,8 @@ def main():
         fail(f'video.md style "{style}" has no "## {style}" entry in the style bible')
     hook = (table_value(os.path.join(vdir, 'video.md'), 'hook') or '').strip()
     mascot = (table_value(os.path.join(sdir, 'series.md'), 'mascot.bible') or '')
+    spoken = (table_value(os.path.join(vdir, 'video.md'), 'chapter.spoken')
+              or table_value(os.path.join(sdir, 'series.md'), 'chapter.spoken') or 'yes').strip(' `').lower() != 'no'
 
     # blocks
     blocks = {}
@@ -170,7 +172,8 @@ def main():
             fail(f"{ch['file']}: no script heading matching '{ch['title']}'")
         else:
             nxt = re.search(r'^##\s', script[m.end():], re.M)
-            span = norm(ch['title'] + ' ' + script[m.end(): m.end() + nxt.start() if nxt else len(script)])
+            body = script[m.end(): m.end() + nxt.start() if nxt else len(script)]
+            span = norm((ch['title'] + ' ' if spoken else '') + body)
         cursor = 0
         counts = []
         typed = {}

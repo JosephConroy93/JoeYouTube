@@ -81,6 +81,8 @@ if (-not $apiKey) { $apiKey = $env:ELEVENLABS_API_KEY }
 if (-not $apiKey -and -not $DryRun) { throw "ELEVENLABS_API_KEY not set in the user environment" }
 
 # ---------- segmentation ----------
+$spokenCfg = if ($vid['chapter.spoken']) { $vid['chapter.spoken'] } else { $cfg['chapter.spoken'] }
+$headingsSpoken = -not ($spokenCfg -and $spokenCfg.Trim().ToLower() -eq 'no')
 $raw = Get-Content $script -Raw -Encoding UTF8
 # drop handoff notes and any front matter
 $raw = ($raw -split '(?m)^## Handoff notes')[0]
@@ -91,7 +93,7 @@ foreach ($line in ($raw -split "`r?`n")) {
   if ($line -match '^#\s') { continue }   # the document title (H1) is never spoken
   if ($line -match '^(#{1,6}\s|---\s*$)') {
     if ($cur.Length -gt 0) { $chunks.Add($cur.ToString().Trim()); $cur.Clear() | Out-Null }
-    if ($line -match '^#{1,6}\s+(.*)$') { $cur.AppendLine($matches[1].Trim()) | Out-Null }  # spoken heading (e.g. "Level one, the chosen.")
+    if ($headingsSpoken -and $line -match '^#{1,6}\s+(.*)$') { $cur.AppendLine($matches[1].Trim()) | Out-Null }  # spoken heading (e.g. "Level 1. The Vat Boy."); chapter.spoken: no leaves it to the card
     continue
   }
   $cur.AppendLine($line) | Out-Null

@@ -67,7 +67,7 @@ A key/value table. Keys:
 | `voice.speed`, `voice.stability`, `voice.style` | ElevenLabs voice settings (defaults 1.0, 0.5, 0); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
-| `chapter.unit`, `chapter.heading`, `chapter.file` | e.g. `level`, `Level N. The <Role>.`, `level-NN.md` |
+| `chapter.unit`, `chapter.heading`, `chapter.file`, `chapter.spoken` | e.g. `chapter`, `Chapter N. <Name>.`, `chapter-NN.md`, `no`; `chapter.spoken: no` puts the heading on the chapter card only (not narrated, not bookmarked), `yes` (default) narrates it as a callout; `video.md` may override any `chapter.*` key |
 | `protagonist` | optional: a reused series "you" figure (`content/<series>/protagonist/` holds its cast line and reference); Step 6 copies it into the video's cast sheet and re-dresses it per rung |
 | `mascot.bible`, `mascot.reference`, `mascot.cameo` | optional; `cameo` = `manual` (operator picks the row at QC) or `none` |
 | `cta` | `none` or the house CTA text/placement |
@@ -115,7 +115,7 @@ in). Chapter file columns:
 ## `cast.md`
 
 The cast sheet. A table `| block | text | guard |`, one row per figure
-(`YOU-L1`, `YOU-L2`, `FATHER`; `ID.variant` binds to `ID`'s reference), an
+(`YOU-<stage>` per costume stage of the protagonist, e.g. `YOU-BOY`, `YOU-CLERK`; `FATHER`; `ID.variant` binds to `ID`'s reference), an
 optional row per recurring setting (`YARD`), and `_closing`; then a short
 list of era don'ts and an overlays table `| scene | text |`. Written by hand
 in Step 6; `gemini-batch.ps1` reads the table (falls back to a legacy

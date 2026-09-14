@@ -55,7 +55,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .claude/skills/generate-
 on a new chapter shape or after a manifest edit. `-Action expand` prints
 each selected row's prompt after block expansion, nothing else.
 References are shrunk in memory to a 1376 px long edge before inlining
-(`-RefMaxPx`, 0 to send them as on disk): a level fits one or two jobs, the
+(`-RefMaxPx`, 0 to send them as on disk): a chapter fits one or two jobs, the
 model's per-image token budget is fixed so cost is unchanged, and identity
 measured equal to full-size references. `-Model` and `-Resolution`
 override every selected row (escalation only). `-Root` overrides the

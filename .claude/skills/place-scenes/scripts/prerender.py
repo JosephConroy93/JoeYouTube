@@ -11,9 +11,9 @@ Reads   claude/scene-timing.md             frame plan (same rule as build_timeli
         scene-generation/<scene_id>.jpg    stills, cropped to 16:9, never downscaled
         claude/hook-plan.md                shot -> scene_id; hook/shot-NN.mp4 replaces that still
         claude/scene-prompts/*.md          `overlay: "<word>"` in a row's notes -> drawn on the carrier
-        claude/script.md                   `## Level N. <Rank>.` headings -> level cards
+        claude/script.md                   `## ` chapter headings (before Handoff notes) -> chapter cards
 Writes  <staging>/scenes/<scene_id>.mp4    one clip per timing row, exactly its planned frames
-        <staging>/cards/<scene_id>.mp4     2 s black level card for each chapter's first scene
+        <staging>/cards/<scene_id>.mp4     2 s black card for each chapter's first scene
 
 Hook clips are scaled to the timeline size, trimmed to the scene's frames or held on
 their last frame. Overlay words sit centred unless --overlay-pos gives top-left fractions.
@@ -114,9 +114,9 @@ def overlays(project):
 
 
 def level_cards(project, rows):
-    heads = [m.group(1) for m in re.finditer(r"^##\s+(Level\s+\d+\..*?)\s*$",
-                                             open(os.path.join(project, "claude", "script.md"),
-                                                  encoding="utf-8").read(), re.M)]
+    text = open(os.path.join(project, "claude", "script.md"), encoding="utf-8").read()
+    text = re.split(r"^##\s+Handoff notes", text, flags=re.M)[0]
+    heads = [m.group(1) for m in re.finditer(r"^##\s+(.+?)\s*$", text, re.M)]
     firsts, seen = [], set()
     for r in rows:
         ch = r.get("chapter")
@@ -124,7 +124,7 @@ def level_cards(project, rows):
             seen.add(ch)
             firsts.append(r)
     if len(heads) != len(firsts):
-        sys.exit(f"ABORT: {len(heads)} level headings in script.md, {len(firsts)} chapters in scene-timing.md")
+        sys.exit(f"ABORT: {len(heads)} chapter headings in script.md, {len(firsts)} chapters in scene-timing.md")
     return list(zip(firsts, heads))
 
 

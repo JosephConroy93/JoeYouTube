@@ -1,24 +1,24 @@
 ---
 name: write-prompts
-description: Writes the image prompts for one level of a video's beat sheet — 50–80 words per row from a fixed recipe (shot, cast token, action and emotion, one dressed setting clause held across a run, light), sets each row's reference cell by the reference rule, hits the source channel's shot spread (medium-first, one or two figures, dressed backgrounds, one place per run), writes hook-plan.md for chapter 1, runs check-manifest.py and marks the chapter written. Run by the prompt-writer agent, one level per dispatch (or by the driving session). Use at WORKFLOW Step 8.1, after the beat sheet exists and before generate-scenes.
+description: Writes the image prompts for one chapter of a video's beat sheet — 50–80 words per row from a fixed recipe (shot, cast token, action and emotion, one dressed setting clause held across a run, light), sets each row's reference cell by the reference rule, hits the source channel's shot spread (medium-first, one or two figures, dressed backgrounds, one place per run), writes hook-plan.md for chapter 1, runs check-manifest.py and marks the chapter written. Run by the prompt-writer agent, one chapter per dispatch (or by the driving session). Use at WORKFLOW Step 8.1, after the beat sheet exists and before generate-scenes.
 ---
 
-# Write prompts — one level at a time
+# Write prompts — one chapter at a time
 
 Layout and schemas: `.claude/conventions.md`. Project path `<series>/<slug>`.
-Run by the `prompt-writer` agent, one level per dispatch, or by the
+Run by the `prompt-writer` agent, one chapter per dispatch, or by the
 driving session. The prompts are the judgment call in the pipeline: they
-are written from what the previous level's QC found, so read that first.
+are written from what the previous chapter's QC found, so read that first.
 
 ## Inputs
 
-- The level's chapter file at status `beats` (rows, bookmarks, beat in
+- The chapter file at status `beats` (rows, bookmarks, beat in
   `notes`, hook marks), from `claude/scene-prompts.md`.
 - `claude/cast.md`: the `[[ID]]` blocks, era don'ts, overlays.
 - The style entry in `content/styles/style-bible.md`: its emotion and
   gesture vocabulary and its `Source frames` (glance at two).
 - `content/prompt-hardening-rules.md` (the rules table, one screen).
-- The previous level's written chapter file and its `batch-log.md` QC
+- The previous chapter's written file and its `batch-log.md` QC
   notes (what failed, what was overruled): what the model does well and
   badly with this cast. Open two of its images only when the notes don't
   say enough.
@@ -68,7 +68,7 @@ clause, 2–3 props, dressed] [light].`
 
 ## Shot spread (from the source channel's census)
 
-Targets per level, counted by `check-manifest.py`: medium 60–75%, wide
+Targets per chapter, counted by `check-manifest.py`: medium 60–75%, wide
 15–25%, close 8–15%; rows with one or two `[[ID]]` tokens ≥ 85%; wide
 shots and crowds bunched where the story peaks, not spread for variety.
 

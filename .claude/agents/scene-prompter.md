@@ -20,11 +20,12 @@ Paths below are relative to `content/<series>/<slug>/`; schemas (manifest
 columns, index table, status words) live in conventions.md.
 
 Config read every run: `series.md` (`chapter.heading`, `chapter.file`,
-`wpm_measured`, the optional `mascot` block) and `video.md` (`style`, `hook`).
+`chapter.spoken`, `wpm_measured`, the optional `mascot` block) and `video.md`
+(`style`, `hook`, and any `chapter.*` override).
 
 1. **Approved script** `claude/script.md` — treated as correct, never
    re-litigated. Handoff notes are not an input.
-2. **Cast sheet** `claude/cast.md` — the figure IDs (`YOU-L1`, `FATHER`)
+2. **Cast sheet** `claude/cast.md` — the figure IDs (`YOU-BOY`, `FATHER`)
    the beat column names people by. Read the table only.
 3. **Research file** `research-<slug>.md` — only when a beat needs a name
    the script does not give. Never read whole.
@@ -50,8 +51,9 @@ words ≈ seconds × `wpm_measured` ÷ 60. At 169 wpm: floor ≈ 11 words,
 average 14–28, ceiling ≈ 31. Judge length by sentence (one sentence ≈ 5–6 s);
 `check-manifest.py` counts afterwards and returns anything out of band.
 
-In a `rank-ladder (nine-level)` video there are no level-title rows; each
-level's first row starts at its callout.
+There are no chapter-title rows. With `chapter.spoken: yes` each chapter's
+first row starts at its spoken callout; with `no` the heading is a card, not
+narration, and the first row starts at the chapter's first spoken words.
 
 ### Fields
 
@@ -63,7 +65,7 @@ level's first row starts at its callout.
 | `content_prompt` | **Empty.** |
 | `style` | The bare style name from `video.md`. |
 | `characters_present / reference_images` | Empty unless `video.md` names a reference to attach for a figure; then `image1 = <File> (ID)`. |
-| `notes` | The beat: ≤12 words, who does what where (`YOU-L1 scrubs bowl at vat; FATHER approaches`); `hook: shot N` on hook rows; `overlay: "<word>"` on text-card rows. Nothing about the mascot. |
+| `notes` | The beat: ≤12 words, who does what where (`YOU-BOY scrubs bowl at vat; FATHER approaches`); `hook: shot N` on hook rows; `overlay: "<word>"` on text-card rows. Nothing about the mascot. |
 
 ### Hook shots
 

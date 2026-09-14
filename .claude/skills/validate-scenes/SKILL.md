@@ -1,6 +1,6 @@
 ---
 name: validate-scenes
-description: QC-lite of fetched scene images for one level (or an explicit scene-id list) — three coarse checks per image (beat, style, malformed) read in 5–8-image Sonnet groups against the cast sheet and the style's source frames. Sets the batch-log row to `validated (n/m)` with failed ids in notes. Checks only; never retries or edits a prompt.
+description: QC-lite of fetched scene images for one chapter (or an explicit scene-id list) — three coarse checks per image (beat, style, malformed) read in 5–8-image Sonnet groups against the cast sheet and the style's source frames. Sets the batch-log row to `validated (n/m)` with failed ids in notes. Checks only; never retries or edits a prompt.
 ---
 
 # Validate scenes — check only
@@ -68,6 +68,6 @@ disputed image to Opus, never a group.
 
 ## Report
 
-Per image: PASS, or FAIL with check and reason. Then build the level's
+Per image: PASS, or FAIL with check and reason. Then build the chapter's
 sheet for the operator and stop:
 `python .claude/skills/validate-scenes/scripts/contact-sheet.py <series>/<slug> --chapter <file> --latest`.

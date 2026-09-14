@@ -24,7 +24,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
 | Timing | `align-scenes` (TTS timestamps, or whisper) |
 | Animated hook | Veo 3.1 via the Gemini API, `generate-hook` (from chapter 1's validated stills) |
-| Cast sheet, beat sheet, prompts | cast sheet from a capped lookup (Step 6); `scene-prompter` beat sheet (Step 7); `prompt-writer` agent per level, following `write-prompts` (Step 8) |
+| Cast sheet, beat sheet, prompts | cast sheet from a capped lookup (Step 6); `scene-prompter` beat sheet (Step 7); `prompt-writer` agent per chapter, following `write-prompts` (Step 8) |
 | Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
 | Thumbnail | `make-thumbnail` (scene stills and hook text, no generation); VidIQ for technical checks only |
@@ -150,7 +150,7 @@ would notice. A quick web check is enough; visuals look good first, and
 Step 3's research stays about the narration.
 
 Write `claude/cast.md` from that lookup and the script: one line per
-figure who recurs (`YOU-L1` … per rung stage, then
+figure who recurs (`YOU-<stage>`, one per costume stage of the protagonist, then
 at most three others), each a costume in a dozen words (garment, colour,
 one marker), a `guard` phrase, and a list of at most five era don'ts a
 viewer would notice. **No bible.** In a costume-identity style the line is
@@ -177,17 +177,17 @@ verbatim bookmarks, a ten-word beat per row, hook-shot marks in chapter 1,
 means `merge-floor.py` (sub-floor rows join a neighbour, ids renumber);
 any FAIL goes back as a Mode 3 edit. Under ten minutes.
 
-## Step 8 — Prompts and generation, one level per loop 🟡
+## Step 8 — Prompts and generation, one chapter per loop 🟡
 
-For each level, in order:
+For each chapter, in order:
 
 1. **Prompts**: dispatch the `prompt-writer` agent in the background with
-   the project path and the level file. It follows `write-prompts` (the
+   the project path and the chapter file. It follows `write-prompts` (the
    recipe, shot-spread targets, reference rule, chapter 1's
    `hook-plan.md`) and returns with `check-manifest.py` clean, the
    spread line and any rows it was unsure of. Read that, and open an
    unsure row before submitting.
-2. **Submit**: `generate-scenes` for the level (references shrunk to 1K;
+2. **Submit**: `generate-scenes` for the chapter (references shrunk to 1K;
    one or two jobs).
 3. **Fetch**: a bounded background wait on `get-scenes` (the skill sets
    the interval and cap).
@@ -196,16 +196,16 @@ For each level, in order:
 5. **Fix**: a failure is resubmitted once; a second failure gets a
    rewritten prompt. A failure seen three times in the video earns one
    rule line in `content/prompt-hardening-rules.md`.
-6. **Report**: one contact sheet of the level to the operator
+6. **Report**: one contact sheet of the chapter to the operator
    (`validate-scenes/scripts/contact-sheet.py --latest`). An
    overrule or a fix goes into the file that should have prevented it
    (the cast sheet, `write-prompts`, `validate-scenes`) before the next
-   level's agent is dispatched; the next agent reads it from there.
+   chapter's agent is dispatched; the next agent reads it from there.
 
-The first level is the pilot: the operator looks at all of its images
-before level 2's agent is dispatched.
+The first chapter is the pilot: the operator looks at all of its images
+before chapter 2's agent is dispatched.
 
-After the last level: `finalize-scenes`, then `align-scenes`, then
+After the last chapter: `finalize-scenes`, then `align-scenes`, then
 `generate-hook`. Set `status: generated`.
 
 ## Step 9 — Edit 🟢
@@ -214,7 +214,7 @@ All in Resolve Studio through the MCP server. **Verification rule** (conventions
 nothing is done until a rendered or measured artefact proves it.
 
 1. `place-scenes`: decide fps, pre-render every visual to exact-frame
-   clips, swap each hook still for its Veo clip, add the 2 s level cards,
+   clips, swap each hook still for its Veo clip, add the 2 s chapter cards,
    draw each text-card row's `overlay` word on its blank carrier the
    same way, author and import the FCP7 XML, verify by readback and
    screenshot. Media is staged at the series
@@ -231,7 +231,7 @@ nothing is done until a rendered or measured artefact proves it.
    the body stays ungraded.
 5. **Spot SFX only**: a short sound for an action on screen (a pot
    clattering, water splashing, a lamp or fire crackling), a handful per
-   level, placed on the scene that shows it. No ambience beds or loops
+   chapter, placed on the scene that shows it. No ambience beds or loops
    under narration. Search `content/sfx/`'s metadata TSV, never the
    filenames; write `claude/sfx-plan.md` and bake with `place-scenes` 5d
    before the timeline is built, so the SFX go in with the voice; add each
@@ -269,8 +269,8 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
    (`content/<series>/mascot/watcher-concept.md` holds the copy for Watcher POV).
 2. Description: citation list plus a "People & Sites Mentioned" section;
    disclose dramatised composites where the format uses them.
-3. Title from Step 2, thumbnail from Step 10, chapters from the level
-   callouts.
+3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
+   headings.
 4. Record `published_id` and publish date in `video.md`; add the title to
    the competitor-titles index under the channel's own section.
    Set `status: published`.
