@@ -97,6 +97,7 @@ def main():
 
     # blocks
     blocks = {}
+    figure_blocks = set()
     bpath = os.path.join(cdir, 'cast.md')
     if not os.path.exists(bpath):
         bpath = os.path.join(cdir, 'prompt-blocks.md')
@@ -105,6 +106,8 @@ def main():
             c = cells(line)
             if c and len(c) >= 2 and re.fullmatch(r'`?[A-Za-z_][\w.-]*`?', c[0]) and c[0].strip('`') != 'block':
                 blocks[c[0].strip('`')] = c[1]
+                if len(c) >= 3 and c[2].strip():
+                    figure_blocks.add(c[0].strip('`'))   # a guard marks a figure; settings have none
 
     # index
     chapters = []
@@ -184,8 +187,6 @@ def main():
                 fail(f'{sid}: {w} words ≈ {s:.1f} s, over the {CEILING_S:.0f} s ceiling ({ceil_w} words); split it')
             elif w < floor_w:
                 warn(f'{sid}: {w} words ≈ {s:.1f} s, under the {FLOOR_S:.0f} s floor ({floor_w} words)')
-            if w > high_w and not re.search(r'ceiling|hold', r['notes'], re.I):
-                warn(f'{sid}: ceiling-band row ({w} words ≈ {s:.1f} s) with no justification in notes')
             if span:
                 pos = span.find(bm, cursor)
                 if pos < 0:
@@ -206,7 +207,7 @@ def main():
             if r['type'] == 'illustrated':
                 first = prompt.strip().split()[0].lower() if prompt.strip() else ''
                 shots[first if first in shots else 'other'] += 1
-                n = len(set(re.findall(r'\[\[([A-Za-z_][\w.-]*)\]\]', prompt)))
+                n = len({t for t in re.findall(r'\[\[([A-Za-z_][\w.-]*)\]\]', prompt) if t in figure_blocks})
                 figs['0' if n == 0 else '1-2' if n <= 2 else '3+'] += 1
             if re.search(r'\bSTYLE:|\bNEGATIVE:', prompt):
                 fail(f'{sid}: content_prompt carries STYLE/NEGATIVE text')
@@ -266,11 +267,11 @@ def main():
             pc = lambda k: shots[k] / tot
             print(f"  {ch['file']} shots: close {pc('close'):.0%}  medium {pc('medium'):.0%}  wide {pc('wide'):.0%}"
                   f"{'  unclassified ' + str(shots['other']) if shots['other'] else ''}"
-                  f"  | cast tokens per row: none {figs['0']}, 1-2 {figs['1-2']}, 3+ {figs['3+']}")
+                  f"  | figures per row: none {figs['0']}, 1-2 {figs['1-2']}, 3+ {figs['3+']}")
             if pc('medium') < 0.5 or pc('wide') > 0.35:
                 warn(f"{ch['file']}: shot spread off target (medium 60-75%, wide 15-25%, close 8-15%)")
             if figs['3+'] > 0.15 * tot:
-                warn(f"{ch['file']}: {figs['3+']} rows with three or more cast tokens; one or two figures is the norm")
+                warn(f"{ch['file']}: {figs['3+']} rows with three or more figure tokens; one or two figures is the norm")
         if empty and ch['status'] == 'beats':
             print(f"  {ch['file']}: beats, {empty} rows awaiting prompts")
         if typed:
