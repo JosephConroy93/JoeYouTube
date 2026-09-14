@@ -34,8 +34,9 @@ One verdict per image, coarse, at the size a viewer sees:
    costume-identity style every figure, background ones included, keeps
    the head, skin and proportions of the source; a principal keeps their
    cast line's costume. A tan body or a wrong costume fails. Small face
-   detail on any figure, a faint nose curve included, is a note, not a
-   regenerate; a fully drawn face (nose with nostrils, ears, irised eyes)
+   detail on any figure (a faint nose curve, a brow crease, a doubled
+   mouth mark) and a short neck like the source frames' own are notes, not
+   regenerates; a fully drawn face (nose with nostrils, ears, irised eyes)
    fails. References are stricter: a reference with any nose line is
    re-rendered, because every scene that attaches it copies it.
 3. **Malformed**: extra or missing limbs, warped anatomy, garbled hands,
