@@ -26,8 +26,8 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
 
 1. **Segment** the script: split at chapter boundaries, merging chapters
    until a segment reaches ~4,500 characters (well inside the model's
-   per-request limit; enough context for continuity). Strip markdown, level
-   callouts stay as spoken text. Write each segment to
+   per-request limit; enough context for continuity). Strip markdown; chapter headings are
+   spoken unless `chapter.spoken: no` (then the card carries them). Write each segment to
    `claude/voiceover-segments/<slug>_voice_NN.txt` — this file is the exact text
    sent, so a filename/content mismatch is detectable later.
 2. **Generate** each segment with
@@ -70,7 +70,8 @@ the API.
 ## Rules
 
 - Generate and listen to **one segment first**; only then the rest.
-- Gain never changes timing, so alignment stays valid after normalisation.
+- Gain never changes timing; tempo does, which is why the timeline
+  alignment is rewritten whenever `voice.tempo` is not 1.
 - Never send the script in one request: segment boundaries are what let a
   single flubbed passage be regenerated cheaply.
 - Cost: Creator tier ≈ £17/month for ~121k characters; a ~24k-character
