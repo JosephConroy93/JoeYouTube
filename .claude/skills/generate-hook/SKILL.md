@@ -62,6 +62,8 @@ and match each to its still by first frame.
 - **Motion-prompt discipline** (from the first live clips): confine every
   gesture to the joint that moves and say what stays put ("index finger taps
   the map twice; forearm stays on the table; other hand stays on the hip");
+  never ask for heat shimmer, haze or glow (Veo draws flames): name what
+  stays still instead ("the sky and the far wall stay still and clear");
   let faces live: mouth movement and changing expressions are welcome (the
   operator prefers them) because the clip's audio is always stripped, but
   steer the emotion when it matters ("he mutters, frowning") or the model
