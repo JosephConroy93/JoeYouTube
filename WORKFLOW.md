@@ -150,8 +150,10 @@ the identity.
 Then render **one reference per main character** (each `YOU-*` stage and
 each named recurring figure) straight from its cast line with
 `channel-farmer/scripts/style-test.ps1 -Prompts`, into `reference-images/`;
-glance at the sheet, re-roll a wrong one once, and otherwise let that
-figure run on its line alone. Copy the style's stock extra
+run `generate-scenes/scripts/reference-heads.py` and look at the head
+crops: a nose, ear, neck or tinted head means re-render, because every
+scene that attaches the reference inherits it; re-roll a wrong one once,
+and otherwise let that figure run on its line alone. Copy the style's stock extra
 (`content/styles/extras/<Style>-Villager.jpg`, rendered once per style) in
 as `Extra-Villager.jpg` and add an `EXTRA` line to the sheet. Settings and
 objects get no reference. Set `visual_guardrails` to the sheet and
