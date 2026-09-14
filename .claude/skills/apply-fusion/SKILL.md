@@ -133,6 +133,10 @@ Per `conventions.md`: a `success` return or a readback is not proof.
    card blackness, and each SFX's presence as the render-minus-voice
    residual. Then look at a few frames: a metric proves change, not the
    right change — a sliding black bar also scores as movement.
+   `ExportVideo: true` can fail to stick on the first `set_settings` after
+   an audio-only job: the job reports Complete, `verify_output` says
+   verified, and the file holds audio only (the check script fails it).
+   Send the settings twice before `add_job`.
 3. **Ask before a full render.** The operator says when; render ranges
    until then.
 

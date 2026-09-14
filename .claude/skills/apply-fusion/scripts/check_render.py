@@ -98,8 +98,12 @@ def main():
     hooks = set(hook_map(project))
     fails = []
 
-    n = int(run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries",
-                 "stream=nb_read_frames", "-of", "csv=p=0", a.render]).stdout.split()[0])
+    counted = run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries",
+                   "stream=nb_read_frames", "-of", "csv=p=0", a.render]).stdout.split()
+    if not counted:
+        sys.exit("FAILED: the render has no video stream (render settings exported audio only; "
+                 "verify_output still reports verified)")
+    n = int(counted[0])
     m_out = m_in + n - 1
     if a.mark_out is not None:
         ok = n == a.mark_out - m_in + 1
