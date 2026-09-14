@@ -33,7 +33,7 @@ content/
     <slug>/
       video.md
       research-<slug>.md             sole factual authority for the script
-      reference-images/<Name>.jpg    one per main character (Step 6) plus Extra-Villager.jpg
+      reference-images/<Name>.jpg    one per main character plus Extra-<Role>.jpg in period dress (Step 6)
       voiceovers/<slug>_voice_NN.mp3             raw TTS as delivered (source; never on the timeline); sorted order = playback order
       voiceovers/normalized/<slug>_voice_NN.wav  the timeline copy: −16 LUFS, true peak ≤ −1.5 dBFS, 48 kHz, dual-mono stereo
       hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)

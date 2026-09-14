@@ -43,10 +43,7 @@ format, voice, style policy, chapter naming, mascot block, CTA policy,
 staging path. Add series-level characters (a mascot) to
 `content/<series>/mascot/character-bible.md` with reference images. Pick or
 add a style in `content/styles/style-bible.md`; each style keeps one
-exemplar image in `content/styles/examples/` and one stock extra,
-`content/styles/extras/<Style>-Villager.jpg` (a plain background figure in
-the style's own head and skin rules, rendered once with
-`channel-farmer/scripts/style-test.ps1`), which every video's extras attach.
+exemplar image in `content/styles/examples/`.
 
 ## Step 1 — Concept and angle 🟢
 
@@ -156,15 +153,15 @@ one marker), a `guard` phrase, and a list of at most five era don'ts a
 viewer would notice. **No bible.** In a costume-identity style the line is
 the identity.
 
-Then render **one reference per main character** (each `YOU-*` stage and
-each named recurring figure) straight from its cast line with
+Then render **one reference per main character** (each `YOU-*` stage, each named recurring figure, and the `EXTRA`
+line in the video's own period dress) straight from its cast line with
 `channel-farmer/scripts/style-test.ps1 -Prompts`, into `reference-images/`;
 run `generate-scenes/scripts/reference-heads.py` and look at the head
 crops: a nose, ear, neck or tinted head means re-render, because every
 scene that attaches the reference inherits it; re-roll a wrong one once,
-and otherwise let that figure run on its line alone. Copy the style's stock extra
-(`content/styles/extras/<Style>-Villager.jpg`, from Step 0) in
-as `Extra-Villager.jpg` and add an `EXTRA` line to the sheet. Settings and
+and otherwise let that figure run on its line alone. The extra is a real
+costume of the era and place, never a bare or towel-clad stand-in, saved as
+`Extra-<Role>.jpg`. Settings and
 objects get no reference. Set `visual_guardrails` to `claude/cast.md` and
 `status: prompted`.
 
