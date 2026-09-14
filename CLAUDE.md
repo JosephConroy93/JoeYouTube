@@ -76,8 +76,8 @@ the operator chose.
 
 | Model | Work | Why |
 |---|---|---|
-| **Opus** | `script-writer` (write, revise, score); `scene-prompter` (bible, scene prompts, revisions, chain groups); Step 3 research synthesis; any call where a lookup contradicts the script | Judgment: contested sources, tone, consistency across a whole video. Errors here cost the most downstream. |
-| **Sonnet** | Step 6 visual lookups; transcript breakdowns and comment mining; `channel-farmer` data, frame and `/watch` passes; image QC against a checklist (`validate-scenes`, reference-image audits, `plan-ken-burns` image confirmation); style-render comparisons | Structured search-and-summarise or checklist work against a precise brief. |
+| **Opus** | `script-writer` (write, revise, score); scene prompts (written by the driving session, Step 8); Step 3 research synthesis; any call where a lookup contradicts the script | Judgment: contested sources, tone, consistency across a whole video. Errors here cost the most downstream. |
+| **Sonnet** | `scene-prompter` beat sheet; Step 6 visual lookups; transcript breakdowns and comment mining; `channel-farmer` data, frame and `/watch` passes; image QC against a checklist (`validate-scenes`, reference-image audits, `plan-ken-burns` image confirmation); style-render comparisons | Structured search-and-summarise or checklist work against a precise brief. |
 | **Haiku** | Batch-log reconciliation, archiving, status polls, word counts, file inventories | Pure mechanics. |
 
 Escalate a single disputed item one tier up; never re-run a whole batch on

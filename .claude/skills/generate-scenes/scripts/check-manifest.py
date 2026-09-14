@@ -9,8 +9,9 @@ per-file row cap, bookmarks verbatim and in order in the script (and any
 narration no bookmark covers), the 11 s ceiling and the floor/ceiling band
 shares from series.md's wpm_measured, style cells, reference cells (numbering,
 files on disk, the 5-reference cap, every attachment bound in the prompt),
-[[block]] tokens against prompt-blocks.md, block text typed out in full,
-text-card strings in qc-checklist.md, mascot leakage and the hook plan.
+[[block]] tokens against cast.md, block text typed out in full, text-card
+overlay notes, mascot leakage and the hook plan. A chapter at `beats` is
+checked for bookmarks and bands only.
 
 FAIL lines block submission (exit 1); WARN lines are for the driving session
 or the operator to judge. Layouts and schemas: .claude/conventions.md.
@@ -94,7 +95,9 @@ def main():
 
     # blocks
     blocks = {}
-    bpath = os.path.join(cdir, 'prompt-blocks.md')
+    bpath = os.path.join(cdir, 'cast.md')
+    if not os.path.exists(bpath):
+        bpath = os.path.join(cdir, 'prompt-blocks.md')
     if os.path.exists(bpath):
         for line in open(bpath, encoding='utf-8-sig'):
             c = cells(line)
@@ -107,13 +110,12 @@ def main():
         c = cells(line)
         if c and len(c) >= 4 and re.search(r'[\w.-]+\.md', c[1]):
             chapters.append({'title': c[0], 'file': re.search(r'([\w.-]+\.md)', c[1]).group(1), 'range': c[2], 'status': c[3]})
-    written = [ch for ch in chapters if ch['status'] == 'written']
+    written = [ch for ch in chapters if ch['status'] in ('written', 'beats')]
     if not written:
-        print('FAIL  no written chapters in the index')
+        print('FAIL  no written or beats chapters in the index')
         return 1
 
     script = open(os.path.join(cdir, 'script.md'), encoding='utf-8').read()
-    qc = open(os.path.join(cdir, 'qc-checklist.md'), encoding='utf-8').read() if os.path.exists(os.path.join(cdir, 'qc-checklist.md')) else ''
     refdir = os.path.join(vdir, 'reference-images')
     scenedir = os.path.join(vdir, 'scene-generation')
 
@@ -167,6 +169,7 @@ def main():
         cursor = 0
         counts = []
         typed = {}
+        empty = 0
         for r in rows:
             sid, bm = r['id'].strip('`'), norm(r['bookmark'])
             prompt = r['prompt']
@@ -189,6 +192,11 @@ def main():
                         warn(f'{sid}: narration before this row is covered by no bookmark: "{gap[:80]}"')
                     cursor = pos + len(bm)
             # content
+            if not prompt.strip():
+                empty += 1
+                if ch['status'] == 'written':
+                    fail(f'{sid}: content_prompt is empty in a written chapter')
+                continue
             if r['style'].strip('`') != style:
                 fail(f"{sid}: style cell '{r['style']}' is not the resolved style '{style}'")
             if re.search(r'\bSTYLE:|\bNEGATIVE:', prompt):
@@ -240,11 +248,12 @@ def main():
                 if o > len(refs):
                     fail(f'{sid}: prompt names the attached reference #{o} but only {len(refs)} are attached')
             if r['type'] == 'text-card':
-                q = re.findall(r'"([^"]+)"', norm(prompt))
-                if not q:
-                    warn(f'{sid}: text-card has no quoted line (blank carrier, word composited at the edit?)')
-                elif q[0] not in norm(qc):
-                    fail(f'{sid}: text-card string "{q[0]}" missing from qc-checklist.md')
+                if not re.search(r'overlay:\s*"[^"]+"', r['notes']):
+                    warn(f'{sid}: text-card without an overlay: "<word>" note')
+                if re.search(r'\b(reading|lettering|inscribed)\b', prompt, re.I) and re.search(r'"[^"]+"', prompt):
+                    fail(f'{sid}: text-card asks the image model for text; generate the carrier blank')
+        if empty and ch['status'] == 'beats':
+            print(f"  {ch['file']}: beats, {empty} rows awaiting prompts")
         if typed:
             warn(f"{ch['file']}: block text typed out instead of [[ID]]: " + ', '.join(f'{b} in {n} rows' for b, n in typed.items()))
         if span:

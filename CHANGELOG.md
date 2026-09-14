@@ -6,6 +6,17 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 
 ---
 
+## 2026-09-14 — Lightweight process (branch `process/lightweight`)
+
+Operator direction after Embalmer chapter 1: over-specification was the problem, not the model. Evidence: a 244-cut census of the source channel (`research/channels/the-explainer-boss/shot-census-streetfighter.md`: medium shots 68%, one or two figures 88%, backgrounds dressed 96%, one place held for 4–12 cuts, 22% of holds over 9 s) and a seven-scene recipe test (60-word prompts, medium framing, one or two figures: 12/12 on style; referenced 6/6 and text-only 4/6 on staging).
+
+- **Step 6 is a five-minute cast sheet** (`claude/cast.md`: one costume line per figure as `[[ID]]` blocks, era don'ts, overlays); no bible, no reference images unless QC shows drift. Why: identity in a costume-identity style is one sentence; the bible was 23k words and the references caused most fixes.
+- **Step 7 is a beat sheet**: `scene-prompter` (now Sonnet) segments the whole script once, prompts empty, status `beats`; Modes 1 and 4 removed; `chain-scenes` retired. Why: 36 minutes per two levels was the prompt writing, not the cutting.
+- **Step 8 prompts are written by the driving session** from a recipe (shot, `[[ID]]`, action and emotion, one dressed setting clause repeated across a run, light; one or two figures; no words in the image). Why: the reproduction that worked was hand-written.
+- **`validate-scenes` is QC-lite**: three checks, `validated (n/m)`, one resubmit then a rewrite; a rule only on a third recurrence. `qc-checklist.md` gone; hardening rules' maintenance section rewritten. Why: the per-failure ceremony cost more than the failures.
+- **Text-cards are blank carriers**; the word is drawn at the edit (`place-scenes` 5c, `overlay:` note). Why: the model typeset one word wrong twice in two ways.
+- `gemini-batch.ps1` reads `cast.md` (legacy `prompt-blocks.md` fallback) and refuses rows with no prompt; `check-manifest.py` accepts `beats` chapters and checks overlay notes instead of checklist strings.
+
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 
 Retro + plan: `research/artifacts/retro-2026-09-12-refactor-plan.md`. Branch `refactor/core-pruning`, one commit per group; `main` = pre-refactor baseline.

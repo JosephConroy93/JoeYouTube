@@ -33,7 +33,7 @@ content/
     <slug>/
       video.md
       research-<slug>.md             sole factual authority for the script
-      reference-images/<Name>.jpg    canonical character AND location references
+      reference-images/<Name>.jpg    optional: a reference rendered only after QC shows drift
       voiceovers/<slug>_voice_NN.mp3             raw TTS as delivered (source; never on the timeline); sorted order = playback order
       voiceovers/normalized/<slug>_voice_NN.wav  the timeline copy: −16 LUFS, true peak ≤ −1.5 dBFS, 48 kHz, dual-mono stereo
       hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)
@@ -44,11 +44,9 @@ content/
       _archive/                          disposables swept by close-video (never auto-deleted)
       claude/
         script.md
-        character-bible.md           characters and recurring locations
-        prompt-blocks.md             the text each [[ID]] token expands to at submit
+        cast.md                      cast sheet: one costume line per figure ([[ID]] blocks), era don'ts, overlays
         scene-prompts.md             index: chapter → file → range → status
         scene-prompts/<chapter>.md   ≤25 scenes per file; filenames come from the index
-        qc-checklist.md              per-video specifics only (locks, era list, text-card strings)
         batch-log.md
         voiceover-segments/<slug>_voice_NN.txt       exact text sent to TTS
         transcripts/<slug>_voice_NN.alignment.json   TTS character timestamps (whisper JSON uses the same stem)
@@ -90,37 +88,43 @@ A key/value table. Keys:
 ## Scene-prompt manifest
 
 Index (`scene-prompts.md`): `| chapter | file | scenes | status |` with status
-`planned` or `written`. Chapter file columns:
+`planned` → `beats` (rows and bookmarks, prompts empty) → `written` (prompts
+in). Chapter file columns:
 
 `| scene_id | script_bookmark | scene_type | content_prompt | style | characters_present / reference_images | notes |`
 
 - `scene_id` = `NNN_<kebab-slug>`; its image is `scene-generation/<scene_id>.jpg`.
-- `scene_type` = `illustrated` or `text-card`.
+- `scene_type` = `illustrated`, or `text-card`: a blank carrier object whose
+  word (`overlay: "<word>"` in `notes`) is drawn at the edit, never by the
+  image model.
 - `script_bookmark` = the verbatim script text the scene covers (parse the
   cell by column boundary, never by quote pair).
 - `style` = a bare style-bible entry name; never expanded text.
-- `content_prompt` may carry `[[ID]]` tokens from `prompt-blocks.md`; the
-  full text sent is `gemini-batch.ps1 -Action expand`'s output.
+- `content_prompt` is empty at `beats`; written, it is 50–80 words with
+  `[[ID]]` tokens from `cast.md`; the full text sent is `gemini-batch.ps1
+  -Action expand`'s output. `notes` holds the beat (≤12 words).
 - Chain groups and scene-specific QC flags go in `notes`.
 - `check-manifest.py` (in `generate-scenes/scripts/`) passes with no FAIL
   before any chapter is submitted.
 
-## `prompt-blocks.md`
+## `cast.md`
 
-`| block | text | guard |`, one row per bible entry (plus variants and
-`_closing`), written by scene-prompter.
+The cast sheet. A table `| block | text | guard |`, one row per figure
+(`YOU-L1`, `YOU-L2`, `FATHER`; `ID.variant` binds to `ID`'s reference), an
+optional row per recurring setting (`YARD`), and `_closing`; then a short
+list of era don'ts and an overlays table `| scene | text |`. Written by hand
+in Step 6; `gemini-batch.ps1` reads the table (falls back to a legacy
+`prompt-blocks.md`).
 
-- `block` = the bible ID (`CH-01a`, `LOC-02`), or `ID.variant` for a second
-  wording of the same entry (`CH-01a.13`), which binds to `ID`'s reference.
-- `text` = the noun phrase, `{ref}`, then the locked description in
-  parentheses: `the tall man{ref} (…)`. `{ref}` becomes ` shown in the
-  <Nth> attached reference image` when the row attaches that ID, else
-  nothing, so one block serves referenced and text-lock-only rows.
-- `guard` = the attributes to preserve, as a possessive phrase (`the tall
-  man's white kilt with its madder-red hem border`). The guards of every
-  block a row uses are joined into one preservation sentence.
-- `_closing` = the style's figure lines, appended to every `illustrated` row
-  sentence by sentence, skipping any sentence the prompt already holds.
+- `text` = the noun phrase, `{ref}`, then the costume or setting in a dozen
+  words: `the tall narrow man{ref}, bald egg head, long white kilt with a
+  broad madder-red hem border and red belt, no sash`. `{ref}` becomes
+  ` shown in the <Nth> attached reference image` when the row attaches that
+  ID, else nothing.
+- `guard` = the attributes to preserve, as a possessive phrase; the guards
+  of every block a row uses are joined into one sentence at submit.
+- `_closing` = the style's figure line(s), appended to every `illustrated`
+  row sentence by sentence, skipping any the prompt already holds.
 - No `|` inside a cell.
 
 ## `batch-log.md`

@@ -24,8 +24,8 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
 | Timing | `align-scenes` (TTS timestamps, or whisper) |
 | Animated hook | Veo 3.1 via the Gemini API, `generate-hook` (from chapter 1's validated stills) |
-| Character/location bible, scene prompts | `scene-prompter` agent (bible once; prompts one chapter per generation loop) |
-| Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `chain-scenes` for continuity groups; `preview-style` for style choice |
+| Cast sheet, beat sheet, prompts | cast sheet by hand (Step 6); `scene-prompter` beat sheet (Step 7); prompts by the driving session from the recipe (Step 8) |
+| Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
 | Thumbnail | Gemini image generation; VidIQ for technical checks only |
 | Close-out | `close-video` |
@@ -138,88 +138,58 @@ factual authority.
 Hook clips (Step 9) are cut to the measured narration beats, never
 generated before the voiceover exists.
 
-## Step 6 — Visual dressing pass 🟡
+## Step 6 — Cast sheet 🟡 (five minutes, hard cap)
 
-**Scenes are there to look good.** Narration stays strictly sourced; the
-image does not have to be a reconstruction. This pass gathers what makes
-the world *visually rich and recognisable*: colour, textiles, lamps and
-light, decoration, markets, plants, animals, weather, crowds, the iconic
-things a viewer associates with the setting. Where the true record is plain,
-dress it anyway, as a film production designer would.
+Write `claude/cast.md` from the research file's visual notes and the
+script: one line per figure who recurs (`YOU-L1` … per rung stage, then
+at most three others), each a costume in a dozen words (garment, colour,
+one marker), a `guard` phrase, and a list of at most five era don'ts a
+viewer would notice. **No bible, no reference images.** In a
+costume-identity style the line is the identity. Set `visual_guardrails`
+to the sheet and `status: prompted`.
 
-Scan the locked script for what scenes will show. For each setting and
-recurring figure, append to the research file a short visual-dressing
-addendum: the look to aim for (palette, materials, props, set dressing), and
-a **short list of immersion-breakers only**: anachronisms a general viewer
-would notice (a modern object, the wrong continent's animal, armour from the
-wrong empire). Accuracy nit-picks a general viewer would not notice are not
-guardrails. Visual only: a contradiction with a narration claim is a Step 3
-gap, flag it back. Point `video.md`'s `visual_guardrails` at the addendum.
-Dispatch on Sonnet (routing table).
+If a later chapter's QC shows a principal drifting in a way a viewer would
+notice, render one reference for that stage
+(`channel-farmer/scripts/style-test.ps1 -Prompts`), save it to
+`reference-images/`, and name it in that video's rows; nothing is rendered
+ahead of need.
 
-## Step 7 — Bible and style 🟢 (once per video)
+## Step 7 — Beat sheet 🟡 (once per video)
 
-1. `scene-prompter` Mode 1 (DEFINE): lock every recurring **character,
-   location and companion object** into `claude/character-bible.md`, with
-   `claude/reference-prompts.txt`; render the reference images
-   (`channel-farmer/scripts/style-test.ps1 -Prompts reference-prompts.txt`)
-   into `reference-images/`. Render three first and show them to the
-   operator beside the style's `Source frames` before rendering the rest.
-   Audit every reference (Sonnet) against the bible **and** the source
-   frames, never against other references. Any style deviation is a
-   regenerate, never a watch item.
-2. Choose the style: `preview-style` renders a few real scenes in candidate
-   styles; set `style` in `video.md`.
-3. Set `status: prompted` once the bible and references pass.
+`scene-prompter` Mode 2 on the whole script: index plus chapter files with
+verbatim bookmarks, a ten-word beat per row, hook-shot marks in chapter 1,
+`content_prompt` empty, every chapter `beats`. Run
+`generate-scenes/scripts/check-manifest.py` and send any FAIL back as a
+Mode 3 edit. Under ten minutes.
 
-## Step 8 — Scene prompts and generation, one chapter per loop 🟢
+## Step 8 — Prompts and generation, one level per loop 🟡
 
-**Prompts are never written ahead of the images they learn from.** Each
-chapter runs the whole loop before the next chapter's prompts exist, so a
-failure found in chapter N is a rule in chapter N+1 rather than a revision
-across files already written.
+For each level, in order:
 
-For each chapter, in order:
-
-1. **Prompts**: `scene-prompter` Mode 2 for this chapter only. It re-reads
-   the hardening log first, including every entry added since the last
-   chapter, and writes the chapter file (≤25 scenes) plus index row; the
-   first chapter also writes `claude/qc-checklist.md` (per-video specifics
-   only). Locked subjects are `[[ID]]` tokens from `claude/prompt-blocks.md`.
-   Visual gaps are flagged in `notes`, never invented. Then run
-   `check-manifest.py` on the chapter; a FAIL goes back to Mode 3.
-2. **Submit**: `generate-scenes` for the chapter, or `chain-scenes` when the
-   chapter has consistency-linked groups (same location or held pairing
-   across separate requests; an already-validated image from an earlier
-   chapter can be the seed).
+1. **Prompts** (driving session, from the beat sheet, 50–80 words a row):
+   `[shot] [[ID]] [action and emotion in the style's own vocabulary]
+   [setting in one dressed clause, repeated verbatim across a run of
+   scenes in the same place] [light]`. Rules from the source channel's
+   census (`research/channels/the-explainer-boss/shot-census-streetfighter.md`):
+   medium shots by default, close and wide for emphasis; one or two
+   figures, an extra only when the story needs one and then small and far,
+   a crowd only at a climax; backgrounds dressed even behind close-ups; no
+   words in the image. Chapter 1 also writes `claude/hook-plan.md` from
+   the hook rows. Mark the chapter `written`; run `check-manifest.py`.
+2. **Submit**: `generate-scenes` for the level (references shrunk to 1K;
+   one or two jobs).
 3. **Fetch**: `get-scenes` (one status check; run again later if pending).
-4. **Validate**: `validate-scenes` (four checks in 5–8-image subagent
-   groups, writes `validated (n/m)`). The operator may review the images
-   directly instead; either way the row gets `validated (n/m)`.
-5. **Harden**: every failure gets a full entry in
-   `content/prompt-hardening-log.md` and one line in the watch list of
-   `content/prompt-hardening-rules.md`. A failure that recurs, or that the
-   next chapter's scenes would obviously repeat, is **promoted** into the
-   rules now, before step 1 of the next chapter.
-6. **Fix**: a one-off render fluke → resubmit the scene id via
-   `generate-scenes`; a prompt problem → `scene-prompter` Mode 3 on the
-   failed rows, then resubmit. Nothing retries automatically. A chapter is
-   closed when every row is validated.
+4. **Validate**: `validate-scenes` (three checks, Sonnet, one pass) or the
+   operator's own look; either way the row gets `validated (n/m)`.
+5. **Fix**: a failure is resubmitted once; a second failure gets a
+   rewritten prompt. A failure seen three times in the video earns one
+   rule line in `content/prompt-hardening-rules.md`.
 
-The first chapter is also the video's pilot: look at its images before
-writing chapter 2 at all, not only at the failures.
+The first level is the pilot: the operator looks at all of its images
+before level 2's prompts are written.
 
-**Hook shots**: when `video.md` sets `hook`, chapter 1's prompts also mark
-the hook shots and write `claude/hook-plan.md`. Their stills generate and
-validate with the rest of chapter 1. The hook is Level 1's own opening
-animated, not a separate script.
-
-After the last chapter: `finalize-scenes` (one canonical `<scene_id>.jpg` per
-scene, the rest to `_archive/`, `FINALIZED` footer), then `align-scenes`
-(needs every chapter's `script_bookmark`s and the voiceover), then
-`generate-hook` (Veo animates the approved hook stills, timed from
-`scene-timing.md`; footage is never generated before every scene is
-validated). Set `status: generated`.
+After the last level: `finalize-scenes`, then `align-scenes`, then
+`generate-hook`. Set `status: generated`.
 
 ## Step 9 — Edit 🟢
 
@@ -228,8 +198,9 @@ nothing is done until a rendered or measured artefact proves it.
 
 1. `place-scenes`: decide fps, pre-render every visual to exact-frame
    clips, swap each hook still for its Veo clip, add the 2 s level cards,
-   author and import the FCP7
-   XML, verify by readback and screenshot. Media is staged at the series
+   draw each text-card row's `overlay` word on its blank carrier the
+   same way, author and import the FCP7 XML, verify by readback and
+   screenshot. Media is staged at the series
    `staging_path`, never inside OneDrive.
 2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
    nearly every scene, Elevated on ≤10% with confirmed targets, FX

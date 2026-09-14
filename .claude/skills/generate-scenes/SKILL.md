@@ -26,7 +26,8 @@ shared with `get-scenes`.
   reports no FAIL. A FAIL goes back to `scene-prompter` Mode 3; WARN lines
   are the driving session's call.
 - Every `[[ID]]` token in the selected rows has a block in
-  `claude/prompt-blocks.md`.
+  `claude/cast.md`; every selected row has a `content_prompt` (the chapter
+  is `written`, not `beats`).
 - `GEMINI_API_KEY` set per conventions.md. The script reads it; never echo
   it or write it anywhere.
 

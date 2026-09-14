@@ -58,6 +58,10 @@ verification rule: `.claude/conventions.md`.
    level's first scene. `build_timeline.py` does not yet insert cards: add a
    `--cards` option (or place them by hand on V2) before the first edit of
    such a video.
+5c. **Text-card words**: a `text-card` row's carrier image is generated
+   blank; draw its `overlay: "<word>"` from the row's `notes` (or the cast
+   sheet's overlays table) centred on the carrier with `drawtext`, a
+   hand-lettered font, ink-dark, before pre-rendering the clip.
    Conform each to the project fps with the same ffmpeg form (no `-loop`)
    into `<staging>/hook/`; any `start_frame`/`end_frame` given to the API
    is in **source** frames at the clip's native rate.

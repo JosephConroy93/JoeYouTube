@@ -17,7 +17,8 @@
           scene-generation/<scene_id>.jpg (or .attempt-N.jpg if the file
           exists) and marks the row `fetched`.
   expand  Prints each selected row's content_prompt after prompt-block
-          expansion (claude/prompt-blocks.md). Posts nothing, logs nothing.
+          expansion (claude/cast.md, or a legacy claude/prompt-blocks.md).
+          Posts nothing, logs nothing.
 
   Prompt blocks: a content_prompt token [[ID]] is replaced by that block's
   text; {ref} in the text becomes " shown in the <Nth> attached reference
@@ -175,7 +176,7 @@ function Resolve-Project([string]$ProjectArg, [string]$RootArg) {
         Index      = Join-Path $claude 'scene-prompts.md'
         ChapterDir = Join-Path $claude 'scene-prompts'
         Log        = Join-Path $claude 'batch-log.md'
-        Blocks     = Join-Path $claude 'prompt-blocks.md'
+        Blocks     = if (Test-Path (Join-Path $claude 'cast.md')) { Join-Path $claude 'cast.md' } else { Join-Path $claude 'prompt-blocks.md' }
         RefDir     = Join-Path $videoDir 'reference-images'
         SceneDir   = Join-Path $videoDir 'scene-generation'
         StyleBible = Join-Path $RootArg 'content\styles\style-bible.md'
@@ -491,6 +492,7 @@ function Invoke-Submit($P) {
     $groups = [ordered]@{}
     foreach ($r in $rows) {
         if ([string]::IsNullOrWhiteSpace($r.style)) { Fail "row $($r.scene_id) has an empty style column; stop and ask the operator which style to use." }
+        if ([string]::IsNullOrWhiteSpace($r.content_prompt)) { Fail "row $($r.scene_id) has no content_prompt (chapter still at beats); write the prompts first." }
         if ($r.scene_type -notin @('illustrated', 'text-card')) { Fail "row $($r.scene_id): scene_type '$($r.scene_type)' is not illustrated|text-card." }
         $m = if ($Model) { $Model } elseif ($r.scene_type -eq 'text-card') { $DefaultTextCardModel } else { $DefaultIllustratedModel }
         $res = if ($Resolution) { $Resolution } elseif ($r.scene_type -eq 'text-card') { $DefaultTextCardRes } else { $DefaultIllustratedRes }

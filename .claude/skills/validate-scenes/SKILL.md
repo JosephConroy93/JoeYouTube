@@ -1,6 +1,6 @@
 ---
 name: validate-scenes
-description: Per-scene QC of fetched images for one batch-log.md row (or an explicit scene-id list) against the video's qc-checklist.md - four universal checks plus the text-card exact-text rule, read in 5-8-image subagent groups. Writes every failure to the hardening log and sets the row to `validated (n/m)`. Checks only; never retries, resubmits or edits a prompt.
+description: QC-lite of fetched scene images for one level (or an explicit scene-id list) — three coarse checks per image (beat, style, malformed) read in 5–8-image Sonnet groups against the cast sheet and the style's source frames. Sets the batch-log row to `validated (n/m)` with failed ids in notes. Checks only; never retries or edits a prompt.
 ---
 
 # Validate scenes — check only
@@ -10,79 +10,53 @@ Layout, schemas and status words: `.claude/conventions.md`. Project path
 
 ## Prerequisites
 
-- `claude/qc-checklist.md`: locked character and location descriptions,
-  the period-violation list, text-card strings. Read once per run.
 - `claude/batch-log.md` has a row at `fetched`; otherwise say so and stop.
-  Read only the rows in scope (grep by status or batch id), never the whole
-  log; read a scene's `notes` from its chapter row, not the whole chapter file,
-  and its prompt as sent from `gemini-batch.ps1 -Action expand -Project
-  <series>/<slug> -SceneIds <ids>` (rows carry `[[ID]]` tokens).
+  Read only the rows in scope.
+- `claude/cast.md`: costume lines and era don'ts. Read once per run.
 - Images at `scene-generation/<scene_id>.jpg`, or the highest-numbered
-  `<scene_id>.attempt-N.jpg` when one exists; check the latest attempt.
+  `<scene_id>.attempt-N.jpg`; check the latest.
+- The prompt as sent: `gemini-batch.ps1 -Action expand -Project
+  <series>/<slug> -SceneIds <ids>`.
 
 ## Scope
 
 Default: the next `fetched` row; "next N" / "rest" take more, each written
-back separately. An explicit scene-id list checks those ids only
-(`chain-scenes` passes its seeds); a row is written back once every id in
-its `scenes` cell has a verdict, else verdicts go in `notes` and it stays
-`fetched`.
+back separately. An explicit scene-id list checks those ids only.
 
 ## The checks
 
-Coarse pass/fail on the whole image, one verdict per scene:
+One verdict per image, coarse, at the size a viewer sees:
 
-1. **Scene match**: depicts the action and setting of the row's
-   `content_prompt`; catches "something unrelated", not clause-level drift.
-2. **Character and location consistency**: every figure or place with a
-   reference attached reads as its locked reference and shows nothing its
-   locked description forbids.
-3. **Major period or setting violation**: only items on the checklist's
-   list, at a size a viewer would notice. Small-prop marks, incidental
-   texture, anything needing a zoomed crop: out of scope, not logged.
-4. **Nothing malformed**: extra or missing limbs, warped anatomy, garbled
-   faces or hands, nonsensical composition.
-5. **Style holds**: judged against two of the style entry's `Source frames`
-   (attach them to every subagent group), never against earlier renders or
-   approved references, which can carry the same drift. Proportions, head
-   treatment, skin colour and line weight must match the source. A style
-   miss is a FAIL, not a note.
+1. **Beat**: the image shows the action, figures and framing the prompt
+   asked for; catches "something else", not clause-level drift.
+2. **Style**: judged against two of the style entry's `Source frames`
+   (attached to every group), never against earlier renders. For a
+   costume-identity style every figure, background ones included, keeps
+   the head, skin and proportions of the source; a principal keeps their
+   cast line's costume. A tan body or a wrong costume fails; a background
+   figure's small face detail is a note.
+3. **Malformed**: extra or missing limbs, warped anatomy, garbled hands,
+   nonsense composition.
 
-Text-card rows additionally: an exact, character-for-character match to
-the quoted line; no second line or stray marks anywhere on the card.
-
-A row's `notes` (a cameo, a sanctioned override, a chain group) says what
-correct looks like for that scene: context, not a fifth check.
+A `text-card` row passes when its carrier object is blank; the word is
+drawn at the edit.
 
 ## Dispatch
 
-Subagents read the images, 5-8 each, never one long pass; each returns
-per-scene PASS or FAIL, the failed check and a one-line reason. Dispatch
-them on **Sonnet** (routing table in `CLAUDE.md`); escalate a disputed
-scene to Opus, never a whole batch.
+Subagents on **Sonnet**, 5–8 images each, returning per image `PASS` or
+`FAIL | check | one-line reason`, plus framing and figure count. Escalate a
+disputed image to Opus, never a group.
 
 ## Writing results
 
-- Every failure: one entry in `content/prompt-hardening-log.md` (the
-  incident archive) in that file's entry format (what the prompt asked for,
-  what the image showed, which check failed, why it matters), **and** one
-  line in the Watch list of `content/prompt-hardening-rules.md`. A
-  recurrence is noted on the existing entry and its watch-list line.
-- Promotion (the operator's or the driving session's call, never automatic):
-  the watch-list line moves to Rules with the next R-number and the log
-  entry is marked PROMOTED.
-- The row: `status` = `validated (n/m)`, failed ids and checks in `notes`.
-  Any review writes this, an operator's direct review included; a row left
-  at `fetched` reads as unreviewed.
-- Files stay where they are; nothing is deleted, moved or renamed.
+- The row: `status` = `validated (n/m)`, failed ids and reasons in `notes`.
+  An operator's direct review writes the same; a row left at `fetched`
+  reads as unreviewed.
+- A failure is resubmitted once by `generate-scenes`; a second failure goes
+  back to the prompt pass. Nothing retries automatically.
+- The same failure on a third image in one video earns one line in
+  `content/prompt-hardening-rules.md`; nothing is logged per failure.
 
 ## Report
 
-Per scene: PASS, or FAIL with check and reason. Then stop; next steps are
-WORKFLOW Step 8's.
-
-## Boundaries
-
-- Does not fetch (`get-scenes`), retry, resubmit, revise a prompt, or pick
-  a model for a resubmission.
-- Does not promote an attempt or archive anything (`finalize-scenes`).
+Per image: PASS, or FAIL with check and reason. Then stop.
