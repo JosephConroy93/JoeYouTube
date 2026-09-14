@@ -153,8 +153,16 @@ def main():
                 fails.append(f"card {sid[:3]}")
 
     by_id = {s["scene_id"]: s for s in scenes}
+    # the voice as the timeline plays it: each segment starts on a whole frame
     vo = sorted(glob.glob(os.path.join(staging, "voiceovers", "*.wav")))
-    vo_all = np.concatenate([pcm(p) for p in vo])
+    parts, t = [], 0.0
+    for path in vo:
+        data = pcm(path)
+        parts.append((int(round(round(t * fps) * SR / fps)), data))
+        t += len(data) / SR
+    vo_all = np.zeros(max(o + len(d) for o, d in parts), dtype=np.float32)
+    for o, d in parts:
+        vo_all[o: o + len(d)] = d
     for r in read_plan(project):
         s = by_id[r["scene_id"]]
         t0 = s["start_frame"] / fps + r["offset"]
