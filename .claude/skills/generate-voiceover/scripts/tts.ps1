@@ -26,7 +26,7 @@ param(
   [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
   [double] $Speed = 0,                          # ElevenLabs voice_settings.speed (0.7-1.2); 0 = series.md/video.md voice.speed, else 1.0
   [string] $Tag = '',                           # optional test suffix: <slug>_voice_NN_<tag>
-  [string] $VoiceId = '',                       # audition override of voice.id
+  [Alias('VoiceId')] [string] $AuditionVoice = '',   # audition override of voice.id (PowerShell names ignore case, so never $VoiceId)
   [string] $Model = '',                         # audition override of voice.model (e.g. eleven_v3)
   [double] $Stability = -1,                     # voice_settings.stability; -1 = voice.stability from config, else 0.5
   [double] $Style = -1,                         # voice_settings.style; -1 = voice.style from config, else 0
@@ -68,7 +68,7 @@ $vid = Read-ConfigTable (Join-Path $videoDir 'video.md')
 $voiceId    = if ($vid['voice.id'])    { $vid['voice.id'] }    else { $cfg['voice.id'] }
 $voiceModel = if ($vid['voice.model']) { $vid['voice.model'] } else { $cfg['voice.model'] }
 if ($Model) { $voiceModel = $Model }
-if ($VoiceId) { $voiceId = $VoiceId }
+if ($AuditionVoice) { $voiceId = $AuditionVoice }
 if (-not $voiceModel) { $voiceModel = 'eleven_multilingual_v2' }
 if (-not $voiceId -or $voiceId -match '^\*?\(?unset') {
   if ($DryRun) { $voiceId = 'VOICE_ID_UNSET' } else { throw "voice.id is unset in series.md/video.md - audition in the ElevenLabs MCP and record the id first" }
@@ -157,6 +157,8 @@ foreach ($i in $todo) {
     next_text     = $(if ($i -lt $segments.Count - 1) { $segments[$i + 1].Substring(0, [math]::Min(600, $segments[$i + 1].Length)) } else { $null })
     voice_settings = @{ stability = $Stability; similarity_boost = 0.75; style = $Style; use_speaker_boost = $true; speed = $Speed }
   }
+  # eleven_v3 rejects previous_text/next_text
+  if ($voiceModel -like 'eleven_v3*') { $body.Remove('previous_text'); $body.Remove('next_text') }
   $json = $body | ConvertTo-Json -Depth 5 -Compress
   $uri  = "$endpointBase/$voiceId/with-timestamps?output_format=mp3_44100_128"
 
