@@ -1,6 +1,6 @@
 ---
 name: generate-hook
-description: Builds a video's animated cold-open hook with Veo 3.1 image-to-video through the Gemini API — one 4–8 s clip per planned shot from an already-generated still, polled and downloaded by scripts/veo.ps1, then trimmed to the narration beats measured by align-scenes and prefixed with the 2 s black level card. Use at the end of Step 8, after every chapter's scenes are validated and align-scenes has run, before place-scenes.
+description: Builds a video's animated cold-open hook with Veo 3.1 image-to-video through the Gemini API — one 4–8 s clip per planned shot from an already-generated still, polled and downloaded by scripts/veo.ps1, then trimmed to the narration beats measured by align-scenes; each clip replaces its scene's still in place-scenes, which lays the chapter card over the first clip. Use at the end of Step 8, after every chapter's scenes are validated and align-scenes has run, before place-scenes.
 ---
 
 # generate-hook
@@ -14,8 +14,10 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
   chapter; one row per shot:
   `| shot | scene_id | motion_prompt | duration_s | beat |`
   `scene_id` names a validated still in `scene-generation/`; `motion_prompt`
-  describes only what moves (camera push, a figure walking, water, flame,
-  cloth) and never restates the still's content; `duration_s` ∈ {4, 6, 8};
+  finishes the action the still has frozen mid-motion (a torn chain, a
+  thrown cap, seized arms, water, flame, cloth) with one slow camera move,
+  and never restates the still's content; a still of someone standing or
+  walking gives a flat clip, so it goes back to the prompt pass; `duration_s` ∈ {4, 6, 8};
   `beat` is the verbatim script text the shot covers (used to cut it to the
   measured narration).
 - Beat timings: `claude/scene-timing.md`. Runs at the end of Step 8, after

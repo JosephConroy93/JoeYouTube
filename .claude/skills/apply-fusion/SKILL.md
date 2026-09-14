@@ -1,6 +1,6 @@
 ---
 name: apply-fusion
-description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve Studio through the `davinci-resolve` MCP server — Baseline zoom as one Lua batch, Elevated pan/focal zoom per scene. No particle effects. Verifies with a window capture first and an ffmpeg-measured render last. Never imports media, builds timelines, or decides motion.
+description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve Studio through the `davinci-resolve` MCP server — every zoom, focal push and pan as one Lua batch, with a per-scene MCP recipe as the fallback. No particle effects. Verifies with a whole-timeline readback report and ffmpeg-measured range renders, then a full render on the operator's go. Never imports media, builds timelines, or decides motion.
 ---
 
 # apply-fusion
@@ -22,9 +22,14 @@ in the project changes; the plan stays the record of what was applied.
 ## Prerequisites
 
 - Resolve Studio running, the project open, the timeline `place-scenes`
-  built current. `resolve_control get_page` must be non-null — if it is,
+  built current (`timeline set_current` by name: the Lua scripts act on the
+  current timeline). `resolve_control get_page` must be non-null — if it is,
   `open_page edit` first. This skill never imports media or creates
   timelines.
+- If `resolve_control launch` reports Resolve not running and cannot start
+  it, start `Resolve.exe` yourself, wait for its window (the Project Manager
+  title), then retry; the first call after the window appears can still
+  fail once.
 - `resolve_control get_version` → `mcp.version` ≥ **v2.213.2**. Older:
   `git pull` in `tools/davinci-resolve-mcp`, reinstall the venv
   requirements, restart Claude Code.
@@ -36,13 +41,14 @@ in the project changes; the plan stays the record of what was applied.
 
 ## Order of work
 
-1. Parse the plan into Baseline (`In`/`Out`), Elevated (`Pan`, `Focal`),
-   Static (skipped) and sweeps. Sweeps are the operator's (or
-   `TimelineItem.AddTransition` on Resolve 21.1+, proven on one cut first)
-   — not built here.
-2. Prove on one scene: one-record spec through the Lua, capture, inspect.
-3. Baseline batch. 4. Elevated, per scene. 5. Verify; ask before a full
-   render.
+1. Sweeps are the operator's (or `TimelineItem.AddTransition` on Resolve
+   21.1+, proven on one cut first) — not built here. Static rows are skipped.
+2. Prove on a few scenes: an `--only` spec with one In, one Out, one EO, one
+   Focal and one Pan; read `Size` back mid-scene and render that range
+   (`check_render.py`).
+3. The whole batch. 4. Readback report (`report_kb.lua` + `check_kb.py`).
+5. Range renders measured. 6. The full render only on the operator's go,
+   measured the same way over the whole file.
 
 ## Every motion — one Lua batch
 
@@ -64,9 +70,10 @@ in the project changes; the plan stays the record of what was applied.
 - `execute` returns `success: false` **and the script runs** —
   `fusion.RunScript` is non-blocking. Never retry on that flag; check
   `timeline_item_fusion get_comp_count` or the Console.
-- Lua `print()` reaches only Workspace → Console. Read it with
-  `scripts/capture-window.ps1 -Title Resolve` (the Console is its own
-  top-level window titled just `Resolve`).
+- Lua `print()` reaches only Workspace → Console, which the MCP cannot
+  read; `report_kb.lua` writes its findings to a file instead. The batch is
+  finished when the last spec item's `get_comp_count` is 1 (about 4 min for
+  150 scenes).
 - The script wraps each item in `StartUndo`/`EndUndo`, never `comp:Lock()`
   (keyframes play live, vanish from the render).
 - Lua `%b{}` against a whole JSON document matches the outer object and
@@ -114,13 +121,13 @@ Per `conventions.md`: a `success` return or a readback is not proof.
    `python .claude/skills/apply-fusion/scripts/check_kb.py --spec <spec> --report <tsv>`:
    every spec scene has its Transform with the right end values and no
    mid-scene overshoot, every Static item has none.
-1. **Capture first, render last.** `scripts/capture-window.ps1 -OutPath
-   <staging>\check.png` shows the Inspector values, keyframe diamonds and
-   the `XYPath` line without rendering. **Multi-comp trap**: the Fusion GUI
-   shows whichever comp a human last opened, not the API's, and ignores
-   `timeline.set_current`. `fusion_comp` without `comp_name` targets the
-   real comp; `load_comp` with an unknown name silently creates an empty
-   one — `get_comp_names` first, cross-check with `get_tool_list`.
+1. **Looking at one comp by hand** (optional): `scripts/capture-window.ps1
+   -OutPath <staging>\check.png` (untested) shows the Inspector values.
+   **Multi-comp trap**: the Fusion GUI shows whichever comp a human last
+   opened, not the API's, and ignores `timeline.set_current`. `fusion_comp`
+   without `comp_name` targets the real comp; `load_comp` with an unknown
+   name silently creates an empty one — `get_comp_names` first,
+   cross-check with `get_tool_list`.
 2. **Render ranges for confirmation** (`render set_settings` MarkIn /
    MarkOut → `add_job` → `start` → `verify_output`): the hook and first
    level card, a stretch with a pan, a focal and an SFX, and the last scene.

@@ -69,9 +69,9 @@ narration, and the first row starts at the chapter's first spoken words.
 
 ### Hook shots
 
-When `video.md` sets `hook`, mark the scenes covering the opening ~30 s of
-narration after the first callout as `hook: shot 1…N` (≤8), each an
-`illustrated` scene with something that can move. The prompt pass writes
+When `video.md` sets `hook`, mark the scenes covering the opening ~20 s of
+narration (the prologue when there is one) as `hook: shot 1…N` (≤8), each an
+`illustrated` scene whose beat is a physical action in progress. The prompt pass writes
 `claude/hook-plan.md` from these rows.
 
 ### Self-check

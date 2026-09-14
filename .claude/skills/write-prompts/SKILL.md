@@ -84,14 +84,18 @@ shots and crowds bunched where the story peaks, not spread for variety.
   time in three. Settings and objects never get a reference.
 - Never more than three references on a row.
 
-## Hook (chapter 1 only)
+## Hook (the first chapter file: the prologue when there is one)
 
 Hook rows are **medium or close shots**, never wide: the hook sells a
 face and a question, not a place (the establishing wide comes after the
-hook). For each `hook: shot N` row write one `claude/hook-plan.md` row (schema in
-conventions.md): `motion_prompt` says only what moves and any emotion,
-allows the mouth to move, asks for one slow constant camera move, never an
-action the still already shows; `duration_s` 4, 6 or 8; `beat` = the
+hook). Each hook still **freezes an action mid-motion**: the chain half torn
+from the neck, the cap leaving the hand, arms seized, papers in the air,
+sparks, water, flame; never a figure standing, walking or doing quiet work,
+which animates as nothing happening. For each `hook: shot N` row write one
+`claude/hook-plan.md` row (schema in conventions.md): `motion_prompt`
+finishes the action the still has started and adds any emotion, allows the
+mouth to move, asks for one slow constant camera move, and never restarts
+an action the still has already completed; `duration_s` 4, 6 or 8; `beat` = the
 bookmark. A hook row re-prompted later gets its plan row rewritten to the
 new still.
 

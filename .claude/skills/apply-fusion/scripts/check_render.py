@@ -12,8 +12,9 @@ The render must start at timeline frame --mark-in. Checks, each printed with its
            (In/Out/Focal/Pan) must change (SSIM < 0.97); a Static still must not (> 0.99);
            hook clips are reported only. Level-card scenes are sampled after the card.
   cards    every level card in range: mean luma of its middle frame < 0.15
-  sfx      every sfx-plan row in range: the render minus the voiceover (best lag within
-           +-0.1 s) is louder inside the sound's window than in the second before it by 6 dB+
+  sfx      every sfx-plan row in range: the render minus the voiceover, lag and gain fitted on
+           the neighbouring second (before or after) that carries more voice, is louder inside
+           the sound's window than in that second by 6 dB+
 Exits non-zero naming every failed check. A metric proves change, not the right change:
 still look at the frames.
 """
@@ -88,6 +89,7 @@ def main():
     ap.add_argument("--mark-in", type=int, required=True)
     ap.add_argument("--mark-out", type=int)
     ap.add_argument("--lufs", type=float, help="expected integrated LUFS of the range (the voice file's, same span)")
+    ap.add_argument("--skip-motion", action="store_true", help="skip the per-scene motion and card checks")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -125,7 +127,7 @@ def main():
         fails.append("audio level or channels")
 
     cards = {os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(staging, "cards", "*.mp4"))}
-    for s in scenes:
+    for s in ([] if a.skip_motion else scenes):
         sid, s0, nf = s["scene_id"], s["start_frame"], s["frames"]
         if s0 < m_in or s0 + nf - 1 > m_out:
             continue
@@ -159,18 +161,28 @@ def main():
         dur = min(r["dur"] or 2.0, s["frames"] / fps - r["offset"])
         if t0 - 1.0 < m_in / fps or t0 + dur > (m_out + 1) / fps:
             continue
-        span0, span1 = t0 - 1.0, t0 + dur
+        span0, span1 = t0 - 1.0, min(t0 + dur + 1.0, (m_out + 1) / fps)
         rend = pcm(a.render, span0 - m_in / fps, span1 - span0)
         ref_full = vo_all[int((span0 - 0.1) * SR): int((span1 + 0.1) * SR)]
-        head, L = rend[:SR], len(rend) + int(0.2 * SR)
-        corr = np.fft.irfft(np.fft.rfft(ref_full[:L], n=L) * np.conj(np.fft.rfft(head, n=L)), n=L)
+        # calibrate lag and gain on whichever neighbouring second carries more voice:
+        # a near-silent second cancels to nothing and proves little
+        win0, win1 = SR, int((t0 + dur - span0) * SR)
+        before_e = db(vo_all[int(span0 * SR): int(span0 * SR) + SR])
+        after_e = db(vo_all[int((t0 + dur) * SR): int((t0 + dur) * SR) + SR]) if len(rend) - win1 >= SR else -120.0
+        c0 = 0 if before_e >= after_e else win1
+        cal = rend[c0: c0 + SR]
+        L = SR + int(0.2 * SR)
+        seg = ref_full[c0: c0 + L]
+        corr = np.fft.irfft(np.fft.rfft(seg, n=L) * np.conj(np.fft.rfft(cal, n=L)), n=L)
         k = int(np.argmax(corr[: int(0.2 * SR)]))
         ref = ref_full[k: k + len(rend)]
-        g = float(np.dot(head, ref[:SR]) / (np.dot(ref[:SR], ref[:SR]) + 1e-12))
-        res = rend[: len(ref)] - g * ref
-        before, inside = db(res[: SR]), db(res[SR:])
-        ok = inside - before >= 6
-        print(f"sfx     {'ok ' if ok else 'BAD'} {r['scene_id'][:3]} residual {inside:.1f} dB in window vs {before:.1f} dB before")
+        n_ok = min(len(rend), len(ref))
+        g = float(np.dot(cal, ref[c0: c0 + SR]) / (np.dot(ref[c0: c0 + SR], ref[c0: c0 + SR]) + 1e-12))
+        res = rend[:n_ok] - g * ref[:n_ok]
+        side, inside = db(res[c0: c0 + SR]), db(res[win0: min(win1, n_ok)])
+        ok = inside - side >= 6
+        print(f"sfx     {'ok ' if ok else 'BAD'} {r['scene_id'][:3]} residual {inside:.1f} dB in window vs {side:.1f} dB "
+              f"{'before' if c0 == 0 else 'after'} (voice there {max(before_e, after_e):.1f} dB)")
         if not ok:
             fails.append(f"sfx {r['scene_id'][:3]}")
 

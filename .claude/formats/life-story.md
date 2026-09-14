@@ -23,9 +23,11 @@ A companion, not a documentary voice. Hedges are dramatised in-scene.
 
 ## Opening
 
-- Cold open inside a moment, not at birth.
-- The hook question (the open loop the ending pays off) lands in the
-  **first 8 seconds** of narration.
+- Cold open inside a moment, not at birth. A **prologue** is allowed: a
+  15–20 s flash-forward to a later chapter's turning point, under a
+  `## Prologue.` heading, then Chapter 1 cuts back to the start.
+- The hook (the stake, then the question the ending pays off) lands within
+  the **first 20 seconds**.
 - One hard, specific, sourced fact early, delivered casually.
 - No CTA before the first reveal; CTA policy comes from `series.md`.
 
@@ -59,7 +61,7 @@ moral. Never an outcome the research leaves unknown.
 
 | Dimension | Points | Floor |
 |---|---|---|
-| Opening, first 30 s: hook question in 8 s (8) · hard sourced fact delivered casually (8) · multiple small open loops (7) · voice established immediately (7) | 30 | 18 |
+| Opening, first 30 s: hook within 20 s (8) · hard sourced fact delivered casually (8) · multiple small open loops (7) · voice established immediately (7) | 30 | 18 |
 | Ending: reversal then cyclical image (8) · lands what outlived them (7) · does not overstate the research (5) | 20 | 12 |
 | Body: escalation holds (7) · chapter names open loops the chapters pay off (6) · personal thread carried (6) · pacing varies (6) | 25 | — |
 | Voice: second-person present sustained (5) · dry not portentous (5) · legends told as stories in-scene, never as fact or as meta-commentary (5) | 15 | — |

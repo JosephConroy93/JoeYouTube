@@ -131,6 +131,12 @@ from more beats, never padding; if the research can't support the target,
 write the honest shorter script and say so in the handoff notes. CTA: none
 unless `series.md` says otherwise, and never before the first reveal.
 
+When `video.md` sets an animated `hook`, the first ~20 s of narration become
+4–6 image-to-video shots. Write those lines as moments of **visible physical
+action** a still can catch mid-motion (a chain torn from a neck, a cap
+thrown, guards seizing arms, papers scattering, torches on water), one
+moment per sentence, never a figure standing, working quietly or walking.
+
 ### Output
 
 Write to `content/<series>/<slug>/claude/script.md` with a closing
