@@ -216,6 +216,13 @@ foreach ($i in $todo) {
   if (-not (Test-Path $wav)) { throw "normalise failed for $label" }
   $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
   $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
+  if ([math]::Abs([double]$chk + 16) -gt 0.3) {
+    # second pass: the measured output misses the target (eleven_v3 lands ~1 dB low), so correct the gain once
+    $gain = [math]::Round($gain + (-16 - [double]$chk), 2)
+    $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+    $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
+    $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
+  }
   $tm = [regex]::Matches($check, 'Peak:\s+(-?[\d.]+) dBFS'); $tp = $tm[$tm.Count - 1].Groups[1].Value
   $lm = [regex]::Matches($check, 'LRA:\s+(-?[\d.]+) LU');     $lra = $lm[$lm.Count - 1].Groups[1].Value
   $rmsOut = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af astats=measure_overall=none:measure_perchannel=RMS_level -f null -"

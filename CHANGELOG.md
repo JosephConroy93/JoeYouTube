@@ -56,6 +56,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **`tts.ps1` reads annotated config cells**: `voice.id`/`voice.model` take the leading token and `voice.speed`/`stability`/`style`/`tempo` the leading number, so a note after a value no longer aborts the run. Why: the first full v3 run failed on `1.10 (operator …)`.
 - **Extras get a per-video reference in period dress** (WORKFLOW Steps 0 and 6, write-prompts, conventions, Eggline entry): `Extra-<Role>.jpg` rendered from the `EXTRA` cast line; the style-level stock extra is dropped. Why: the stock extra wore an Egyptian white kilt against mudbrick, which would pull kilts into a Tudor video; operator: a real costume, not a white towel.
 - **`wpm_measured` per video** (`check-manifest.py`, `scene-prompter`, conventions): `video.md` overrides the series pace. Why: the Cromwell narration on `eleven_v3` at tempo 1.10 runs well under the series' 169 wpm, so bands at 169 would plan scenes that run long on screen.
+- **`tts.ps1` second loudness pass**: when the normalised WAV misses −16 LUFS by more than 0.3 dB, the gain is corrected once from the measured output. Why: every `eleven_v3` segment landed at −16.9 to −17.3 LUFS on a single pass (segment 5 re-run: −16.9 → −16.4).
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 
