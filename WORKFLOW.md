@@ -204,15 +204,20 @@ nothing is done until a rendered or measured artefact proves it.
    `staging_path`, never inside OneDrive.
 2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
    nearly every scene, Elevated on ≤10% with confirmed targets, FX
-   suggestions capped at 5, Static only on text-cards, a black sweep on
-   about 1 in 10 beat boundaries. **The operator edits the plan** — pacing
-   and emphasis stay human.
+   suggestions capped at 5, Static only on text-cards, no transitions
+   (`video.md`'s `transitions` turns black sweeps on, for chapter ends,
+   once proven on the locked Resolve version). **The operator edits the
+   plan** — pacing and emphasis stay human.
 3. `apply-fusion`: motion and particles from the plan; render-verify each
    effect once and drop any that is invisible.
 4. Grade hook clips only (CDL matched by measurement, per `place-scenes`);
    the body stays ungraded.
-5. SFX and beds from `content/sfx/` (search the metadata TSV, never the
-   filenames; index a new pack with `index-pack.sh` first). Bake levels.
+5. **Spot SFX only**: a short sound for an action on screen (a pot
+   clattering, water splashing, a lamp or fire crackling), a handful per
+   level, placed on the scene that shows it. No ambience beds or loops
+   under narration. Search `content/sfx/`'s metadata TSV, never the
+   filenames; add each sound used to `sfx-index.md` so the library grows
+   from what worked. Bake levels well under the voice.
 6. Render. Measure the render: integrated LUFS **and per-channel RMS**,
    frame spot-checks at hook, title cards and FX scenes. Watch it through.
    Set `status: edited`.

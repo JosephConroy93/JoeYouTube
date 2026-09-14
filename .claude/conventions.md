@@ -83,6 +83,8 @@ A key/value table. Keys:
 | `status` | `concept` → `researched` → `scripted` → `voiced` → `prompted` → `generated` → `edited` → `published` → `closed` |
 | `published_id`, `runtime` | filled at publish / close |
 | `visual_guardrails` | pointer to the research file's visual-reference addenda |
+| `sfx` | the video's sound-effect policy (default: spot effects for on-screen actions only, no ambience beds) |
+| `transitions` | `none` (default) or `sweep` (black sweeps at chapter ends, once proven on the Resolve version in use) |
 | `notes` | anything the next session needs |
 
 ## Scene-prompt manifest

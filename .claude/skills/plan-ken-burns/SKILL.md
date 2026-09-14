@@ -107,7 +107,8 @@ this — their `ease` is a curve shape.
 
 ## Black sweep
 
-About 1 in 10 scenes ends with a ~0.5 s fade to black, placed only at beat
+Only when `video.md` sets `transitions: sweep`; otherwise the column stays
+blank and the summary says "no transitions". When on: about 1 in 10 scenes ends with a ~0.5 s fade to black, placed only at beat
 boundaries — a chapter or act closer, the end of a rank, a line that earns a
 breath — never evenly spaced. Justify each in `note`. Manual in the Resolve
 GUI below Resolve 21.1; on 21.1+ use `TimelineItem.AddTransition` and prove
