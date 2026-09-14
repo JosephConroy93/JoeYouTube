@@ -10,7 +10,9 @@ narration no bookmark covers), the 11 s ceiling and the floor/ceiling band
 shares from series.md's wpm_measured, style cells, reference cells (numbering,
 files on disk, the 5-reference cap, every attachment bound in the prompt),
 [[block]] tokens against cast.md, block text typed out in full, text-card
-overlay notes, mascot leakage and the hook plan. A chapter at `beats` is
+overlay notes, mascot leakage, the hook plan, and the shot spread (first
+word of each prompt) and cast-token count per row against the targets in
+the write-prompts skill. A chapter at `beats` is
 checked for bookmarks and bands only.
 
 FAIL lines block submission (exit 1); WARN lines are for the driving session
@@ -170,6 +172,8 @@ def main():
         counts = []
         typed = {}
         empty = 0
+        shots = {'close': 0, 'medium': 0, 'wide': 0, 'other': 0}
+        figs = {'0': 0, '1-2': 0, '3+': 0}
         for r in rows:
             sid, bm = r['id'].strip('`'), norm(r['bookmark'])
             prompt = r['prompt']
@@ -199,6 +203,11 @@ def main():
                 continue
             if r['style'].strip('`') != style:
                 fail(f"{sid}: style cell '{r['style']}' is not the resolved style '{style}'")
+            if r['type'] == 'illustrated':
+                first = prompt.strip().split()[0].lower() if prompt.strip() else ''
+                shots[first if first in shots else 'other'] += 1
+                n = len(set(re.findall(r'\[\[([A-Za-z_][\w.-]*)\]\]', prompt)))
+                figs['0' if n == 0 else '1-2' if n <= 2 else '3+'] += 1
             if re.search(r'\bSTYLE:|\bNEGATIVE:', prompt):
                 fail(f'{sid}: content_prompt carries STYLE/NEGATIVE text')
             if re.search(r'\{(?!ref\})[^}]*\}', prompt):
@@ -252,6 +261,16 @@ def main():
                     warn(f'{sid}: text-card without an overlay: "<word>" note')
                 if re.search(r'\b(reading|lettering|inscribed)\b', prompt, re.I) and re.search(r'"[^"]+"', prompt):
                     fail(f'{sid}: text-card asks the image model for text; generate the carrier blank')
+        tot = sum(shots.values())
+        if tot and ch['status'] == 'written':
+            pc = lambda k: shots[k] / tot
+            print(f"  {ch['file']} shots: close {pc('close'):.0%}  medium {pc('medium'):.0%}  wide {pc('wide'):.0%}"
+                  f"{'  unclassified ' + str(shots['other']) if shots['other'] else ''}"
+                  f"  | cast tokens per row: none {figs['0']}, 1-2 {figs['1-2']}, 3+ {figs['3+']}")
+            if pc('medium') < 0.5 or pc('wide') > 0.35:
+                warn(f"{ch['file']}: shot spread off target (medium 60-75%, wide 15-25%, close 8-15%)")
+            if figs['3+'] > 0.15 * tot:
+                warn(f"{ch['file']}: {figs['3+']} rows with three or more cast tokens; one or two figures is the norm")
         if empty and ch['status'] == 'beats':
             print(f"  {ch['file']}: beats, {empty} rows awaiting prompts")
         if typed:

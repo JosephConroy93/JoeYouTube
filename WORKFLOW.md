@@ -24,7 +24,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
 | Timing | `align-scenes` (TTS timestamps, or whisper) |
 | Animated hook | Veo 3.1 via the Gemini API, `generate-hook` (from chapter 1's validated stills) |
-| Cast sheet, beat sheet, prompts | cast sheet by hand (Step 6); `scene-prompter` beat sheet (Step 7); prompts by the driving session from the recipe (Step 8) |
+| Cast sheet, beat sheet, prompts | cast sheet by hand (Step 6); `scene-prompter` beat sheet (Step 7); `write-prompts` by the driving session (Step 8) |
 | Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
 | Thumbnail | Gemini image generation; VidIQ for technical checks only |
@@ -144,15 +144,15 @@ Write `claude/cast.md` from the research file's visual notes and the
 script: one line per figure who recurs (`YOU-L1` … per rung stage, then
 at most three others), each a costume in a dozen words (garment, colour,
 one marker), a `guard` phrase, and a list of at most five era don'ts a
-viewer would notice. **No bible, no reference images.** In a
-costume-identity style the line is the identity. Set `visual_guardrails`
-to the sheet and `status: prompted`.
+viewer would notice. **No bible.** In a costume-identity style the line is
+the identity.
 
-If a later chapter's QC shows a principal drifting in a way a viewer would
-notice, render one reference for that stage
-(`channel-farmer/scripts/style-test.ps1 -Prompts`), save it to
-`reference-images/`, and name it in that video's rows; nothing is rendered
-ahead of need.
+Then render **one reference per main character** (each `YOU-*` stage and
+each named recurring figure) straight from its cast line with
+`channel-farmer/scripts/style-test.ps1 -Prompts`, into `reference-images/`;
+glance at the sheet, re-roll a wrong one once, and otherwise let that
+figure run on its line alone. Settings, objects and extras get no
+reference. Set `visual_guardrails` to the sheet and `status: prompted`.
 
 ## Step 7 — Beat sheet 🟡 (once per video)
 
@@ -166,16 +166,10 @@ Mode 3 edit. Under ten minutes.
 
 For each level, in order:
 
-1. **Prompts** (driving session, from the beat sheet, 50–80 words a row):
-   `[shot] [[ID]] [action and emotion in the style's own vocabulary]
-   [setting in one dressed clause, repeated verbatim across a run of
-   scenes in the same place] [light]`. Rules from the source channel's
-   census (`research/channels/the-explainer-boss/shot-census-streetfighter.md`):
-   medium shots by default, close and wide for emphasis; one or two
-   figures, an extra only when the story needs one and then small and far,
-   a crowd only at a climax; backgrounds dressed even behind close-ups; no
-   words in the image. Chapter 1 also writes `claude/hook-plan.md` from
-   the hook rows. Mark the chapter `written`; run `check-manifest.py`.
+1. **Prompts**: `write-prompts`, run by the driving session for this
+   level: the recipe, the shot-spread targets, the reference rule and
+   chapter 1's `hook-plan.md` live in that skill. It ends with
+   `check-manifest.py` clean and the chapter `written`.
 2. **Submit**: `generate-scenes` for the level (references shrunk to 1K;
    one or two jobs).
 3. **Fetch**: `get-scenes` (one status check; run again later if pending).

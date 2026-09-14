@@ -1,0 +1,80 @@
+---
+name: write-prompts
+description: Writes the image prompts for one level of a video's beat sheet — 50–80 words per row from a fixed recipe (shot, cast token, action and emotion, one dressed setting clause held across a run, light), sets each row's reference cell by the reference rule, hits the source channel's shot spread (medium-first, one or two figures, dressed backgrounds, one place per run), writes hook-plan.md for chapter 1, runs check-manifest.py and marks the chapter written. Run by the driving session, never a subagent. Use at WORKFLOW Step 8.1, after the beat sheet exists and before generate-scenes.
+---
+
+# Write prompts — one level at a time
+
+Layout and schemas: `.claude/conventions.md`. Project path `<series>/<slug>`.
+The driving session runs this itself: the prompts are the judgment call in
+the pipeline and they are written from what is on screen in the previous
+level, so nothing is delegated.
+
+## Inputs
+
+- The level's chapter file at status `beats` (rows, bookmarks, beat in
+  `notes`, hook marks), from `claude/scene-prompts.md`.
+- `claude/cast.md`: the `[[ID]]` blocks, era don'ts, overlays.
+- The style entry in `content/styles/style-bible.md`: its emotion and
+  gesture vocabulary and its `Source frames` (glance at two).
+- `content/prompt-hardening-rules.md` (the rules table, one screen).
+- The previous level's validated images, looked at once, for what the
+  model does well and badly with this cast.
+
+## Recipe, per row (50–80 words)
+
+`[shot] [[ID]] [action, then emotion in the style's own marks] [setting: one
+clause, 2–3 props, dressed] [light].`
+
+- **Shot**: `Close shot`, `Medium shot`, `Medium two-shot`, `Wide shot`. The
+  first two words of every prompt, so the spread can be counted.
+- **Figures**: one or two. A third only when the beat needs one, and then
+  small and far, described in six words with the style's head and skin
+  stated. A crowd (six or more) only at the story's climax, and then as a
+  crowd, not five individuals.
+- **Setting**: one clause. Consecutive rows in the same place reuse the
+  clause **verbatim**; change angle, action and figure count instead of the
+  room. Dressed even behind a close-up (a shelf of jars, a hanging cloth).
+  A recurring place may be a `[[SETTING]]` block in the cast sheet.
+- **Emotion** in the style's vocabulary only (Eggline: brow angle, mouth
+  line, sweat drop, tear, blush marks); never "looks sad".
+- **No words in the image.** A `text-card` row describes its carrier blank;
+  the word is in `overlay:` and drawn at the edit.
+- Nothing from the bible or research beyond the cast line; the narration
+  carries the facts, the image carries the atmosphere.
+
+## Shot spread (from the source channel's census)
+
+Targets per level, counted by `check-manifest.py`: medium 60–75%, wide
+15–25%, close 8–15%; rows with one or two `[[ID]]` tokens ≥ 85%; wide
+shots and crowds bunched where the story peaks, not spread for variety.
+
+## Reference rule
+
+- A main character (`YOU-*`, any named recurring figure) with a file in
+  `reference-images/` is attached on every row it appears in:
+  `imageN = <File> (ID)`, figures in order of importance. Without a file,
+  the cast line carries it.
+- Settings, objects and extras never get a reference.
+- Never more than three references on a row.
+
+## Hook (chapter 1 only)
+
+For each `hook: shot N` row write one `claude/hook-plan.md` row (schema in
+conventions.md): `motion_prompt` says only what moves and any emotion,
+allows the mouth to move, asks for one slow constant camera move, never an
+action the still already shows; `duration_s` 4, 6 or 8; `beat` = the
+bookmark.
+
+## Finish
+
+1. `python .claude/skills/generate-scenes/scripts/check-manifest.py <series>/<slug> --chapter <file>`:
+   no FAIL; read the spread line and adjust shots if a target is missed.
+2. `gemini-batch.ps1 -Action expand … -SceneIds <two rows>`: read two
+   expanded prompts once, as the model will.
+3. Index row → `written`. Hand to `generate-scenes`.
+
+## Boundaries
+
+Does not cut or re-bookmark scenes (`scene-prompter` Mode 3), render a
+reference (Step 6), generate, fetch or QC.
