@@ -1,0 +1,157 @@
+---
+name: apply-fusion
+description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve Studio through the `davinci-resolve` MCP server — every zoom, focal push and pan as one Lua batch, with a per-scene MCP recipe as the fallback. No particle effects. Verifies with a whole-timeline readback report and ffmpeg-measured range renders, then a full render on the operator's go. Never imports media, builds timelines, or decides motion.
+---
+
+# apply-fusion
+
+Invocation: `<series>/<slug>` — see `.claude/conventions.md`.
+
+## Reads and writes
+
+Under `content/<series>/<slug>/`:
+
+- `claude/ken-burns-plan.md` — `| # | scene_id | dur | zoom | ease |
+  transition | note |`. Coordinates are top-left fractions; **this skill
+  does the Y-flip, `fusion_y = 1 − py`**.
+- `series.md` / `video.md` — fps, `staging_path`.
+
+Writes `<staging_path>\ken-burns-spec.json` (the batch input). Nothing else
+in the project changes; the plan stays the record of what was applied.
+
+## Prerequisites
+
+- Resolve Studio running, the project open, the timeline `place-scenes`
+  built current (`timeline set_current` by name: the Lua scripts act on the
+  current timeline). `resolve_control get_page` must be non-null — if it is,
+  `open_page edit` first. This skill never imports media or creates
+  timelines.
+- If `resolve_control launch` reports Resolve not running and cannot start
+  it, start `Resolve.exe` yourself, wait for its window (the Project Manager
+  title), then retry; the first call after the window appears can still
+  fail once.
+- `resolve_control get_version` → `mcp.version` ≥ **v2.213.2**. Older:
+  `git pull` in `tools/davinci-resolve-mcp`, reinstall the venv
+  requirements, restart Claude Code.
+- Keyframes go through `fusion_comp` only. `timeline_item` keyframe
+  actions do not exist on the live object — never call them.
+- `scripts/capture-window.ps1` is untested; prove any change to
+  `scripts/apply_baseline.lua` on one scene of each motion type before a
+  batch.
+
+## Order of work
+
+1. Sweeps are the operator's (or `TimelineItem.AddTransition` on Resolve
+   21.1+, proven on one cut first) — not built here. Static rows are skipped.
+2. Prove on a few scenes: an `--only` spec with one In, one Out, one EO, one
+   Focal and one Pan; read `Size` back mid-scene and render that range
+   (`check_render.py`).
+3. The whole batch. 4. Readback report (`report_kb.lua` + `check_kb.py`).
+5. Range renders measured. 6. The full render only on the operator's go,
+   measured the same way over the whole file.
+
+## Every motion — one Lua batch
+
+- Spec: `python .claude/skills/apply-fusion/scripts/plan_to_spec.py
+  <series>/<slug> --fps N --out <staging>\ken-burns-spec.json [--only
+  006,012]`. Records are flat: `{scene_id, frames, ease, size_start,
+  size_end, center_x, center_y}` plus `pan, cx0, cy0, cx1, cy1` for a pan.
+  `In` = 1.0 → 1.15, `Out` = 1.15 → 1.0 about the centre; `Focal` = pivot
+  at the target, 1.0 → 1.2; `Pan` = static Size 1.2 with `Center`
+  keyframed on an XYPath. Static rows are skipped.
+- Copy the Lua into `script_plugin path Edit` with `SPEC_PATH` set to the
+  spec (a file copy, not `install`, keeps the source out of the
+  conversation), then `script_plugin execute`.
+- Spline handles in `SetKeyFrames` are `{time, value}` **offsets from their
+  key**; absolute points throw the curve past its end value. Read `Size`
+  back mid-scene (`get_input` with `time`) on one In, one Out and one EO
+  scene before trusting a batch.
+- Camera travelling right = `Center.x` falling (the image slides left).
+- `execute` returns `success: false` **and the script runs** —
+  `fusion.RunScript` is non-blocking. Never retry on that flag; check
+  `timeline_item_fusion get_comp_count` or the Console.
+- Lua `print()` reaches only Workspace → Console, which the MCP cannot
+  read; `report_kb.lua` writes its findings to a file instead. The batch is
+  finished when the last spec item's `get_comp_count` is 1 (about 4 min for
+  150 scenes).
+- The script wraps each item in `StartUndo`/`EndUndo`, never `comp:Lock()`
+  (keyframes play live, vanish from the render).
+- Lua `%b{}` against a whole JSON document matches the outer object and
+  yields one phantom record; the script narrows to the `scenes` array and
+  aborts if the parsed count is below `expected`. Keep `expected` honest.
+- Budget ~1.5–3 s per clip; the UI looks busy throughout.
+- The Dynamic Zoom panel is the manual fallback and has exactly three real
+  presets: Out + L, In + EI, Out + EO — the plan is already limited to
+  these.
+
+## Elevated — per scene through the MCP (fallback)
+
+The Lua batch handles Focal and Pan. Use this recipe to fix a single
+scene by hand. Recipe: `timeline_item_fusion add_comp` (**once** per item; `get_comp_names`
+first) → `fusion_comp add_tool Transform "KB"` → `connect` **MediaIn1 → KB
+and KB → MediaOut1**. Missing the first connection keyframes fine and shows
+"No frame available for MediaOut1". Batch independent calls in rounds (all
+`add_comp`s, then all `add_tool`s, …).
+
+- **Focal (x,y)**: `set_input Pivot [x, 1−y, 0]` static; leave `Center`
+  at its default; keyframe `Size` at 0 and the last frame. `Pivot` is the
+  point scaling happens around; `Center` moves the image and zooms toward
+  whatever is already central.
+- **Pan (x1,y1)→(x2,y2)**: static `Size` for headroom first, then
+  `add_keyframe Center time 0 value [x1, 1−y1, 0] modifier "XYPath"`;
+  second keyframe at the last frame, no modifier. `Path` and the default
+  `BezierSpline` fail with `FUSION_ADD_MODIFIER_FAILED`. Horizontal pans
+  keep `y1 = y2`; "no zoom" means no animated `Size`, the static headroom
+  scale stays.
+- **Headroom invariant**: `Size ≥ 1 + 2·max|Center − 0.5|` plus a margin,
+  or a black bar sweeps in. The visible window is `1/Size` of the image —
+  check the source has the resolution.
+- Point3D values (`Center`, `Pivot`) are **bare arrays `[x, y, z]`**. A
+  dict returns `success: true`, is never applied, and `get_input` keeps
+  reporting the old value.
+- `get_keyframes` on an `XYPath` input shows a spurious keyframe at
+  `time: −1000000000` — an extrapolation anchor, ignore it.
+
+## Verification
+
+Per `conventions.md`: a `success` return or a readback is not proof.
+
+0. **Readback of the whole batch.** Copy `scripts/report_kb.lua` into the
+   Edit scripts folder with `REPORT_PATH` set, execute it, then
+   `python .claude/skills/apply-fusion/scripts/check_kb.py --spec <spec> --report <tsv>`:
+   every spec scene has its Transform with the right end values and no
+   mid-scene overshoot, every Static item has none.
+1. **Looking at one comp by hand** (optional): `scripts/capture-window.ps1
+   -OutPath <staging>\check.png` (untested) shows the Inspector values.
+   **Multi-comp trap**: the Fusion GUI shows whichever comp a human last
+   opened, not the API's, and ignores `timeline.set_current`. `fusion_comp`
+   without `comp_name` targets the real comp; `load_comp` with an unknown
+   name silently creates an empty one — `get_comp_names` first,
+   cross-check with `get_tool_list`.
+2. **Render ranges for confirmation** (`render set_settings` MarkIn /
+   MarkOut → `add_job` → `start` → `verify_output`): the hook and first
+   level card, a stretch with a pan, a focal and an SFX, and the last scene.
+   Then
+   ```
+   python .claude/skills/apply-fusion/scripts/check_render.py <series>/<slug> --staging <dir> --fps N --render <mp4> --mark-in F --mark-out F --lufs <voice LUFS over the span>
+   ```
+   checks frame count, loudness and per-channel RMS, SSIM change on every
+   moving scene (a normal move lands 0.4–0.75; ≥ 0.97 means nothing moved),
+   card blackness, and each SFX's presence as the render-minus-voice
+   residual. Then look at a few frames: a metric proves change, not the
+   right change — a sliding black bar also scores as movement.
+   `ExportVideo: true` can fail to stick on the first `set_settings` after
+   an audio-only job: the job reports Complete, `verify_output` says
+   verified, and the file holds audio only (the check script fails it).
+   Send the settings twice before `add_job`.
+3. **Ask before a full render.** The operator says when; render ranges
+   until then.
+
+## Does not
+
+- Import media, create or edit timelines — `place-scenes`.
+- Decide motion — `plan-ken-burns`; the operator overrides on playback.
+- Build particle, glow or other overlay effects.
+- Build sweeps, captions or loudness.
+- Read scene images into context; if the real composition contradicts the
+  plan, trust the image.

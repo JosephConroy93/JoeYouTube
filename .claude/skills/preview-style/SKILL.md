@@ -1,96 +1,55 @@
 ---
 name: preview-style
-description: Generates real, rendered comparison images for a small scene range in a candidate style from content/styles/style-bible.md, so a style can be judged by looking at it applied to real scene content before committing a project to it. Reads content_prompt from an already-written (possibly chapter-split) scene-prompts manifest, merges in the candidate style's STYLE/NEGATIVE block plus the universal-negatives preamble (same stitch generate-scenes uses), and defaults to fast/direct Gemini calls rather than the batch-log flow — real usage found direct calls are the right default for the handful-of-images scale a style preview actually is. Runs validate-scenes' QC against the result. Output is disposable — content/watcher-pov/<slug>/claude/style-previews/<StyleName>-scenes-<range>/, never scene-generation/ or the real manifest. Standalone skill (moved out of scene-prompter's Mode 5, 2026-09-10) for ad-hoc use directly between Joe and the primary session — no agent judgment involved, just a lookup, a text merge, and a generation call.
+description: Renders a small set of an existing manifest's scenes in a named candidate style from the style bible, via direct Gemini calls, so a style can be judged on real scene content before a video commits to it. Output is disposable and never touches the manifest, batch log or scene-generation folder. Use when comparing candidate styles for a video, or checking one before scene-prompter locks it in.
 ---
 
-# Preview style — ad-hoc rendered comparison for a candidate style
+# Preview style — rendered comparison for a candidate style
 
-Generates real images for a small handful of scenes in a named candidate
-style, so a style choice can be judged by looking at actual output rather
-than imagining it from prompt text. Joe's original framing: *"Scenes 1-15
-on Style X for Script X — so I can make a decision how I think it looks
-for that video."*
-
-**Moved out of `scene-prompter`'s Mode 5 into its own skill (2026-09-10)**:
-the job — look up `content_prompt`, merge in a style, generate, QC — never
-needed agent-level creative judgment, and `scene-prompter` structurally
-can't execute it anyway (no Bash in its tool list — confirmed by three real
-failed dispatches the same day, each burning ~70-75k tokens on prep before
-hitting the wall at the actual generation call). A plain skill, with full
-tool access, is the right shape for this.
+Layout, manifest schema and credentials: `.claude/conventions.md`.
 
 ## Inputs
 
-- **Project slug** (e.g. `pharaohs-servant`).
-- **A named style** from `content/styles/style-bible.md` (e.g. `Trueline`).
-- **A scene range** — specific `scene_id`s, not necessarily contiguous or
-  within one chapter file. Find the right `scene-prompts/level-NN.md`
-  file(s) via `scene-prompts.md`'s chapter index; a range spanning more
-  than one chapter file just means reading more than one.
+- Project path `<series>/<slug>`.
+- A style name from `content/styles/style-bible.md`.
+- Scene ids, not necessarily contiguous or within one chapter file.
 
-The manifest must already exist (`scene-prompter` Mode 2 must have run for
-at least the chapters covering the requested range) — this skill never
-segments a script or writes `content_prompt` itself, only reads it.
+The manifest must already exist for the chapters covering those ids; this
+skill reads `content_prompt`, never writes it.
 
-## What it does
+## Procedure
 
-1. **For each requested scene_id, take its `content_prompt` verbatim** and
-   merge in the candidate style's STYLE/NEGATIVE block plus
-   `style-bible.md`'s own "Universal negatives" preamble — the exact same
-   three-piece stitch `generate-scenes`' "Building the request" section
-   uses, just with an explicit style argument standing in for whatever (if
-   anything) the manifest's own `style` column currently holds. **Never
-   writes this merge back into the manifest** — the candidate style here
-   is not a commitment, `scene-prompts.md`'s `style` column stays exactly
-   as it was.
-2. **Generate.** Defaults to **fast/direct individual `generateContent`
-   calls**, not the `generate-scenes`/`get-scenes` batch-log flow — a
-   style preview is typically 3-15 images, well below the scale where
-   batch submission's async overhead earns its keep, and real usage
-   (2026-09-10, three real style previews) confirmed direct calls are
-   faster and simpler to reason about at this size. If a genuinely large
-   preview range is ever needed, the batch-log flow is still available —
-   submit via `generate-scenes` with the style argument override, fetch via
-   `get-scenes`, same as production — but that's the exception, not this
-   skill's default path. Same model selection as `generate-scenes`
-   (`gemini-3.1-flash-image` at 2K for `illustrated` rows needing
-   references, `gemini-3.1-flash-lite-image` for `text-card` rows), same
-   positional reference-image binding.
-3. **Run `validate-scenes`' QC against the result** — a style preview is
-   still a real generation, worth checking for the same content failures
-   (ignored negatives, unconstrained secondary characters) the
-   prompt-hardening log already documents, not just eyeballed for "does
-   the style look right." Failures get logged to
-   `prompt-hardening-log.md` the same way, with the same "no automatic
-   retry" discipline — report and stop, don't resubmit on your own
-   initiative.
+1. **Locate rows.** Read `claude/scene-prompts.md`'s index to find which
+   `scene-prompts/<chapter>.md` file holds each requested id; a range
+   spanning chapters just means reading more than one file.
+2. **Stitch the request** exactly as `generate-scenes`' "Building the
+   request" section: the row's `content_prompt` verbatim, then the candidate
+   style's STYLE and NEGATIVE blocks from the style bible, then the bible's
+   universal-negatives preamble, as one text part. The candidate style
+   stands in for whatever the row's `style` column holds; the manifest is
+   not edited. Attach reference images positionally, in prompt order.
+3. **Generate** with one direct `generateContent` call per scene — not the
+   batch flow; a preview is a handful of images. Use the model and
+   resolution `generate-scenes`' model table assigns to the row's
+   `scene_type`. Read `GEMINI_API_KEY` fresh from the user environment;
+   never print or log it.
+4. **Write** each image to
+   `content/<series>/<slug>/claude/style-previews/<Style>-scenes-<range>/<scene_id>.jpg`.
+   One folder per style/range pair; re-running for another style is the
+   normal way to compare.
+5. **QC by hand.** Apply `validate-scenes`' four checks (scene match,
+   character consistency, major era violations only, nothing malformed) plus
+   the text-card exact-text rule to each image yourself, and say in the
+   report that this is a manual application of that checklist: no
+   `batch-log.md` rows exist for a preview, so the skill is not invoked.
+6. **Log fails** as `validate-scenes` does: a full entry in
+   `content/prompt-hardening-log.md` and one watch-list line in
+   `content/prompt-hardening-rules.md`. Report and stop; no automatic retry.
 
-## Output
+## Boundaries
 
-Real image files at
-`content/watcher-pov/<slug>/claude/style-previews/<StyleName>-scenes-<range>/<scene_id>.jpg`
-— one folder per style/range combination, so two or three candidate styles
-for the same scenes sit side by side as actual images, not prompt text to
-imagine from. **Never touches or overwrites** `scene-prompts.md`,
-`batch-log.md`, or `scene-generation/` — this is disposable comparison
-output, regenerable on demand.
-
-**Running it again for a different style on the same range** is the normal
-way to compare — each call produces its own folder.
-
-## Once a style is chosen from comparison
-
-That's a `scene-prompter` Mode 3 (REVISE) job, not this skill's — ask Mode
-3 to set the real manifest's `style` column (a bare name, never expanded
-text) to the winning style, for the whole project or a range. This skill
-only ever produces throwaway preview images, never touches the production
-manifest or the canonical `scene-generation/` output.
-
-## What this skill does not do
-
-- Does not segment a script or write `content_prompt` — reads an
-  already-written manifest only.
-- Does not commit a style to the manifest — that's a `scene-prompter` Mode
-  3 job, done explicitly, after comparison.
-- Does not retry a failed preview scene automatically — same "report and
-  stop" discipline as `validate-scenes`.
+- Never touches `scene-prompts.md`, any chapter file, `batch-log.md` or
+  `scene-generation/`; output is disposable and regenerable.
+- Never segments a script or writes `content_prompt`.
+- Committing a style is not this skill's job: set `style` in `video.md`,
+  then run `scene-prompter` Mode 3 to populate the manifest's `style` column
+  with the bare name.
