@@ -64,6 +64,7 @@ A key/value table. Keys:
 | `series`, `display_name` | slug and human name |
 | `format` | default format module name |
 | `voice.provider`, `voice.name`, `voice.id`, `voice.model` | TTS voice actually used |
+| `voice.speed`, `voice.stability`, `voice.style` | ElevenLabs voice settings (defaults 1.0, 0.5, 0); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
 | `chapter.unit`, `chapter.heading`, `chapter.file` | e.g. `level`, `Level N. The <Role>.`, `level-NN.md` |

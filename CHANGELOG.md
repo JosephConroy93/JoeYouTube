@@ -46,6 +46,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **`prompt-writer` agent (Opus)**: one level per dispatch, follows `write-prompts` (still the single source of the recipe), returns the spread line and unsure rows; WORKFLOW Step 8 loop now dispatch → submit → bounded wait → QC → one resubmit → contact sheet → fixes into files before the next dispatch. Why: roadmap Stage 2, so the level loop runs in the background; fixes must live where the next agent reads them.
 - **`validate-scenes/scripts/contact-sheet.py`**: tiles a level's images (latest attempt, gaps shown) for the operator's per-level look. Why: sheets were built ad hoc in chat every level.
 - **Card line per level** (`rank-ladder` nine-level, `script-writer` handoff table): a 3–6 word hook statement for each level card. Why: the operator wants level cards to work as retention loops (cream card, half-hidden still from later in the level); the render itself is built at the next edit.
+- **Voice audition in `tts.ps1`**: `-VoiceId`, `-Model`, `-Stability`, `-Style` overrides for tagged takes; `voice.stability` and `voice.style` config keys (conventions). Why: the next video starts with ElevenLabs testing after Embalmer's delivery was a bit dicey, and stability and style were hard-coded.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 

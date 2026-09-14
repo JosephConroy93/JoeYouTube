@@ -6,6 +6,7 @@
 
 .USAGE
   .\tts.ps1 -Project watcher-pov/my-video [-Segment 3] [-DryRun] [-MaxChars 4500] [-Seed 12345]
+  .\tts.ps1 -Project watcher-pov/my-video -Segment 1 -Tag v3-s05 [-VoiceId <id>] [-Model eleven_v3] [-Stability 0.5] [-Style 0.2] [-Speed 1.05]   # audition take
 
 .STATUS
   Live-tested on one 3,273-character segment (generate + normalise + alignment).
@@ -25,6 +26,10 @@ param(
   [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
   [double] $Speed = 0,                          # ElevenLabs voice_settings.speed (0.7-1.2); 0 = series.md/video.md voice.speed, else 1.0
   [string] $Tag = '',                           # optional test suffix: <slug>_voice_NN_<tag>
+  [string] $VoiceId = '',                       # audition override of voice.id
+  [string] $Model = '',                         # audition override of voice.model (e.g. eleven_v3)
+  [double] $Stability = -1,                     # voice_settings.stability; -1 = voice.stability from config, else 0.5
+  [double] $Style = -1,                         # voice_settings.style; -1 = voice.style from config, else 0
   [int]    $MaxChars = 4500,
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
@@ -62,6 +67,8 @@ $cfg = Read-ConfigTable (Join-Path $seriesDir 'series.md')
 $vid = Read-ConfigTable (Join-Path $videoDir 'video.md')
 $voiceId    = if ($vid['voice.id'])    { $vid['voice.id'] }    else { $cfg['voice.id'] }
 $voiceModel = if ($vid['voice.model']) { $vid['voice.model'] } else { $cfg['voice.model'] }
+if ($Model) { $voiceModel = $Model }
+if ($VoiceId) { $voiceId = $VoiceId }
 if (-not $voiceModel) { $voiceModel = 'eleven_multilingual_v2' }
 if (-not $voiceId -or $voiceId -match '^\*?\(?unset') {
   if ($DryRun) { $voiceId = 'VOICE_ID_UNSET' } else { throw "voice.id is unset in series.md/video.md - audition in the ElevenLabs MCP and record the id first" }
@@ -120,6 +127,14 @@ if ($Speed -eq 0) {
   $cfgSpeed = if ($vid['voice.speed']) { $vid['voice.speed'] } else { $cfg['voice.speed'] }
   $Speed = if ($cfgSpeed) { [double]$cfgSpeed } else { 1.0 }
 }
+if ($Stability -lt 0) {
+  $cfgStab = if ($vid['voice.stability']) { $vid['voice.stability'] } else { $cfg['voice.stability'] }
+  $Stability = if ($cfgStab) { [double]$cfgStab } else { 0.5 }
+}
+if ($Style -lt 0) {
+  $cfgStyle = if ($vid['voice.style']) { $vid['voice.style'] } else { $cfg['voice.style'] }
+  $Style = if ($cfgStyle) { [double]$cfgStyle } else { 0 }
+}
 
 Write-Host ("Segments: {0}  (chars: {1})" -f $segments.Count, (($segments | ForEach-Object Length) -join ', '))
 for ($i = 0; $i -lt $segments.Count; $i++) {
@@ -138,7 +153,7 @@ foreach ($i in $todo) {
     seed          = $Seed
     previous_text = $(if ($i -gt 0) { $segments[$i - 1].Substring([math]::Max(0, $segments[$i - 1].Length - 600)) } else { $null })
     next_text     = $(if ($i -lt $segments.Count - 1) { $segments[$i + 1].Substring(0, [math]::Min(600, $segments[$i + 1].Length)) } else { $null })
-    voice_settings = @{ stability = 0.5; similarity_boost = 0.75; style = 0; use_speaker_boost = $true; speed = $Speed }
+    voice_settings = @{ stability = $Stability; similarity_boost = 0.75; style = $Style; use_speaker_boost = $true; speed = $Speed }
   }
   $json = $body | ConvertTo-Json -Depth 5 -Compress
   $uri  = "$endpointBase/$voiceId/with-timestamps?output_format=mp3_44100_128"
@@ -184,6 +199,6 @@ foreach ($i in $todo) {
 if (-not $DryRun) {
   $total = 0.0
   Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double]((Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$($_.FullName)`"").Trim()) }
-  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed)
+  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style)
   Write-Host "Now: log the voice in voice-register.md and video.md; then scene-prompter Mode 2, then align-scenes --source api."
 }

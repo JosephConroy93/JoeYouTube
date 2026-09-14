@@ -18,8 +18,9 @@ by `scripts/tts.ps1`; this file says what it does and what must be true.
 - `ELEVENLABS_API_KEY` in the user environment (conventions.md). Never in a file.
 
 Stop if the script is not locked, the voice id is unset, or the key is
-missing. Do not pick a voice here; auditioning is done in the hosted
-ElevenLabs MCP and the id is written to `series.md`.
+missing. The operator picks the voice from audition takes (below) or the
+hosted ElevenLabs MCP; the id and settings are written to `series.md` or
+`video.md`.
 
 ## What it does
 
@@ -52,7 +53,10 @@ ElevenLabs MCP and the id is written to `series.md`.
 `--segment NN` regenerates one segment only (same seed). Speed comes from
 `voice.speed` in `video.md` or `series.md` unless `--speed` is given; `--tag
 x` suffixes test takes (`<slug>_voice_NN_x`) so they never overwrite the real
-segment. The raw MP3 is the source of record; only the normalised WAV goes
+segment. **Audition** (Step 5, before the full run): two to four tagged
+takes of segment 1, varying one of `-VoiceId`, `-Model`, `-Stability`,
+`-Style` or `-Speed` per take; the operator listens, and the winner's
+values go into `video.md` as `voice.*` keys so the full run reads them. The raw MP3 is the source of record; only the normalised WAV goes
 to the timeline. `--dry-run` writes
 the segment texts and the request JSON to the scratch dir without calling
 the API.
