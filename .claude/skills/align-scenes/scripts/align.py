@@ -62,7 +62,7 @@ def read_kv_table(path):
 # ----------------------------------------------------------------------------- manifest
 
 SCENE_ID = re.compile(r"^\d{3}_[A-Za-z0-9-]+$")
-ROW_START = re.compile(r"^\|\s*`(\d{3}_[^`]+)`")
+ROW_START = re.compile(r"^\|\s*`?(\d{3}_[A-Za-z0-9-]+)`?\s*\|")   # scene ids with or without backticks
 
 
 def chapter_files(project):
@@ -428,8 +428,10 @@ def main():
     a = ap.parse_args()
 
     project = resolve_project(a.project)
-    fps = a.fps or int(read_kv_table(os.path.join(project, "video.md")).get("fps") or
-                       read_kv_table(os.path.join(os.path.dirname(project), "series.md")).get("fps_default") or 0)
+    # config cells may carry a note after the number ("24 (Veo clips are native 24 fps)")
+    fps_cell = (read_kv_table(os.path.join(project, "video.md")).get("fps") or
+                read_kv_table(os.path.join(os.path.dirname(project), "series.md")).get("fps_default") or "0")
+    fps = a.fps or int(re.match(r"\s*`?(\d+)", fps_cell).group(1))
 
     scenes = load_manifest(project)
     print(f"manifest: {len(scenes)} scenes across {len({s['chapter'] for s in scenes})} chapter files")
