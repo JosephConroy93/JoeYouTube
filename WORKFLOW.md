@@ -27,7 +27,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Cast sheet, beat sheet, prompts | cast sheet by hand (Step 6); `scene-prompter` beat sheet (Step 7); `write-prompts` by the driving session (Step 8) |
 | Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
-| Thumbnail | Gemini image generation; VidIQ for technical checks only |
+| Thumbnail | `make-thumbnail` (scene stills and hook text, no generation); VidIQ for technical checks only |
 | Close-out | `close-video` |
 
 ---
@@ -229,18 +229,22 @@ editorial human — templated structure is a named inauthentic-content trigger.
 
 ## Step 10 — Thumbnail 🟢
 
-After the edit, so a real frame or moment can be used.
+After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
 
-- Template: white/very light background, one consistent protagonist with
-  era-identifying detail, exaggerated emotion, 2–3 words readable at 100 px,
-  one saturated accent, locked layout across videos.
+- Template, locked across videos: the series' cream background; 2–3 hook
+  words stacked on the left in the series font, one line in the accent
+  colour; one scene still from the video as a tilted, outlined card on the
+  right, showing the protagonist's strongest emotion or one striking object
+  the words point at; readable at 168 px wide. Colours and font are
+  `series.md`'s `thumbnail.*` keys.
 - **Thumbnail text is a factual claim.** Check every candidate line against
   the research file's fact-check flags exactly as script lines are checked;
   where the research says "contested", the thumbnail may not resolve it.
   Prefer a differentiated fact the research supports over a competitor's
   stronger inaccurate hook. Text adds the stake, never restates the title.
-- Generate in the video's style with the same reference images.
-  `vidiq_score_thumbnail` is for blur/brightness only, never pass/fail.
+- Make two and upload them as a YouTube Test & Compare pair; record both in
+  `video.md`'s `thumbnail` key. `vidiq_score_thumbnail` is for blur/brightness
+  only, never pass/fail.
 
 ## Step 11 — Publish 🟡
 

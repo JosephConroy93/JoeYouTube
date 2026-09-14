@@ -38,7 +38,7 @@ content/
       voiceovers/normalized/<slug>_voice_NN.wav  the timeline copy: −16 LUFS, true peak ≤ −1.5 dBFS, 48 kHz, dual-mono stereo
       hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)
       hook/shot-NN.mp4               hook clip trimmed to its scene's narration
-      thumbnails/
+      thumbnails/<name>.jpg          make-thumbnail output, with <name>-sizes.jpg (1280 / 360 / 168 px check)
       scene-generation/<scene_id>.jpg    exactly one canonical image per scene after finalize
       scene-generation/_archive/         attempts, superseded, manual-edit sources
       _archive/                          disposables swept by close-video (never auto-deleted)
@@ -73,6 +73,7 @@ A key/value table. Keys:
 | `concepts_location` | `series` or `slug` |
 | `staging_path` | local non-OneDrive path pattern for Resolve media, e.g. `C:\Users\<user>\Videos\<slug>-<fps>` |
 | `fps_default`, `resolution_default` | timeline defaults |
+| `thumbnail.background`, `thumbnail.ink`, `thumbnail.accent`, `thumbnail.font` | the locked thumbnail template read by `make-thumbnail`: hex colours for the ground, the text and the accent line, and a font file path |
 
 ## `video.md`
 
@@ -85,6 +86,7 @@ A key/value table. Keys:
 | `visual_guardrails` | pointer to the research file's visual-reference addenda |
 | `sfx` | the video's sound-effect policy (default: spot effects for on-screen actions only, no ambience beds) |
 | `transitions` | `none` (default) or `sweep` (black sweeps at chapter ends, once proven on the Resolve version in use) |
+| `thumbnail` | the chosen file(s) in `thumbnails/` with the `make-thumbnail` arguments that built them; two names are a Test & Compare pair |
 | `notes` | anything the next session needs |
 
 ## Scene-prompt manifest
