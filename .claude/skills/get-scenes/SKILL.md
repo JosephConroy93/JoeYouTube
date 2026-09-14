@@ -32,8 +32,8 @@ those ids (`chain-scenes` does this for its seed batch). `fetch -DryRun
 ## Outcomes per row
 
 - `BATCH_STATE_PENDING` or `RUNNING`: `checked_at` updated, status stays
-  `submitted`. One line of output; run again later. Never loop, wait or
-  background a poll.
+  `submitted`. One line of output; run again later. The driving session
+  may wait in the background (below).
 - `BATCH_STATE_SUCCEEDED`: `status` prints READY with the result count.
   `fetch` reads `response.inlinedResponses.inlinedResponses[]`, each
   `{metadata.key, response.candidates[0].content.parts[].inlineData{mimeType,data}}`,
@@ -56,5 +56,8 @@ Nothing about what the images show.
 ## Boundaries
 
 - No judgment on images; that is `validate-scenes`.
-- No polling, waiting or backgrounding.
+- Polling is the driving session's, never the script's: one background
+  loop of `-Action status` every 2 minutes, capped at 40 minutes, that
+  exits when no row is pending; then one `fetch`. Never a tighter
+  interval, never an unbounded loop.
 - No retries, resubmission or prompt changes.
