@@ -257,7 +257,7 @@ or leaving, a genuinely new action. Never cut mid-sentence or mechanically
 on a word count. But narrative change alone forces nothing, and an unbounded
 hold on a still loses the viewer.
 
-**Ceiling: 9 seconds of narration per scene**, no exceptions. A scene that
+**Ceiling: 11 seconds of narration per scene**, no exceptions. A scene that
 would exceed it is cut even when nothing visible changes — find a secondary
 shot (closer framing, a detail insert, a reaction, another angle, a
 `text-card`). **Floor: 4 seconds**; sustained sub-4 s cutting reads as
@@ -271,7 +271,7 @@ word count is the proxy: **words ≈ seconds × `wpm_measured` ÷ 60** from
 |---|---|---|
 | Floor (≤ ~10% of scenes) | 4 | ~11 |
 | Average range (most scenes) | 5–8 | ~14–23 |
-| Ceiling (≤ ~10%, each justified in `notes`) | 9 | ~26 |
+| Ceiling (≤ ~10%, each justified in `notes`) | 11 | ~31 |
 
 The 5–8 s range is a band, not a point to cluster on. Both extremes are
 exceptions, and every ceiling scene says in `notes` why it earns the hold
@@ -483,6 +483,6 @@ references.
   re-invented per scene.
 - The bookmark is not optional.
 - Not every beat needs a new scene, but every scene has a ceiling: hold
-  while nothing changes, up to 9 seconds; past that the hold is the problem.
+  while nothing changes, up to 11 seconds; past that the hold is the problem.
 - A gap in the research, an unlocked location or an ungenerated reference
   is information, not an obstacle: flag it, never paper over it.

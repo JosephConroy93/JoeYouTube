@@ -6,7 +6,7 @@ scene-prompter Mode 2/3 pass and before generate-scenes submits.
 Checks the rules that are counting, matching or lookup, so the prompt writer
 never does them by hand: row format and numbering against the index, the
 per-file row cap, bookmarks verbatim and in order in the script (and any
-narration no bookmark covers), the 9 s ceiling and the floor/ceiling band
+narration no bookmark covers), the 11 s ceiling and the floor/ceiling band
 shares from series.md's wpm_measured, style cells, reference cells (numbering,
 files on disk, the 5-reference cap, every attachment bound in the prompt),
 [[block]] tokens against prompt-blocks.md, block text typed out in full,
@@ -23,7 +23,7 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 ORD = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5, 'sixth': 6, 'seventh': 7, 'eighth': 8}
-CEILING_S, FLOOR_S = 9.0, 4.0          # hard ceiling; floor
+CEILING_S, FLOOR_S = 11.0, 4.0         # hard ceiling; floor
 BAND_LOW_S, BAND_HIGH_S = 5.0, 8.0     # average range; outside it counts toward the band shares
 # every band is compared in whole words, rounded from seconds at wpm_measured, as the agent's table is
 BAND_SHARE = 0.10
@@ -242,7 +242,7 @@ def main():
             if r['type'] == 'text-card':
                 q = re.findall(r'"([^"]+)"', norm(prompt))
                 if not q:
-                    fail(f'{sid}: text-card has no quoted line')
+                    warn(f'{sid}: text-card has no quoted line (blank carrier, word composited at the edit?)')
                 elif q[0] not in norm(qc):
                     fail(f'{sid}: text-card string "{q[0]}" missing from qc-checklist.md')
         if typed:
