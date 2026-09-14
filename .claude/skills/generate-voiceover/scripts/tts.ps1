@@ -66,8 +66,11 @@ function Read-ConfigTable([string] $path) {
 }
 $cfg = Read-ConfigTable (Join-Path $seriesDir 'series.md')
 $vid = Read-ConfigTable (Join-Path $videoDir 'video.md')
-$voiceId    = if ($vid['voice.id'])    { $vid['voice.id'] }    else { $cfg['voice.id'] }
-$voiceModel = if ($vid['voice.model']) { $vid['voice.model'] } else { $cfg['voice.model'] }
+# config cells may carry a note after the value ("1.10 (operator pick)"): take the leading token or number
+function Cfg-Token([string] $v) { if ($v -and $v.Trim() -match '^(\S+)') { return $matches[1] } else { return '' } }
+function Cfg-Num([string] $v, [double] $default) { if ($v -and $v -match '^\s*(-?\d+(?:\.\d+)?)') { return [double]$matches[1] } else { return $default } }
+$voiceId    = Cfg-Token $(if ($vid['voice.id'])    { $vid['voice.id'] }    else { $cfg['voice.id'] })
+$voiceModel = Cfg-Token $(if ($vid['voice.model']) { $vid['voice.model'] } else { $cfg['voice.model'] })
 if ($Model) { $voiceModel = $Model }
 if ($AuditionVoice) { $voiceId = $AuditionVoice }
 if (-not $voiceModel) { $voiceModel = 'eleven_multilingual_v2' }
@@ -128,20 +131,20 @@ for ($i = 0; $i -lt $segments.Count; $i++) {
 }
 if ($Speed -eq 0) {
   $cfgSpeed = if ($vid['voice.speed']) { $vid['voice.speed'] } else { $cfg['voice.speed'] }
-  $Speed = if ($cfgSpeed) { [double]$cfgSpeed } else { 1.0 }
+  $Speed = Cfg-Num $cfgSpeed 1.0
 }
 if ($Stability -lt 0) {
   $cfgStab = if ($vid['voice.stability']) { $vid['voice.stability'] } else { $cfg['voice.stability'] }
-  $Stability = if ($cfgStab) { [double]$cfgStab } else { 0.5 }
+  $Stability = Cfg-Num $cfgStab 0.5
 }
 if ($Tempo -eq 0) {
   $cfgTempo = if ($vid['voice.tempo']) { $vid['voice.tempo'] } else { $cfg['voice.tempo'] }
-  $Tempo = if ($cfgTempo) { [double]$cfgTempo } else { 1.0 }
+  $Tempo = Cfg-Num $cfgTempo 1.0
 }
 if ($Tempo -lt 0.8 -or $Tempo -gt 1.3) { throw "Tempo $Tempo outside 0.8-1.3" }
 if ($Style -lt 0) {
   $cfgStyle = if ($vid['voice.style']) { $vid['voice.style'] } else { $cfg['voice.style'] }
-  $Style = if ($cfgStyle) { [double]$cfgStyle } else { 0 }
+  $Style = Cfg-Num $cfgStyle 0
 }
 
 Write-Host ("Segments: {0}  (chars: {1})" -f $segments.Count, (($segments | ForEach-Object Length) -join ', '))
