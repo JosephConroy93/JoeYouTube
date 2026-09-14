@@ -30,7 +30,8 @@ Layout: `.claude/conventions.md`. Executed by `scripts/close-video.ps1`.
 **Both** end with the manual checklist: delete `_archive/` when sure;
 confirm channel About copy; confirm the description pattern; add the
 title to the competitor index; note the published id in
-`voice-register.md`.
+`voice-register.md`; add the video's rough costs (images, hook, voice share,
+other) and total to `content/<series>/creator-costs.md`.
 
 ## Rules
 
