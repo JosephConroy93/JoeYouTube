@@ -30,6 +30,7 @@ param(
   [string] $Model = '',                         # audition override of voice.model (e.g. eleven_v3)
   [double] $Stability = -1,                     # voice_settings.stability; -1 = voice.stability from config, else 0.5
   [double] $Style = -1,                         # voice_settings.style; -1 = voice.style from config, else 0
+  [double] $Tempo = 0,                          # post-generation time-stretch (pitch kept), e.g. 1.10 for eleven_v3, which ignores speed; 0 = voice.tempo from config, else 1
   [int]    $MaxChars = 4500,
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
@@ -133,6 +134,11 @@ if ($Stability -lt 0) {
   $cfgStab = if ($vid['voice.stability']) { $vid['voice.stability'] } else { $cfg['voice.stability'] }
   $Stability = if ($cfgStab) { [double]$cfgStab } else { 0.5 }
 }
+if ($Tempo -eq 0) {
+  $cfgTempo = if ($vid['voice.tempo']) { $vid['voice.tempo'] } else { $cfg['voice.tempo'] }
+  $Tempo = if ($cfgTempo) { [double]$cfgTempo } else { 1.0 }
+}
+if ($Tempo -lt 0.8 -or $Tempo -gt 1.3) { throw "Tempo $Tempo outside 0.8-1.3" }
 if ($Style -lt 0) {
   $cfgStyle = if ($vid['voice.style']) { $vid['voice.style'] } else { $cfg['voice.style'] }
   $Style = if ($cfgStyle) { [double]$cfgStyle } else { 0 }
@@ -178,7 +184,21 @@ foreach ($i in $todo) {
   $resp = Invoke-RestMethod -Method Post -Uri $uri -Headers @{ 'xi-api-key' = $apiKey; 'Content-Type' = 'application/json' } -Body ([Text.Encoding]::UTF8.GetBytes($json))
   if (-not $resp.audio_base64) { throw "No audio_base64 in response for $label" }
   [IO.File]::WriteAllBytes($mp3, [Convert]::FromBase64String($resp.audio_base64))
-  [IO.File]::WriteAllText((Join-Path $alignDir "$label.alignment.json"), ($resp.alignment | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding($false)))
+  [IO.File]::WriteAllText((Join-Path $alignDir "$label.alignment.raw.json"), ($resp.alignment | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding($false)))
+  }
+
+  # ---------- alignment for the timeline copy (times divided by the tempo) ----------
+  $rawAlign = Join-Path $alignDir "$label.alignment.raw.json"
+  $outAlign = Join-Path $alignDir "$label.alignment.json"
+  if (-not (Test-Path $rawAlign) -and (Test-Path $outAlign)) { Copy-Item $outAlign $rawAlign }   # older runs kept only the delivered alignment
+  if (Test-Path $rawAlign) {
+    $al = Get-Content $rawAlign -Raw -Encoding UTF8 | ConvertFrom-Json
+    $scaled = [ordered]@{
+      characters = $al.characters
+      character_start_times_seconds = @($al.character_start_times_seconds | ForEach-Object { [math]::Round([double]$_ / $Tempo, 4) })
+      character_end_times_seconds   = @($al.character_end_times_seconds   | ForEach-Object { [math]::Round([double]$_ / $Tempo, 4) })
+    }
+    [IO.File]::WriteAllText($outAlign, ($scaled | ConvertTo-Json -Depth 4 -Compress), (New-Object System.Text.UTF8Encoding($false)))
   }
 
   # ---------- normalise ----------
@@ -188,7 +208,8 @@ foreach ($i in $todo) {
   $lufs = [double]$m.Groups[1].Value
   $gain = [math]::Round(-16 - $lufs, 2)
   $wav = Join-Path $normDir "$label.wav"
-  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+  $tempoFilter = if ($Tempo -ne 1) { "atempo=$Tempo," } else { '' }
+  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
   if (-not (Test-Path $wav)) { throw "normalise failed for $label" }
   $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
   $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
@@ -203,6 +224,6 @@ foreach ($i in $todo) {
 if (-not $DryRun) {
   $total = 0.0
   Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double]((Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$($_.FullName)`"").Trim()) }
-  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style)
+  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}, tempo {8}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style, $Tempo)
   Write-Host "Now: log the voice in voice-register.md and video.md; then scene-prompter Mode 2, then align-scenes --source api."
 }

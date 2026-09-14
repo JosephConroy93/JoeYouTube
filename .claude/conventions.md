@@ -64,7 +64,7 @@ A key/value table. Keys:
 | `series`, `display_name` | slug and human name |
 | `format` | default format module name |
 | `voice.provider`, `voice.name`, `voice.id`, `voice.model` | TTS voice actually used |
-| `voice.speed`, `voice.stability`, `voice.style` | ElevenLabs voice settings (defaults 1.0, 0.5, 0); `video.md` overrides, set from the Step 5 audition |
+| `voice.speed`, `voice.stability`, `voice.style`, `voice.tempo` | ElevenLabs voice settings (defaults 1.0, 0.5, 0) and a post-generation time-stretch (default 1.0; pitch kept, alignment scaled to match; the only pace control on `eleven_v3`, which ignores `speed`); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
 | `chapter.unit`, `chapter.heading`, `chapter.file`, `chapter.spoken` | e.g. `chapter`, `Chapter N. <Name>.`, `chapter-NN.md`, `no`; `chapter.spoken: no` puts the heading on the chapter card only (not narrated, not bookmarked), `yes` (default) narrates it as a callout; `video.md` may override any `chapter.*` key |

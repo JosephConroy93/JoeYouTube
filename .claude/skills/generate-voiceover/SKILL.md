@@ -56,7 +56,13 @@ x` suffixes test takes (`<slug>_voice_NN_x`) so they never overwrite the real
 segment. **Audition** (Step 5, before the full run): two to four tagged
 takes of segment 1, varying one of `-VoiceId`, `-Model`, `-Stability`,
 `-Style` or `-Speed` per take; the operator listens, and the winner's
-values go into `video.md` as `voice.*` keys so the full run reads them. The raw MP3 is the source of record; only the normalised WAV goes
+values go into `video.md` as `voice.*` keys so the full run reads them.
+`eleven_v3` ignores `speed` and rejects neighbouring-text context: set its
+pace with `-Tempo` / `voice.tempo`, which stretches the audio at
+normalisation (pitch kept) and writes `<label>.alignment.json` with times
+divided by the tempo; the delivered alignment stays in
+`<label>.alignment.raw.json`. `-SkipGenerate -Tempo x` re-times an existing
+take without new credits. The raw MP3 is the source of record; only the normalised WAV goes
 to the timeline. `--dry-run` writes
 the segment texts and the request JSON to the scratch dir without calling
 the API.
