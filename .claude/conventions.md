@@ -81,7 +81,7 @@ A key/value table. Keys:
 | key | meaning |
 |---|---|
 | `slug`, `title` | |
-| `format`, `style`, `fps`, `voice` | overrides of series defaults; `style` replaces the style bible's "currently assigned" table |
+| `format`, `style`, `fps`, `voice`, `wpm_measured` | overrides of series defaults (`wpm_measured` when the video's voice model or tempo sets a different pace); `style` replaces the style bible's "currently assigned" table |
 | `status` | `concept` → `researched` → `scripted` → `voiced` → `prompted` → `generated` → `edited` → `published` → `closed` |
 | `published_id`, `runtime` | filled at publish / close |
 | `visual_guardrails` | pointer to the cast sheet, `claude/cast.md` (Step 6) |

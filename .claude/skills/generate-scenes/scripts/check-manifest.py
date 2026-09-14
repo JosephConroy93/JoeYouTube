@@ -87,7 +87,8 @@ def main():
         print(f'FAIL  no manifest index: {index}')
         return 1
 
-    wpm = float(re.search(r'\d+(?:\.\d+)?', table_value(os.path.join(sdir, 'series.md'), 'wpm_measured')).group())
+    wpm = float(re.search(r'\d+(?:\.\d+)?', table_value(os.path.join(vdir, 'video.md'), 'wpm_measured')
+                          or table_value(os.path.join(sdir, 'series.md'), 'wpm_measured')).group())
     style = re.sub(r'\(.*?\)', '', (table_value(os.path.join(vdir, 'video.md'), 'style') or '')).strip(' `*')
     style_bible = open(os.path.join(a.root, 'content', 'styles', 'style-bible.md'), encoding='utf-8').read()
     if not re.search(rf'^## {re.escape(style)}\b', style_bible, re.M):

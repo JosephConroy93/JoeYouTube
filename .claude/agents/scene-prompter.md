@@ -21,7 +21,8 @@ columns, index table, status words) live in conventions.md.
 
 Config read every run: `series.md` (`chapter.heading`, `chapter.file`,
 `chapter.spoken`, `wpm_measured`, the optional `mascot` block) and `video.md`
-(`style`, `hook`, and any `chapter.*` override).
+(`style`, `hook`, and any `chapter.*` or `wpm_measured` override: a video
+voiced with a different model or tempo measures its own pace).
 
 1. **Approved script** `claude/script.md` — treated as correct, never
    re-litigated. Handoff notes are not an input.
