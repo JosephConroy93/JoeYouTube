@@ -1,6 +1,6 @@
 ---
 name: get-scenes
-description: Checks and fetches Gemini Batch API scene jobs that generate-scenes submitted. One status GET per batch-log.md row at `submitted`, or per explicit batch id, never a loop; a succeeded job's images are decoded to scene-generation/<scene_id>.jpg without overwriting anything and the row is set to `fetched`. Makes no judgment about image content.
+description: Checks and fetches Gemini Batch API scene jobs that generate-scenes submitted. One status GET per batch-log.md row at `submitted`, or per explicit batch id (the driving session may repeat it in one bounded background wait); a succeeded job's images are decoded to scene-generation/<scene_id>.jpg without overwriting anything and the row is set to `fetched`. Makes no judgment about image content.
 ---
 
 # Get scenes — one check per pending batch
