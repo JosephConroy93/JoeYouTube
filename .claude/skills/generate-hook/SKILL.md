@@ -37,7 +37,12 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 3. Report per shot: model, duration requested vs delivered, cost.
 
 `--dry-run` writes the request JSON to the scratch dir and exits.
-`--shot N` regenerates one shot.
+`--shot N` regenerates one shot. A plain rerun skips shots already in
+`hook/raw/`. Every submitted operation name is appended to
+`hook/raw/operations.txt` before polling, and a 429 (Veo allows only a few
+submissions a minute) waits 60 s and retries; if a run still dies, list
+`models/<model>:operations` with the API key, download the finished ones
+and match each to its still by first frame.
 
 ## API facts the public docs get wrong (verified live)
 

@@ -45,11 +45,15 @@ function Build-Body([string] $imgPath, [string] $motion, [int] $dur, [string] $r
              parameters = $params } | ConvertTo-Json -Depth 8 -Compress)
 }
 function Submit([string] $body, [string] $label) {
-  try { $r = Invoke-RestMethod -Method Post -Uri "$base/models/${modelId}:predictLongRunning" -Headers $headers -Body ([Text.Encoding]::UTF8.GetBytes($body)) }
-  catch {
-    $detail = $_.Exception.Message
-    try { $rs = $_.Exception.Response.GetResponseStream(); $sr = New-Object IO.StreamReader($rs); $detail = $sr.ReadToEnd() } catch {}
-    throw "submit $label failed: $detail"
+  # Veo allows only a few submissions a minute: a 429 waits 60 s and retries, up to 6 times
+  for ($try = 1; $try -le 6; $try++) {
+    try { $r = Invoke-RestMethod -Method Post -Uri "$base/models/${modelId}:predictLongRunning" -Headers $headers -Body ([Text.Encoding]::UTF8.GetBytes($body)); break }
+    catch {
+      $detail = $_.Exception.Message
+      try { $rs = $_.Exception.Response.GetResponseStream(); $sr = New-Object IO.StreamReader($rs); $detail = $sr.ReadToEnd() } catch {}
+      if ($detail -match '"code":\s*429|RESOURCE_EXHAUSTED' -and $try -lt 6) { Write-Host "  $label rate-limited; waiting 60 s (try $try)"; Start-Sleep -Seconds 60; continue }
+      throw "submit $label failed: $detail"
+    }
   }
   Write-Host ("  submitted {0} -> {1}" -f $label, $r.name); return $r.name
 }
@@ -98,13 +102,18 @@ if ($rows.Count -eq 0) { throw 'hook-plan.md has no shot rows' }
 if ($rows.Count -gt 8) { throw "hook plan has $($rows.Count) shots; cap is 8" }
 if ($Shot -gt 0) { $rows = @($rows | Where-Object shot -eq $Shot) }
 $ops = @()
+$rawDir = Join-Path $videoDir 'hookaw'; New-Item -ItemType Directory -Force $rawDir | Out-Null
+$opsLog = Join-Path $rawDir 'operations.txt'   # every submitted operation name, so a failed run can still be downloaded
 foreach ($r in $rows) {
   $still = Get-ChildItem (Join-Path $videoDir 'scene-generation') -File | Where-Object { $_.BaseName -eq $r.scene_id } | Select-Object -First 1
   if (-not $still) { throw "shot $($r.shot): no canonical image for scene_id $($r.scene_id)" }
   $body = Build-Body $still.FullName $r.motion $r.dur $Resolution
   $label = ('shot-{0:D2}' -f $r.shot)
+  if (-not $DryRun -and $Shot -eq 0 -and (Test-Path (Join-Path $rawDir "$label.mp4"))) { Write-Host "  $label already downloaded; skipping"; continue }
   if ($DryRun) { $p = Join-Path $scratch "$label.request.json"; [IO.File]::WriteAllText($p, $body, (New-Object Text.UTF8Encoding($false))); Write-Host "[dry-run] $label -> $p"; continue }
-  $ops += [pscustomobject]@{ label = $label; op = (Submit $body $label); dur = $r.dur }
+  $opName = Submit $body $label
+  Add-Content -Path $opsLog -Value "$label $opName"
+  $ops += [pscustomobject]@{ label = $label; op = $opName; dur = $r.dur }
 }
 if ($DryRun) { return }
 foreach ($o in $ops) {
