@@ -216,11 +216,13 @@ nothing is done until a rendered or measured artefact proves it.
    clattering, water splashing, a lamp or fire crackling), a handful per
    level, placed on the scene that shows it. No ambience beds or loops
    under narration. Search `content/sfx/`'s metadata TSV, never the
-   filenames; add each sound used to `sfx-index.md` so the library grows
-   from what worked. Bake levels well under the voice.
-6. Render. Measure the render: integrated LUFS **and per-channel RMS**,
-   frame spot-checks at hook, level cards and Elevated scenes. Watch it through.
-   Set `status: edited`.
+   filenames; write `claude/sfx-plan.md` and bake with `place-scenes` 5d
+   before the timeline is built, so the SFX go in with the voice; add each
+   sound used to `sfx-index.md` so the library grows from what worked.
+6. Render ranges first and measure them (`apply-fusion` verification:
+   `check_render.py` for frames, LUFS **and per-channel RMS**, motion, cards
+   and SFX). The full render waits for the operator's go. Measure it the
+   same way, watch it through, set `status: edited`.
 
 Automate the mechanical (sequencing, sync, loudness, export); keep the
 editorial human — templated structure is a named inauthentic-content trigger.

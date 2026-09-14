@@ -37,47 +37,60 @@ verification rule: `.claude/conventions.md`.
    should. Difference rounded frame numbers, never round differences.
    Assert: no zero-length scene, each start equals the previous end, last
    end equals the audio end.
-4. **Pre-render every visual** to `<staging>/scenes/<scene_id>.mp4` at
-   exactly its planned frame count: `ffmpeg -loop 1 -i <jpg> -frames:v <N>
-   -r <fps> -vf crop=<16:9> -c:v libx264 -crf 18 -pix_fmt yuv420p -an`.
-   `-frames:v`, never `-t` (rounds up a frame); `-an` always; crop to
-   16:9, don't scale; upscale only sources below timeline resolution.
-   Verify every output with `ffprobe -count_frames`. Run the batch in
-   parallel, in the background.
+4. **Pre-render every visual** (steps 4, 5, 5b and 5c in one run):
+   ```
+   python .claude/skills/place-scenes/scripts/prerender.py <series>/<slug> --staging <dir> --fps N [--overlay-pos <scene_id>=x,y] [--jobs 8] [--only id,id]
+   ```
+   Copies the normalised WAVs to `<staging>/voiceovers/`, then writes
+   `<staging>/scenes/<scene_id>.mp4` at exactly each scene's planned frame
+   count (`-frames:v`, never `-t`; `-an`; stills cropped to 16:9, never
+   downscaled) and `<staging>/cards/<scene_id>.mp4`, and frame-counts every
+   output with `ffprobe -count_frames`. Run it in the background. Parallel
+   runs can leave a clip short under load: rerun the ids it names with
+   `--only` and fewer `--jobs`.
 5. **Hook clips.** Each row of `claude/hook-plan.md` names a `scene_id`;
    its clip `hook/shot-NN.mp4` **replaces that scene's still** at the same
    timeline position and duration (the plan is 1:1 with scenes; there is no
-   separate hook script). Trim to the scene's measured duration; if the clip
-   is shorter, hold its last frame. **Never trim the last hook clip to make a
-   total fit.** (Older videos with a separate hook section: cut each clip at
-   its own narration beat from the word timings.)
-5b. **Level cards** (`rank-ladder (nine-level)` videos): for each level,
-   render a 2 s black card with the level heading from `script.md` in small
-   white hand-lettered capitals, centred (ffmpeg `drawtext`, exact text,
-   project fps, frame-exact), and place it over the first two seconds of that
-   level's first scene. `build_timeline.py` does not yet insert cards: add a
-   `--cards` option (or place them by hand on V2) before the first edit of
-   such a video.
+   separate hook script). `prerender.py` scales it to the timeline size and
+   trims it to the scene's frames, or holds its last frame when shorter; the
+   staging `hook/` folder stays empty. **Never trim the last hook clip to make
+   a total fit.**
+5b. **Level cards** (`rank-ladder (nine-level)` videos): `prerender.py`
+   renders a 2 s black card per level with the `## Level N. <Rank>.` heading
+   from `script.md` in small white hand-lettered capitals (Ink Free), centred;
+   `build_timeline.py --cards` places each on V2 over the first two seconds
+   of that level's first scene.
 5c. **Text-card words**: a `text-card` row's carrier image is generated
-   blank; draw its `overlay: "<word>"` from the row's `notes` (or the cast
-   sheet's overlays table) centred on the carrier with `drawtext`, a
-   hand-lettered font, ink-dark, before pre-rendering the clip.
-   Conform each to the project fps with the same ffmpeg form (no `-loop`)
-   into `<staging>/hook/`; any `start_frame`/`end_frame` given to the API
-   is in **source** frames at the clip's native rate.
+   blank; `prerender.py` draws its `overlay: "<word>"` (from the row's
+   `notes`) in hand-lettered ink-dark type, centred, or at `--overlay-pos`
+   when the blank patch sits off-centre. Check each overlay frame (a
+   subagent) for the word sitting on the patch.
+5d. **Spot SFX**: write `claude/sfx-plan.md` (schema in `conventions.md`)
+   from the scenes that show a sounding action, searching
+   `content/sfx/cinematic-bundle-metadata.tsv` descriptions, never
+   filenames. Then
+   ```
+   python .claude/skills/place-scenes/scripts/sfx.py <series>/<slug> --staging <dir> --fps N
+   ```
+   cuts, fades and level-sets each clip to `<staging>/sfx/<scene_id>.wav`
+   (48 kHz stereo) and measures integrated LUFS and per-channel RMS on every
+   output; it aborts on a sound that runs past its scene.
 6. **Author the XML.**
    ```
-   python .claude/skills/place-scenes/scripts/build_timeline.py <series>/<slug> --staging <dir> --fps N --out <xml> [--hook-order a.mp4,b.mp4] [--count-frames]
+   python .claude/skills/place-scenes/scripts/build_timeline.py <series>/<slug> --staging <dir> --fps N --out <xml> --count-frames [--cards] [--sfx]
    ```
    Re-derives the frame plan from the timing file and staging inventory,
-   aborts naming any clip whose frame count disagrees, requires the hook
-   to fill frame 0 to the first scene exactly, writes one sequence (V1 =
-   hook then scenes, one audio track per segment) and re-parses it to
-   check video end = audio end = planned total.
+   aborts naming any clip whose frame count disagrees, writes one sequence
+   (V1 = scenes, V2 = level cards, one audio track per voice segment, then
+   SFX tracks packed without overlaps) and re-parses it to check video end
+   = audio end = planned total.
 7. **Import.** Bins first (`add_subfolder` + `set_current_folder`: Hook /
    Scenes / Voiceover), then `timeline.import_timeline_checked(path,
-   sanitize_media: true)` — without it a syntax fault reports only
-   "created no timeline". Check `media.linked == media.total`.
+   sanitize_media: false, require_temp_path: false)`. On Windows the
+   sanitizer reads `file://localhost/C:/...` as `/C:/...`, reports every clip
+   missing and imports an empty timeline; if an import ever reports
+   "created no timeline", run the sanitizer once only to read its syntax
+   report. Check `media.linked == media.total`.
 8. **Verify** (conventions rule): `timeline.get_current` end frame equals
    the plan; read back name/start/end/duration of the first item, each
    hook clip, the first body scene and the last item; the last audio item
@@ -86,6 +99,18 @@ verification rule: `.claude/conventions.md`.
    passes every position check. Every audio check reports integrated LUFS
    **and per-channel RMS**: a mono file on a stereo track plays left-only
    and integrated loudness cannot see it.
+
+## Audio traps
+
+- An XMEML import makes every audio track **mono, panned centre**: it plays
+  3 dB under the file and takes channel 1 only. `build_timeline.py` writes an
+  Audio Levels filter of +3 dB on each audio clip (clip volume is settable
+  through the XML, not the API), and every WAV it places must be dual-mono
+  (`sfx.py` folds SFX). A render of a narration range lands within about
+  0.5 LU of the voice file over the same span; 3 LU under means the filter
+  was lost.
+- Integrated LUFS cannot see a missing channel: per-channel RMS on every
+  audio check.
 
 ## Destructive-call rules
 
@@ -112,5 +137,5 @@ the reference — a readback of the CDL values is not verification.
 ## Not this skill's job
 
 Motion (`plan-ken-burns`, `apply-fusion`), the hook→body
-transition, captions, SFX beds, final loudness, export, or judging whether
-a measured duration reads well.
+transition, captions, ambience beds, final loudness, export, or judging
+whether a measured duration reads well.

@@ -1,9 +1,7 @@
 -- apply_baseline.lua -- Baseline-zoom batch for the apply-fusion skill.
 --
--- UNTESTED AS WRITTEN. Reconstructed from the working batch's description;
--- the original file was not kept. First run: a one-scene spec, then a
--- window capture of the Fusion page and of the Console before trusting it
--- on a full video.
+-- Check every run with report_kb.lua + check_kb.py, then a rendered range
+-- measured by check_render.py.
 --
 -- What it does: for every record in a JSON spec, finds the timeline item on
 -- video track 1 (by scene_id prefix of the clip name, or by 1-based
@@ -30,8 +28,11 @@
 --   ]
 -- }
 -- center_x / center_y are the zoom pivot as TOP-LEFT image fractions
--- (the plan's convention); this script sets Transform.Pivot (never Center)
--- and does the Fusion Y-flip (fusion_y = 1 - y). ease: L | EI | EO.
+-- (the plan's convention); this script sets Transform.Pivot and does the
+-- Fusion Y-flip (fusion_y = 1 - y). ease: L | EI | EO.
+-- A pan record adds "pan": 1 and cx0, cy0, cx1, cy1 (Center start and end,
+-- top-left): Size holds at size_start and Center is keyframed instead.
+-- scripts/plan_to_spec.py writes the spec from ken-burns-plan.md.
 
 local SPEC_PATH = os.getenv("KB_SPEC_PATH") or [[C:\Users\<user>\Videos\<slug>-<fps>\ken-burns-spec.json]]
 local TOOL_NAME = "KB"
@@ -74,6 +75,9 @@ local function parse_spec(raw)
       center_y   = field_num(rec, "center_y") or 0.5,
       ease       = field_str(rec, "ease") or "L",
       frames     = field_num(rec, "frames"),
+      pan        = field_num(rec, "pan"),
+      cx0 = field_num(rec, "cx0"), cy0 = field_num(rec, "cy0"),
+      cx1 = field_num(rec, "cx1"), cy1 = field_num(rec, "cy1"),
     }
   end
   return scenes, nil, expected
@@ -81,25 +85,27 @@ end
 
 -- ------------------------------------------------------------- keyframes --
 
--- Two-key spline from (t0, v0) to (t1, v1). Handles are absolute
--- {time, value} pairs. EI = flat start, straight arrival (building);
--- EO = straight start, flat arrival (release); L = linear.
+-- Two-key spline from (t0, v0) to (t1, v1). Handles are {time, value}
+-- OFFSETS from their own key, not absolute points: absolute values read as
+-- offsets throw the curve far past v1 (Size 1.87 on a 1.00 -> 1.15 zoom).
+-- EI = flat start, straight arrival (building); EO = straight start, flat
+-- arrival (release); L = linear.
 local function make_keys(t0, v0, t1, v1, ease)
   local dt, dv = t1 - t0, v1 - v0
   if ease == "EI" then
     return {
-      [t0] = { v0, RH = { t0 + dt * 0.6, v0 } },
-      [t1] = { v1, LH = { t1 - dt / 3, v1 - dv / 3 } },
+      [t0] = { v0, RH = { dt * 0.6, 0 } },
+      [t1] = { v1, LH = { -dt / 3, -dv / 3 } },
     }
   elseif ease == "EO" then
     return {
-      [t0] = { v0, RH = { t0 + dt / 3, v0 + dv / 3 } },
-      [t1] = { v1, LH = { t1 - dt * 0.6, v1 } },
+      [t0] = { v0, RH = { dt / 3, dv / 3 } },
+      [t1] = { v1, LH = { -dt * 0.6, 0 } },
     }
   end
   return {
-    [t0] = { v0, Flags = { Linear = true } },
-    [t1] = { v1, Flags = { Linear = true } },
+    [t0] = { v0, RH = { dt / 3, dv / 3 } },
+    [t1] = { v1, LH = { -dt / 3, -dv / 3 } },
   }
 end
 
@@ -151,9 +157,18 @@ local function apply_one(item, spec)
     xf.Pivot = { spec.center_x, 1 - spec.center_y }
 
     local last = math.max(1, math.floor(spec.frames + 0.5) - 1)
-    xf.Size = comp:BezierSpline()
-    local spline = xf.Size:GetConnectedOutput():GetTool()
-    spline:SetKeyFrames(make_keys(0, spec.size_start, last, spec.size_end, spec.ease), true)
+    if spec.pan then
+      -- Pan: static Size for headroom, Center animated on an XYPath from
+      -- (cx0, cy0) to (cx1, cy1), top-left fractions flipped to Fusion's Y.
+      xf.Size = spec.size_start
+      xf.Center = comp:XYPath()
+      xf.Center[0] = { spec.cx0, 1 - spec.cy0 }
+      xf.Center[last] = { spec.cx1, 1 - spec.cy1 }
+    else
+      xf.Size = comp:BezierSpline()
+      local spline = xf.Size:GetConnectedOutput():GetTool()
+      spline:SetKeyFrames(make_keys(0, spec.size_start, last, spec.size_end, spec.ease), true)
+    end
   end)
   comp:EndUndo(ok and true or false)
   return ok, err
@@ -197,8 +212,13 @@ local function main()
       local ok, err = apply_one(item, spec)
       if ok then
         applied = applied + 1
-        print(string.format("  [%d] %s (item %d): Size %.3f -> %.3f %s over %d frames",
-          n, label, idx, spec.size_start, spec.size_end, spec.ease, spec.frames))
+        if spec.pan then
+          print(string.format("  [%d] %s (item %d): Pan Center (%.2f,%.2f) -> (%.2f,%.2f) at Size %.2f over %d frames",
+            n, label, idx, spec.cx0, spec.cy0, spec.cx1, spec.cy1, spec.size_start, spec.frames))
+        else
+          print(string.format("  [%d] %s (item %d): Size %.3f -> %.3f %s over %d frames",
+            n, label, idx, spec.size_start, spec.size_end, spec.ease, spec.frames))
+        end
       else
         failed = failed + 1
         print(string.format("  [%d] %s (item %d): FAILED %s", n, label, idx, tostring(err)))

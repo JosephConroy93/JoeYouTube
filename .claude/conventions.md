@@ -162,6 +162,17 @@ sets `hook`. At most 8 rows; `duration_s` ∈ 4 · 6 · 8; `beat` is the scene's
 Coordinates are fractions with origin top-left; `apply-fusion` does the Fusion
 Y-flip. `transition` = `sweep` or blank.
 
+## `sfx-plan.md`
+
+`| scene_id | source | in_s | dur_s | offset_s | lufs | note |`
+
+`source` is relative to the SFX library root named in
+`content/sfx/sfx-index.md`; `in_s` is the start inside the source; blank
+`dur_s` = to the end of the file; `offset_s` is from the scene's start and
+the sound must end inside the scene; `lufs` is the baked clip's integrated
+loudness (voice sits at −16). `note` names the metadata description and the
+on-screen action.
+
 ## Verification rule (every Resolve step)
 
 A change is done only when a rendered or measured artefact proves it: a

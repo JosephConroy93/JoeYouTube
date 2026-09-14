@@ -30,9 +30,9 @@ in the project changes; the plan stays the record of what was applied.
   requirements, restart Claude Code.
 - Keyframes go through `fusion_comp` only. `timeline_item` keyframe
   actions do not exist on the live object — never call them.
-- `scripts/capture-window.ps1` and `scripts/apply_baseline.lua` are
-  **untested until a first run on one scene with a screenshot**. Do that
-  before any batch.
+- `scripts/capture-window.ps1` is untested; prove any change to
+  `scripts/apply_baseline.lua` on one scene of each motion type before a
+  batch.
 
 ## Order of work
 
@@ -44,15 +44,23 @@ in the project changes; the plan stays the record of what was applied.
 3. Baseline batch. 4. Elevated, per scene. 5. Verify; ask before a full
    render.
 
-## Baseline zoom — one Lua batch
+## Every motion — one Lua batch
 
-- Spec: `{"expected": N, "scenes": [{scene_id | item_index, size_start,
-  size_end, center_x, center_y, ease, frames}]}`. `frames = round(dur ×
-  fps)`; `center` = pivot (0.5, 0.5 for Baseline); `In` = 1.0 → 1.15,
-  `Out` = 1.15 → 1.0 unless `note` asks for more. Flat records only.
-- Set `SPEC_PATH` in the script (or `KB_SPEC_PATH` user env var), then
-  `script_plugin install` (`language: lua`, `category: Edit`, `overwrite`)
-  and `script_plugin execute`.
+- Spec: `python .claude/skills/apply-fusion/scripts/plan_to_spec.py
+  <series>/<slug> --fps N --out <staging>\ken-burns-spec.json [--only
+  006,012]`. Records are flat: `{scene_id, frames, ease, size_start,
+  size_end, center_x, center_y}` plus `pan, cx0, cy0, cx1, cy1` for a pan.
+  `In` = 1.0 → 1.15, `Out` = 1.15 → 1.0 about the centre; `Focal` = pivot
+  at the target, 1.0 → 1.2; `Pan` = static Size 1.2 with `Center`
+  keyframed on an XYPath. Static rows are skipped.
+- Copy the Lua into `script_plugin path Edit` with `SPEC_PATH` set to the
+  spec (a file copy, not `install`, keeps the source out of the
+  conversation), then `script_plugin execute`.
+- Spline handles in `SetKeyFrames` are `{time, value}` **offsets from their
+  key**; absolute points throw the curve past its end value. Read `Size`
+  back mid-scene (`get_input` with `time`) on one In, one Out and one EO
+  scene before trusting a batch.
+- Camera travelling right = `Center.x` falling (the image slides left).
 - `execute` returns `success: false` **and the script runs** —
   `fusion.RunScript` is non-blocking. Never retry on that flag; check
   `timeline_item_fusion get_comp_count` or the Console.
@@ -69,9 +77,10 @@ in the project changes; the plan stays the record of what was applied.
   presets: Out + L, In + EI, Out + EO — the plan is already limited to
   these.
 
-## Elevated — per scene through the MCP
+## Elevated — per scene through the MCP (fallback)
 
-Recipe: `timeline_item_fusion add_comp` (**once** per item; `get_comp_names`
+The Lua batch handles Focal and Pan. Use this recipe to fix a single
+scene by hand. Recipe: `timeline_item_fusion add_comp` (**once** per item; `get_comp_names`
 first) → `fusion_comp add_tool Transform "KB"` → `connect` **MediaIn1 → KB
 and KB → MediaOut1**. Missing the first connection keyframes fine and shows
 "No frame available for MediaOut1". Batch independent calls in rounds (all
@@ -95,14 +104,16 @@ and KB → MediaOut1**. Missing the first connection keyframes fine and shows
   reporting the old value.
 - `get_keyframes` on an `XYPath` input shows a spurious keyframe at
   `time: −1000000000` — an extrapolation anchor, ignore it.
-- **Open**: which `Center` X direction reads as pan-right on screen is
-  unverified. On the first pan, capture the viewer (or render and view the
-  first and last frames) and record the mapping here.
 
 ## Verification
 
 Per `conventions.md`: a `success` return or a readback is not proof.
 
+0. **Readback of the whole batch.** Copy `scripts/report_kb.lua` into the
+   Edit scripts folder with `REPORT_PATH` set, execute it, then
+   `python .claude/skills/apply-fusion/scripts/check_kb.py --spec <spec> --report <tsv>`:
+   every spec scene has its Transform with the right end values and no
+   mid-scene overshoot, every Static item has none.
 1. **Capture first, render last.** `scripts/capture-window.ps1 -OutPath
    <staging>\check.png` shows the Inspector values, keyframe diamonds and
    the `XYPath` line without rendering. **Multi-comp trap**: the Fusion GUI
@@ -110,14 +121,20 @@ Per `conventions.md`: a `success` return or a readback is not proof.
    `timeline.set_current`. `fusion_comp` without `comp_name` targets the
    real comp; `load_comp` with an unknown name silently creates an empty
    one — `get_comp_names` first, cross-check with `get_tool_list`.
-2. **Render for confirmation** (`render add_job → start →
-   verify_output`), extract frames (`ffmpeg -ss <t> -frames:v 1 -update 1
-   out.jpg`), measure `ffmpeg -lavfi "ssim;[0:v][1:v]psnr"`. A normal move
-   lands SSIM 0.5–0.75 / PSNR 15–20 dB; ≥ 0.999 / ≥ 70 dB means nothing
-   changed. Then look: a metric proves change, not the right change — a
-   sliding black bar also scores as movement.
-3. **Ask before a full render.** Rendering costs time and has crashed
-   Resolve; render a range, not speculatively.
+2. **Render ranges for confirmation** (`render set_settings` MarkIn /
+   MarkOut → `add_job` → `start` → `verify_output`): the hook and first
+   level card, a stretch with a pan, a focal and an SFX, and the last scene.
+   Then
+   ```
+   python .claude/skills/apply-fusion/scripts/check_render.py <series>/<slug> --staging <dir> --fps N --render <mp4> --mark-in F --mark-out F --lufs <voice LUFS over the span>
+   ```
+   checks frame count, loudness and per-channel RMS, SSIM change on every
+   moving scene (a normal move lands 0.4–0.75; ≥ 0.97 means nothing moved),
+   card blackness, and each SFX's presence as the render-minus-voice
+   residual. Then look at a few frames: a metric proves change, not the
+   right change — a sliding black bar also scores as movement.
+3. **Ask before a full render.** The operator says when; render ranges
+   until then.
 
 ## Does not
 

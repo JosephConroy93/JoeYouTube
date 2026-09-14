@@ -12,5 +12,6 @@
 !.claude/**
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+**/__pycache__/
 !tools/
 !tools/**

@@ -3,7 +3,7 @@
 
 Usage:
     build_timeline.py <project-path> --staging <dir> --fps N --out <xml>
-                      [--hook-order a.mp4,b.mp4,...] [--name NAME]
+                      [--hook-order a.mp4,b.mp4,...] [--name NAME] [--cards] [--sfx]
                       [--width 1920 --height 1080] [--count-frames]
 
 <project-path> is `<series>/<slug>` (resolved under content/) or a directory.
@@ -12,12 +12,21 @@ Reads   claude/scene-timing.md                  scene_id, segment, start_seconds
         <staging>/voiceovers/<segment>.wav|.mp3 audio per segment; sorted stems = playback order
         <staging>/scenes/<scene_id>.mp4         pre-rendered, exact-frame, at --fps
         <staging>/hook/*.mp4                    optional cold open, played first, in --hook-order
+        <staging>/cards/<scene_id>.mp4          --cards: level card over the start of that scene (V2)
+        claude/sfx-plan.md + <staging>/sfx/<scene_id>.wav
+                                                --sfx: baked spot SFX at scene start + offset_s
 Writes  <xml>                                   <xmeml version="5">: one sequence, V1 = hook clips
-                                                then scenes, one audio track per segment
+                                                then scenes, V2 = cards, one audio track per
+                                                segment, then SFX tracks (packed, no overlaps)
 
 Every position is a frame number: frames(t) = round(t * fps). A scene runs from its own
 start frame to the next scene's start frame (the last one to the end of the audio); the
 clip on disk must hold exactly that many frames or the build aborts naming the clip.
+
+Resolve imports every XMEML audio track as a MONO track panned centre, which plays 3 dB
+under the file and takes channel 1 only. Each audio clip therefore carries an Audio Levels
+filter of +MONO_PAN_LAW_DB (the API cannot set clip volume; the XML can), and the WAVs
+must be dual-mono.
 """
 import argparse
 import glob
@@ -43,7 +52,7 @@ def resolve_project(arg):
 
 
 def read_timing(project):
-    """scene-timing.md rows in file order -> [{scene_id, segment, start, end, match}]."""
+    """scene-timing.md rows in file order -> [{scene_id, chapter, segment, start, end, match}]."""
     path = os.path.join(project, "claude", "scene-timing.md")
     if not os.path.isfile(path):
         sys.exit(f"ABORT: missing {path}")
@@ -56,7 +65,7 @@ def read_timing(project):
         sid = cells[0].strip("`")
         if len(cells) < 6 or not re.fullmatch(r"\d{3}_[A-Za-z0-9-]+", sid):
             continue
-        rows.append({"scene_id": sid, "segment": cells[2], "start": float(cells[3]),
+        rows.append({"scene_id": sid, "chapter": cells[1], "segment": cells[2], "start": float(cells[3]),
                      "end": float(cells[4]), "match": cells[5]})
     if not rows:
         sys.exit("ABORT: scene-timing.md has no scene rows")
@@ -98,11 +107,53 @@ def video_frames(path, fps, count):
     return int(n)
 
 
+MONO_PAN_LAW_DB = 3.0
+
+
 def frames(seconds, fps):
     return int(round(seconds * fps))
 
 
 # ----------------------------------------------------------------------------- plan
+
+
+def build_cards(staging, scenes, fps, count):
+    by_id = {s["scene_id"]: s for s in scenes}
+    cards = []
+    for p in sorted(glob.glob(os.path.join(staging, "cards", "*.mp4"))):
+        sid = os.path.splitext(os.path.basename(p))[0]
+        if sid not in by_id:
+            sys.exit(f"ABORT: card {p} names no scene in the timing file")
+        nf = video_frames(p, fps, count)
+        if nf > by_id[sid]["frames"]:
+            sys.exit(f"ABORT: card {sid} ({nf} frames) is longer than its scene ({by_id[sid]['frames']})")
+        cards.append({"name": "card-" + sid[:3], "path": p, "start_frame": by_id[sid]["start_frame"], "frames": nf})
+    if not cards:
+        sys.exit("ABORT: --cards given but no clips in <staging>/cards")
+    return cards
+
+
+def build_sfx(project, staging, scenes, fps):
+    from sfx import read_plan
+    by_id = {s["scene_id"]: s for s in scenes}
+    tracks = []
+    for r in sorted(read_plan(project), key=lambda r: by_id[r["scene_id"]]["start_frame"]):
+        p = os.path.join(staging, "sfx", r["scene_id"] + ".wav")
+        if not os.path.isfile(p):
+            sys.exit(f"ABORT: sfx clip missing: {p} (run sfx.py)")
+        sc = by_id[r["scene_id"]]
+        start = sc["start_frame"] + frames(r["offset"], fps)
+        nf = frames(audio_duration(p), fps)
+        if start + nf > sc["start_frame"] + sc["frames"]:
+            sys.exit(f"ABORT: sfx {r['scene_id']} runs past its scene")
+        item = {"stem": "sfx-" + r["scene_id"][:3], "path": p, "start_frame": start, "end_frame": start + nf}
+        for t in tracks:
+            if t[-1]["end_frame"] <= start:
+                t.append(item)
+                break
+        else:
+            tracks.append([item])
+    return tracks
 
 
 def build_plan(project, staging, fps, hook_order, count):
@@ -231,9 +282,23 @@ def clipitem(track, cid, name, path, fps, start, nframes, width, height, audio):
         st = sub(c, "sourcetrack")
         sub(st, "mediatype", "audio")
         sub(st, "trackindex", 1)
+        flt = sub(c, "filter")
+        sub(flt, "enabled", "TRUE")
+        sub(flt, "start", 0)
+        sub(flt, "end", nframes)
+        eff = sub(flt, "effect")
+        for tag, text in (("name", "Audio Levels"), ("effectid", "audiolevels"), ("effecttype", "audiolevels"),
+                          ("mediatype", "audio"), ("effectcategory", "audiolevels")):
+            sub(eff, tag, text)
+        par = sub(eff, "parameter")
+        sub(par, "name", "Level")
+        sub(par, "parameterid", "level")
+        sub(par, "value", f"{10 ** (MONO_PAN_LAW_DB / 20):.7f}")
+        sub(par, "valuemin", "1e-05")
+        sub(par, "valuemax", "31.6228")
 
 
-def write_xml(out, name, fps, width, height, hook, scenes, audio, total_frames):
+def write_xml(out, name, fps, width, height, hook, scenes, audio, total_frames, cards=(), sfx=()):
     root = ET.Element("xmeml", version="5")
     seq = sub(root, "sequence")
     sub(seq, "name", name)
@@ -251,11 +316,20 @@ def write_xml(out, name, fps, width, height, hook, scenes, audio, total_frames):
         clipitem(vt, f"hook-{k + 1}", h["name"], h["path"], fps, h["start_frame"], h["frames"], width, height, False)
     for s in scenes:
         clipitem(vt, s["scene_id"], s["scene_id"], s["path"], fps, s["start_frame"], s["frames"], width, height, False)
+    if cards:
+        ct = sub(video, "track")
+        for c in cards:
+            clipitem(ct, c["name"], c["name"], c["path"], fps, c["start_frame"], c["frames"], width, height, False)
     aud = sub(media, "audio")
     for a in audio:
         at = sub(aud, "track")
         clipitem(at, "vo-" + a["stem"], a["stem"], a["path"], fps, a["start_frame"],
                  a["end_frame"] - a["start_frame"], width, height, True)
+    for t in sfx:
+        at = sub(aud, "track")
+        for a in t:
+            clipitem(at, a["stem"], a["stem"], a["path"], fps, a["start_frame"],
+                     a["end_frame"] - a["start_frame"], width, height, True)
     tree = ET.ElementTree(root)
     ET.indent(tree)
     with open(out, "wb") as f:
@@ -266,7 +340,7 @@ def write_xml(out, name, fps, width, height, hook, scenes, audio, total_frames):
 def validate(out, total_frames):
     """Re-parse the written file and check the ends line up."""
     seq = ET.parse(out).getroot().find("sequence")
-    v = seq.findall("media/video/track/clipitem")
+    v = seq.find("media/video/track").findall("clipitem")
     a = seq.findall("media/audio/track/clipitem")
     v_end = max(int(c.findtext("end")) for c in v)
     a_end = max(int(c.findtext("end")) for c in a)
@@ -295,6 +369,8 @@ def main():
     ap.add_argument("--width", type=int, default=1920)
     ap.add_argument("--height", type=int, default=1080)
     ap.add_argument("--count-frames", action="store_true", help="decode every clip to count frames (slow, exact)")
+    ap.add_argument("--cards", action="store_true", help="place <staging>/cards/<scene_id>.mp4 on V2")
+    ap.add_argument("--sfx", action="store_true", help="place claude/sfx-plan.md clips from <staging>/sfx/")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -305,13 +381,18 @@ def main():
     name = a.name or f"{os.path.basename(project)} v1"
 
     hook, scenes, audio, total = build_plan(project, staging, a.fps, hook_order, a.count_frames)
-    write_xml(a.out, name, a.fps, a.width, a.height, hook, scenes, audio, total)
+    cards = build_cards(staging, scenes, a.fps, a.count_frames) if a.cards else []
+    sfx = build_sfx(project, staging, scenes, a.fps) if a.sfx else []
+    write_xml(a.out, name, a.fps, a.width, a.height, hook, scenes, audio, total, cards, sfx)
     nv, na, vf = validate(a.out, total)
     print(f"wrote {a.out}")
     print(f"  sequence '{name}' @ {a.fps} fps: {total} frames ({timecode(total, a.fps)})")
     print(f"  video: {len(hook)} hook + {len(scenes)} scenes = {nv} items, {vf} frames; "
           f"first scene at frame {scenes[0]['start_frame']}, last ends {scenes[-1]['start_frame'] + scenes[-1]['frames']}")
-    print(f"  audio: {na} tracks, ends frame {audio[-1]['end_frame']}")
+    print(f"  audio: {len(audio)} voice tracks, ends frame {audio[-1]['end_frame']}; "
+          f"{sum(len(t) for t in sfx)} sfx on {len(sfx)} tracks")
+    for c in cards:
+        print(f"  {c['name']}: V2 frames {c['start_frame']}-{c['start_frame'] + c['frames']}")
     for h in hook:
         print(f"  hook {h['name']}: frames {h['start_frame']}-{h['start_frame'] + h['frames']}")
 
