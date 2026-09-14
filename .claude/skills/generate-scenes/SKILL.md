@@ -40,7 +40,7 @@ row yet.
 - "next N": the next N candidates, one script call each.
 - "rest": every candidate, one script call each.
 - An explicit scene-id list (full id or 3-digit prefix, any chapter):
-  `-SceneIds`; `-Chapter` is then optional. `chain-scenes` uses this form.
+  `-SceneIds`; `-Chapter` is then optional (resubmits use this form).
 
 No candidates: say so and stop.
 

@@ -1,14 +1,14 @@
 ---
 name: write-prompts
-description: Writes the image prompts for one level of a video's beat sheet — 50–80 words per row from a fixed recipe (shot, cast token, action and emotion, one dressed setting clause held across a run, light), sets each row's reference cell by the reference rule, hits the source channel's shot spread (medium-first, one or two figures, dressed backgrounds, one place per run), writes hook-plan.md for chapter 1, runs check-manifest.py and marks the chapter written. Run by the driving session, never a subagent. Use at WORKFLOW Step 8.1, after the beat sheet exists and before generate-scenes.
+description: Writes the image prompts for one level of a video's beat sheet — 50–80 words per row from a fixed recipe (shot, cast token, action and emotion, one dressed setting clause held across a run, light), sets each row's reference cell by the reference rule, hits the source channel's shot spread (medium-first, one or two figures, dressed backgrounds, one place per run), writes hook-plan.md for chapter 1, runs check-manifest.py and marks the chapter written. Run by the prompt-writer agent, one level per dispatch (or by the driving session). Use at WORKFLOW Step 8.1, after the beat sheet exists and before generate-scenes.
 ---
 
 # Write prompts — one level at a time
 
 Layout and schemas: `.claude/conventions.md`. Project path `<series>/<slug>`.
-The driving session runs this itself: the prompts are the judgment call in
-the pipeline and they are written from what is on screen in the previous
-level, so nothing is delegated.
+Run by the `prompt-writer` agent, one level per dispatch, or by the
+driving session. The prompts are the judgment call in the pipeline: they
+are written from what the previous level's QC found, so read that first.
 
 ## Inputs
 
@@ -18,8 +18,10 @@ level, so nothing is delegated.
 - The style entry in `content/styles/style-bible.md`: its emotion and
   gesture vocabulary and its `Source frames` (glance at two).
 - `content/prompt-hardening-rules.md` (the rules table, one screen).
-- The previous level's validated images, looked at once, for what the
-  model does well and badly with this cast.
+- The previous level's written chapter file and its `batch-log.md` QC
+  notes (what failed, what was overruled): what the model does well and
+  badly with this cast. Open two of its images only when the notes don't
+  say enough.
 
 ## Recipe, per row (50–80 words)
 

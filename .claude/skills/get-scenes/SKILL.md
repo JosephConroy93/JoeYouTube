@@ -26,7 +26,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .claude/skills/generate-
 `GET https://generativelanguage.googleapis.com/v1beta/{batch_id}` per row,
 header `x-goog-api-key`, state read from `metadata.state`. To scope to a
 scene-id list, pass the `-BatchId` of the row whose `scenes` cell covers
-those ids (`chain-scenes` does this for its seed batch). `fetch -DryRun
+those ids. `fetch -DryRun
 -OutDir <dir>` writes images there and updates no row.
 
 ## Outcomes per row

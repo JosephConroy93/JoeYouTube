@@ -82,7 +82,11 @@ above applies, with these overrides:
   in length; Level 9 is a short epilogue or inversion.
 - **Callout**: "Level N. <Rank title>." — bare, and the first words of the
   level. Age or stage surfaces inside the level, never in the callout.
-  (Edit renders a 2 s black card with the same text before each callout.)
+- **Card line**: one per level, 3–6 words, a hook statement that opens a
+  loop the level pays off, never the rank title and never its incident
+  given away ("The dead pay better"). Listed in the handoff notes as
+  `| level | card line |`; the edit sets it on the level card beside a
+  half-hidden still from later in that level.
 - **Per level**: the rung named → what the rung really is, deflated → one
   incident → one aphorism → a **hand-off cliff** whose last line is the next
   level's premise.

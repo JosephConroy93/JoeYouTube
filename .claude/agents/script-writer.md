@@ -140,6 +140,7 @@ Write to `content/<series>/<slug>/claude/script.md` with a closing
 - Where the research was thin and the script stayed vague.
 - Any hard-fact or hook gap research should close before the next script.
 - The register used, where the format module offered a choice.
+- Any per-level table the format module asks for (e.g. card lines).
 - The self-check result.
 
 ### Self-check before returning

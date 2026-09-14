@@ -24,7 +24,7 @@ Status: 🟢 run on a real video · 🟡 defined, not yet run as designed
 | Voiceover | ElevenLabs REST API via `generate-voiceover` (hosted ElevenLabs MCP for auditioning voices only) |
 | Timing | `align-scenes` (TTS timestamps, or whisper) |
 | Animated hook | Veo 3.1 via the Gemini API, `generate-hook` (from chapter 1's validated stills) |
-| Cast sheet, beat sheet, prompts | cast sheet by hand (Step 6); `scene-prompter` beat sheet (Step 7); `write-prompts` by the driving session (Step 8) |
+| Cast sheet, beat sheet, prompts | cast sheet from a capped lookup (Step 6); `scene-prompter` beat sheet (Step 7); `prompt-writer` agent per level, following `write-prompts` (Step 8) |
 | Scene images | Google Gemini Batch API via `generate-scenes` → `get-scenes` → `validate-scenes` → `finalize-scenes`; `preview-style` for style choice |
 | Edit | DaVinci Resolve Studio via the `davinci-resolve` MCP server: `place-scenes` → `plan-ken-burns` → `apply-fusion` |
 | Thumbnail | `make-thumbnail` (scene stills and hook text, no generation); VidIQ for technical checks only |
@@ -43,7 +43,10 @@ format, voice, style policy, chapter naming, mascot block, CTA policy,
 staging path. Add series-level characters (a mascot) to
 `content/<series>/mascot/character-bible.md` with reference images. Pick or
 add a style in `content/styles/style-bible.md`; each style keeps one
-exemplar image in `content/styles/examples/`.
+exemplar image in `content/styles/examples/` and one stock extra,
+`content/styles/extras/<Style>-Villager.jpg` (a plain background figure in
+the style's own head and skin rules, rendered once with
+`channel-farmer/scripts/style-test.ps1`), which every video's extras attach.
 
 ## Step 1 — Concept and angle 🟢
 
@@ -140,8 +143,14 @@ generated before the voiceover exists.
 
 ## Step 6 — Cast sheet 🟡 (five minutes, hard cap)
 
-Write `claude/cast.md` from the research file's visual notes and the
-script: one line per figure who recurs (`YOU-L1` … per rung stage, then
+First a **costume lookup**, one Sonnet subagent with a five-minute cap:
+from the script's roles, era and place, return one plausible costume per
+role (garment, colour, one marker) and at most five era don'ts a viewer
+would notice. A quick web check is enough; visuals look good first, and
+Step 3's research stays about the narration.
+
+Write `claude/cast.md` from that lookup and the script: one line per
+figure who recurs (`YOU-L1` … per rung stage, then
 at most three others), each a costume in a dozen words (garment, colour,
 one marker), a `guard` phrase, and a list of at most five era don'ts a
 viewer would notice. **No bible.** In a costume-identity style the line is
@@ -154,9 +163,9 @@ run `generate-scenes/scripts/reference-heads.py` and look at the head
 crops: a nose, ear, neck or tinted head means re-render, because every
 scene that attaches the reference inherits it; re-roll a wrong one once,
 and otherwise let that figure run on its line alone. Copy the style's stock extra
-(`content/styles/extras/<Style>-Villager.jpg`, rendered once per style) in
+(`content/styles/extras/<Style>-Villager.jpg`, from Step 0) in
 as `Extra-Villager.jpg` and add an `EXTRA` line to the sheet. Settings and
-objects get no reference. Set `visual_guardrails` to the sheet and
+objects get no reference. Set `visual_guardrails` to `claude/cast.md` and
 `status: prompted`.
 
 ## Step 7 — Beat sheet 🟡 (once per video)
@@ -172,21 +181,29 @@ any FAIL goes back as a Mode 3 edit. Under ten minutes.
 
 For each level, in order:
 
-1. **Prompts**: `write-prompts`, run by the driving session for this
-   level: the recipe, the shot-spread targets, the reference rule and
-   chapter 1's `hook-plan.md` live in that skill. It ends with
-   `check-manifest.py` clean and the chapter `written`.
+1. **Prompts**: dispatch the `prompt-writer` agent in the background with
+   the project path and the level file. It follows `write-prompts` (the
+   recipe, shot-spread targets, reference rule, chapter 1's
+   `hook-plan.md`) and returns with `check-manifest.py` clean, the
+   spread line and any rows it was unsure of. Read that, and open an
+   unsure row before submitting.
 2. **Submit**: `generate-scenes` for the level (references shrunk to 1K;
    one or two jobs).
-3. **Fetch**: `get-scenes` (one status check; run again later if pending).
+3. **Fetch**: a bounded background wait on `get-scenes` (the skill sets
+   the interval and cap).
 4. **Validate**: `validate-scenes` (three checks, Sonnet, one pass) or the
    operator's own look; either way the row gets `validated (n/m)`.
 5. **Fix**: a failure is resubmitted once; a second failure gets a
    rewritten prompt. A failure seen three times in the video earns one
    rule line in `content/prompt-hardening-rules.md`.
+6. **Report**: one contact sheet of the level to the operator
+   (`validate-scenes/scripts/contact-sheet.py --latest`). An
+   overrule or a fix goes into the file that should have prevented it
+   (the cast sheet, `write-prompts`, `validate-scenes`) before the next
+   level's agent is dispatched; the next agent reads it from there.
 
 The first level is the pilot: the operator looks at all of its images
-before level 2's prompts are written.
+before level 2's agent is dispatched.
 
 After the last level: `finalize-scenes`, then `align-scenes`, then
 `generate-hook`. Set `status: generated`.

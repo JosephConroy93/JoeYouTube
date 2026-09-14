@@ -29,11 +29,11 @@ content/
     series.md
     concepts.md  sources.md          series-level unless video.md says otherwise
     mascot/                          optional series-level characters (bible + refs)
-    protagonist/                     optional reused "you" figure: base entry + references
+    protagonist/                     optional reused "you" figure: cast line + reference image
     <slug>/
       video.md
       research-<slug>.md             sole factual authority for the script
-      reference-images/<Name>.jpg    optional: a reference rendered only after QC shows drift
+      reference-images/<Name>.jpg    one per main character (Step 6) plus Extra-Villager.jpg
       voiceovers/<slug>_voice_NN.mp3             raw TTS as delivered (source; never on the timeline); sorted order = playback order
       voiceovers/normalized/<slug>_voice_NN.wav  the timeline copy: −16 LUFS, true peak ≤ −1.5 dBFS, 48 kHz, dual-mono stereo
       hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)
@@ -66,8 +66,8 @@ A key/value table. Keys:
 | `voice.provider`, `voice.name`, `voice.id`, `voice.model` | TTS voice actually used |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
-| `chapter.unit`, `chapter.heading`, `chapter.file` | e.g. `level`, `Level N, the <role>.`, `level-NN.md` |
-| `protagonist` | optional: a reused series "you" figure (`content/<series>/protagonist/` holds its base bible entry and references); scene-prompter Mode 1 re-dresses it per video instead of defining a new one |
+| `chapter.unit`, `chapter.heading`, `chapter.file` | e.g. `level`, `Level N. The <Role>.`, `level-NN.md` |
+| `protagonist` | optional: a reused series "you" figure (`content/<series>/protagonist/` holds its cast line and reference); Step 6 copies it into the video's cast sheet and re-dresses it per rung |
 | `mascot.bible`, `mascot.reference`, `mascot.cameo` | optional; `cameo` = `manual` (operator picks the row at QC) or `none` |
 | `cta` | `none` or the house CTA text/placement |
 | `concepts_location` | `series` or `slug` |
@@ -83,7 +83,7 @@ A key/value table. Keys:
 | `format`, `style`, `fps`, `voice` | overrides of series defaults; `style` replaces the style bible's "currently assigned" table |
 | `status` | `concept` → `researched` → `scripted` → `voiced` → `prompted` → `generated` → `edited` → `published` → `closed` |
 | `published_id`, `runtime` | filled at publish / close |
-| `visual_guardrails` | pointer to the research file's visual-reference addenda |
+| `visual_guardrails` | pointer to the cast sheet, `claude/cast.md` (Step 6) |
 | `sfx` | the video's sound-effect policy (default: spot effects for on-screen actions only, no ambience beds) |
 | `transitions` | `none` (default) or `sweep` (black sweeps at chapter ends, once proven on the Resolve version in use) |
 | `thumbnail` | the chosen file(s) in `thumbnails/` with the `make-thumbnail` arguments that built them; two names are a Test & Compare pair |

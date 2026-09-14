@@ -14,7 +14,7 @@ this file's narrative.
 - [.claude/conventions.md](.claude/conventions.md) — invocation contract
   (`<series>/<slug>`), folder layout, every schema and status vocabulary.
   Change a schema here first.
-- `.claude/agents/` (`script-writer`, `scene-prompter`), `.claude/skills/`
+- `.claude/agents/` (`script-writer`, `scene-prompter`, `prompt-writer`), `.claude/skills/`
   (one folder per step, with `scripts/` where the step is code),
   `.claude/formats/` (script formats: `rank-ladder`, `explainer`).
 - `content/<series>/series.md` and `content/<series>/<slug>/video.md` —
@@ -81,7 +81,7 @@ the operator chose.
 
 | Model | Work | Why |
 |---|---|---|
-| **Opus** | `script-writer` (write, revise, score); `write-prompts` (the driving session, Step 8); Step 3 research synthesis; any call where a lookup contradicts the script | Judgment: contested sources, tone, consistency across a whole video. Errors here cost the most downstream. |
+| **Opus** | `script-writer` (write, revise, score); `prompt-writer` (per level, following `write-prompts`, Step 8); Step 3 research synthesis; any call where a lookup contradicts the script | Judgment: contested sources, tone, consistency across a whole video. Errors here cost the most downstream. |
 | **Sonnet** | `scene-prompter` beat sheet; Step 6 visual lookups; transcript breakdowns and comment mining; `channel-farmer` data, frame and `/watch` passes; image QC against a checklist (`validate-scenes`, reference-image audits, `plan-ken-burns` image confirmation); style-render comparisons | Structured search-and-summarise or checklist work against a precise brief. |
 | **Haiku** | Batch-log reconciliation, archiving, status polls, word counts, file inventories | Pure mechanics. |
 

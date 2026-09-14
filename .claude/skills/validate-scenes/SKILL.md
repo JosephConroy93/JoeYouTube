@@ -68,4 +68,6 @@ disputed image to Opus, never a group.
 
 ## Report
 
-Per image: PASS, or FAIL with check and reason. Then stop.
+Per image: PASS, or FAIL with check and reason. Then build the level's
+sheet for the operator and stop:
+`python .claude/skills/validate-scenes/scripts/contact-sheet.py <series>/<slug> --chapter <file> --latest`.
