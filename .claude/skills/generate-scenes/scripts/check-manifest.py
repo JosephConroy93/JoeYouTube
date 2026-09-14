@@ -189,7 +189,7 @@ def main():
             counts.append(w)
             if w > ceil_w:
                 fail(f'{sid}: {w} words ≈ {s:.1f} s, over the {CEILING_S:.0f} s ceiling ({ceil_w} words); split it')
-            elif w < floor_w:
+            elif w < floor_w and 'hook:' not in r['notes']:
                 warn(f'{sid}: {w} words ≈ {s:.1f} s, under the {FLOOR_S:.0f} s floor ({floor_w} words)')
             if span:
                 pos = span.find(bm, cursor)

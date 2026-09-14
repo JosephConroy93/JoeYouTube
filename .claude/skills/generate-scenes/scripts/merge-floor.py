@@ -1,10 +1,13 @@
 """Merge sub-floor beat rows into a neighbour, renumber, rewrite index ranges.
 
-    python merge-floor.py <series>/<slug> [--floor 11] [--ceiling 31] [--root <project root>]
+    python merge-floor.py <series>/<slug> [--floor N] [--ceiling N] [--root <project root>]
 
 Runs on chapters at status `beats` only (never a written chapter). A row
 under --floor words joins the next row when the sum stays under --ceiling,
-else the previous; text-card rows never merge. Bookmarks concatenate, beats
+else the previous; text-card and `hook:` rows never merge (a hook shot is
+one physical moment, often a single short sentence). --floor and --ceiling
+default to 4 s and 11 s in words at `wpm_measured` (video.md, else
+series.md). Bookmarks concatenate, beats
 join with "; ", ids renumber continuously from the first beats chapter, and
 the index ranges follow. The prompt pass reads every joined beat and picks
 the image for the moment the line lands. Run after scene-prompter Mode 2
@@ -40,12 +43,21 @@ def slug(bm):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('project')
-    ap.add_argument('--floor', type=int, default=11)
-    ap.add_argument('--ceiling', type=int, default=31)
+    ap.add_argument('--floor', type=int)
+    ap.add_argument('--ceiling', type=int)
     ap.add_argument('--root', default=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')))
     a = ap.parse_args()
     series, slug_ = a.project.replace('\\', '/').split('/')
     cdir = os.path.join(a.root, 'content', series, slug_, 'claude')
+    wpm = None
+    for cfg in (os.path.join(a.root, 'content', series, slug_, 'video.md'), os.path.join(a.root, 'content', series, 'series.md')):
+        for line in open(cfg, encoding='utf-8-sig'):
+            c = cells(line)
+            if wpm is None and c and len(c) >= 2 and c[0].strip('`') == 'wpm_measured':
+                wpm = float(re.search(r'\d+(?:\.\d+)?', c[1]).group())
+    a.floor = a.floor or round(4 * wpm / 60)
+    a.ceiling = a.ceiling or round(11 * wpm / 60)
+    print(f'wpm {wpm:g}: floor {a.floor} words, ceiling {a.ceiling} words')
     index = os.path.join(cdir, 'scene-prompts.md')
     chapters = []
     for line in open(index, encoding='utf-8-sig'):
@@ -73,12 +85,13 @@ def main():
         while changed:
             changed = False
             for i, c in enumerate(rows):
-                if words(c[2]) >= a.floor or c[3].strip() == 'text-card':
+                fixed = lambda r: r[3].strip() == 'text-card' or 'hook:' in r[7]
+                if words(c[2]) >= a.floor or fixed(c):
                     continue
                 cand = []
-                if i + 1 < len(rows) and rows[i + 1][3].strip() != 'text-card':
+                if i + 1 < len(rows) and not fixed(rows[i + 1]):
                     cand.append(('next', i + 1))
-                if i - 1 >= 0 and rows[i - 1][3].strip() != 'text-card':
+                if i - 1 >= 0 and not fixed(rows[i - 1]):
                     cand.append(('prev', i - 1))
                 for kind, j in cand:
                     if words(c[2]) + words(rows[j][2]) <= a.ceiling:
