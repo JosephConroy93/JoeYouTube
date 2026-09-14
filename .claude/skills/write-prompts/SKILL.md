@@ -42,6 +42,11 @@ clause, 2–3 props, dressed] [light].`
   the word is in `overlay:` and drawn at the edit.
 - Nothing from the bible or research beyond the cast line; the narration
   carries the facts, the image carries the atmosphere.
+- A beat joined from two rows (`; ` in `notes`, from `merge-floor.py`) gets
+  the image for the moment its last line lands, not a split composition.
+- An extra needing a role detail keeps the `[[EXTRA]]` token and adds the
+  detail in words after it (`[[EXTRA]] wearing a plain white sash as a
+  lector`).
 
 ## Shot spread (from the source channel's census)
 
@@ -67,7 +72,8 @@ For each `hook: shot N` row write one `claude/hook-plan.md` row (schema in
 conventions.md): `motion_prompt` says only what moves and any emotion,
 allows the mouth to move, asks for one slow constant camera move, never an
 action the still already shows; `duration_s` 4, 6 or 8; `beat` = the
-bookmark.
+bookmark. A hook row re-prompted later gets its plan row rewritten to the
+new still.
 
 ## Finish
 

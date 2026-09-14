@@ -67,6 +67,11 @@ server is a submodule under `tools/`.
 - **Keep pushing back** where a tool is vague or a cheaper/better route exists.
 - Deletion of anything under `content/` is the operator's manual step;
   skills archive, they don't delete.
+- **A fix applied in chat is written into the file that should have
+  prevented it before the next level starts**: an overrule into the cast
+  sheet or the QC calibration, a workaround into the skill, a script out of
+  the scratchpad into the repo. The CHANGELOG line is the receipt; a fix
+  that exists only in the conversation is not applied.
 
 ## Model routing
 

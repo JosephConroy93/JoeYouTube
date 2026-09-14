@@ -162,8 +162,9 @@ objects get no reference. Set `visual_guardrails` to the sheet and
 `scene-prompter` Mode 2 on the whole script: index plus chapter files with
 verbatim bookmarks, a ten-word beat per row, hook-shot marks in chapter 1,
 `content_prompt` empty, every chapter `beats`. Run
-`generate-scenes/scripts/check-manifest.py` and send any FAIL back as a
-Mode 3 edit. Under ten minutes.
+`generate-scenes/scripts/check-manifest.py`; a floor band well over ~10%
+means `merge-floor.py` (sub-floor rows join a neighbour, ids renumber);
+any FAIL goes back as a Mode 3 edit. Under ten minutes.
 
 ## Step 8 — Prompts and generation, one level per loop 🟡
 
