@@ -151,8 +151,11 @@ Then render **one reference per main character** (each `YOU-*` stage and
 each named recurring figure) straight from its cast line with
 `channel-farmer/scripts/style-test.ps1 -Prompts`, into `reference-images/`;
 glance at the sheet, re-roll a wrong one once, and otherwise let that
-figure run on its line alone. Settings, objects and extras get no
-reference. Set `visual_guardrails` to the sheet and `status: prompted`.
+figure run on its line alone. Copy the style's stock extra
+(`content/styles/extras/<Style>-Villager.jpg`, rendered once per style) in
+as `Extra-Villager.jpg` and add an `EXTRA` line to the sheet. Settings and
+objects get no reference. Set `visual_guardrails` to the sheet and
+`status: prompted`.
 
 ## Step 7 — Beat sheet 🟡 (once per video)
 

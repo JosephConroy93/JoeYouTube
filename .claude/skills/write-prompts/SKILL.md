@@ -55,7 +55,10 @@ shots and crowds bunched where the story peaks, not spread for variety.
   `reference-images/` is attached on every row it appears in:
   `imageN = <File> (ID)`, figures in order of importance. Without a file,
   the cast line carries it.
-- Settings, objects and extras never get a reference.
+- An extra is written as `[[EXTRA]]` and attaches the style's stock extra
+  reference (`content/styles/extras/<Style>-Villager.jpg`, copied into the
+  video's `reference-images/`); without one, extras render tan about one
+  time in three. Settings and objects never get a reference.
 - Never more than three references on a row.
 
 ## Hook (chapter 1 only)
