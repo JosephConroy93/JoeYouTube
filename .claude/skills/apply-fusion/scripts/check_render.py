@@ -38,8 +38,9 @@ def run(args):
     return subprocess.run(args, capture_output=True, text=True)
 
 
-def frame_png(render, n, out):
-    run(["ffmpeg", "-v", "error", "-y", "-i", render, "-vf", f"select=eq(n\\,{n})", "-frames:v", "1", out])
+def frame_png(render, n, out, fps):
+    """Frame n by input seek (a select filter decodes from the start: minutes per frame on a full render)."""
+    run(["ffmpeg", "-v", "error", "-y", "-ss", f"{max(0.0, (n - 0.25) / fps):.4f}", "-i", render, "-frames:v", "1", out])
     return out
 
 
@@ -133,7 +134,7 @@ def main():
         last = s0 - m_in + nf - 2
         if last - first < fps:
             continue
-        v = ssim(frame_png(a.render, first, os.path.join(tmp, "a.png")), frame_png(a.render, last, os.path.join(tmp, "b.png")))
+        v = ssim(frame_png(a.render, first, os.path.join(tmp, "a.png"), fps), frame_png(a.render, last, os.path.join(tmp, "b.png"), fps))
         if sid in hooks:
             print(f"motion  --  {sid[:3]} hook clip SSIM {v:.3f}")
             continue
@@ -143,7 +144,7 @@ def main():
         if not ok:
             fails.append(f"motion {sid[:3]}")
         if sid in cards:
-            y = luma(frame_png(a.render, s0 - m_in + fps, os.path.join(tmp, "c.png")))
+            y = luma(frame_png(a.render, s0 - m_in + fps, os.path.join(tmp, "c.png"), fps))
             ok = y < 0.15
             print(f"card    {'ok ' if ok else 'BAD'} {sid[:3]} mean luma {y:.3f}")
             if not ok:
