@@ -33,7 +33,9 @@ One verdict per image, coarse, at the size a viewer sees:
    (attached to every group), never against earlier renders. For a
    costume-identity style every figure, background ones included, keeps
    the head, skin and proportions of the source; a principal keeps their
-   cast line's costume. A tan body or a wrong costume fails. Small face
+   cast line's costume. A tan body or a wrong costume fails. Hair, a beard
+   or headwear that suits the role is a note, not a fail, unless it hides
+   who a principal is. Small face
    detail on any figure (a faint nose curve, a brow crease, a doubled
    mouth mark) and a short neck like the source frames' own are notes, not
    regenerates; a fully drawn face (nose with nostrils, ears, irised eyes)

@@ -36,9 +36,9 @@ clause, 2–3 props, dressed] [light].`
   clause **verbatim**; change angle, action and figure count instead of the
   room. Dressed even behind a close-up (a shelf of jars, a hanging cloth).
   A recurring place may be a `[[SETTING]]` block in the cast sheet.
-- **Age by posture and props only** (a stoop, a staff, slow hands): "the
-  same smooth blank egg head with no beard, hair or wrinkles". "Old" alone
-  draws a beard and creases.
+- **Age by posture and props** (a stoop, a staff, slow hands); "old"
+  alone may add grey hair or a beard, which is fine (the style allows hair
+  and headwear that suit a role).
 - **Emotion** in the style's vocabulary only (Eggline: brow angle, mouth
   line, sweat drop, tear, blush marks); never "looks sad".
 - **A close shot on an object stays attached to its figure**: "[[ID]] seen
@@ -84,7 +84,9 @@ shots and crowds bunched where the story peaks, not spread for variety.
 
 ## Hook (chapter 1 only)
 
-For each `hook: shot N` row write one `claude/hook-plan.md` row (schema in
+Hook rows are **medium or close shots**, never wide: the hook sells a
+face and a question, not a place (the establishing wide comes after the
+hook). For each `hook: shot N` row write one `claude/hook-plan.md` row (schema in
 conventions.md): `motion_prompt` says only what moves and any emotion,
 allows the mouth to move, asks for one slow constant camera move, never an
 action the still already shows; `duration_s` 4, 6 or 8; `beat` = the
