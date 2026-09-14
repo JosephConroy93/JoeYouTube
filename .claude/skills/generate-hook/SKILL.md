@@ -31,7 +31,7 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
    motion prompt, `aspectRatio 16:9`, `durationSeconds`, `resolution` — then
    **poll** each operation until `done` and **download** the video URI to
    `hook/raw/shot-NN.mp4`. Requests run in parallel; poll every 15 s.
-2. **Cut to beats**: trim each raw clip to the measured length of its beat (never stretch; if the beat is longer than the
+2. **Cut to beats** (`python scripts/trim-hook.py <series>/<slug>`): trim each raw clip to the measured length of its beat (never stretch; if the beat is longer than the
    clip, hold the last frame and report it) into `hook/shot-NN.mp4`; the
    last shot is never trimmed to fit.
 3. Report per shot: model, duration requested vs delivered, cost.
@@ -80,4 +80,4 @@ grade note).
 
 ## Status
 
-🟡 Exercised live on two 4 s 720p lite clips (gesture and walking; submit, poll, download, probe). Plan mode, beat trimming and the level card are UNTESTED until the Silk Road run.
+🟢 Plan mode, the 429 retry and `trim-hook.py` exercised on a five-shot hook (6/8/6/6/8 s lite 720p, one clip shorter than its beat held on its last frame). The level card is placed by `place-scenes`, not here.
