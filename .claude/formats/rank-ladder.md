@@ -27,7 +27,8 @@ dramatised in-scene, never as commentary about sources.
 
 - Cold-open straight onto the first level callout. No preamble.
 - Open on status, not drama: withhold what the title promised; the hook
-  lands a few sentences into level one.
+  question (the open loop the ending pays off) lands in the **first 8
+  seconds** of narration after the callout, setup after it.
 - One hard, specific, sourced fact early, delivered casually. If the
   research has none, leave it out and say so in the handoff notes.
 - No CTA before the first reveal; CTA policy comes from `series.md`.
