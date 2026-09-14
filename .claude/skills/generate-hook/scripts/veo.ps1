@@ -102,7 +102,7 @@ if ($rows.Count -eq 0) { throw 'hook-plan.md has no shot rows' }
 if ($rows.Count -gt 8) { throw "hook plan has $($rows.Count) shots; cap is 8" }
 if ($Shot -gt 0) { $rows = @($rows | Where-Object shot -eq $Shot) }
 $ops = @()
-$rawDir = Join-Path $videoDir 'hookaw'; New-Item -ItemType Directory -Force $rawDir | Out-Null
+$rawDir = Join-Path (Join-Path $videoDir 'hook') 'raw'; New-Item -ItemType Directory -Force $rawDir | Out-Null
 $opsLog = Join-Path $rawDir 'operations.txt'   # every submitted operation name, so a failed run can still be downloaded
 foreach ($r in $rows) {
   $still = Get-ChildItem (Join-Path $videoDir 'scene-generation') -File | Where-Object { $_.BaseName -eq $r.scene_id } | Select-Object -First 1
