@@ -37,7 +37,8 @@ those ids (`chain-scenes` does this for its seed batch). `fetch -DryRun
 - `BATCH_STATE_SUCCEEDED`: `status` prints READY with the result count.
   `fetch` reads `response.inlinedResponses.inlinedResponses[]`, each
   `{metadata.key, response.candidates[0].content.parts[].inlineData{mimeType,data}}`,
-  and decodes every image to `scene-generation/<metadata.key>.jpg`, or to
+  and decodes every image to `scene-generation/<metadata.key>.jpg` (a result
+  with no image part is a refused prompt: rewrite it, don't resubmit), or to
   `<scene_id>.attempt-N.jpg` (next unused N, from 2) when that file already
   exists. Nothing is ever overwritten. The row becomes `fetched` with
   `fetched_at`; any result lacking an image part is named in `notes`.

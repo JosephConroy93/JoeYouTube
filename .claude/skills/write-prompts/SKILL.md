@@ -38,6 +38,9 @@ clause, 2–3 props, dressed] [light].`
   A recurring place may be a `[[SETTING]]` block in the cast sheet.
 - **Emotion** in the style's vocabulary only (Eggline: brow angle, mouth
   line, sweat drop, tear, blush marks); never "looks sad".
+- **No tool touching a body** (a knife, hook or spatula at a wrapped or
+  covered body): the model reads it as surgery and returns no image. Hands
+  smooth, wrap, lift and carry.
 - **No words in the image.** A `text-card` row describes its carrier blank;
   the word is in `overlay:` and drawn at the edit.
 - Nothing from the bible or research beyond the cast line; the narration
