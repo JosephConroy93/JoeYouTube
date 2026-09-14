@@ -49,7 +49,9 @@ clause, 2–3 props, dressed] [light].`
   your wrist got slapped" → that scene's image): copy its latest file to
   `scene-generation/<scene_id>.jpg`, write `reuse: NNN` in `notes`, and
   leave the row out of the `generate-scenes` id list.
-- **No words in the image.** A `text-card` row describes its carrier blank;
+- **No words in the image.** Name a document by what it is, not what it
+  says ("a rolled papyrus tied with string", never "a contract"): the
+  model writes the word on it in English. A `text-card` row describes its carrier blank;
   the word is in `overlay:` and drawn at the edit.
 - Nothing from the bible or research beyond the cast line; the narration
   carries the facts, the image carries the atmosphere.
