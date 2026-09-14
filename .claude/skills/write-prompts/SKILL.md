@@ -38,6 +38,10 @@ clause, 2–3 props, dressed] [light].`
   A recurring place may be a `[[SETTING]]` block in the cast sheet.
 - **Emotion** in the style's vocabulary only (Eggline: brow angle, mouth
   line, sweat drop, tear, blush marks); never "looks sad".
+- **A close shot on an object stays attached to its figure**: "[[ID]] seen
+  from the chest up, holding X out in front of him", never "the hands of
+  [[ID]] holding X, his head soft behind", which draws a second body or a
+  pair of hands with no one attached.
 - **No tool touching a body** (a knife, hook or spatula at a wrapped or
   covered body): the model reads it as surgery and returns no image. Hands
   smooth, wrap, lift and carry.
