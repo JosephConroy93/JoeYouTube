@@ -227,14 +227,16 @@ All in Resolve Studio through the MCP server. **Verification rule** (conventions
 nothing is done until a rendered or measured artefact proves it.
 
 1. `place-scenes`: decide fps, pre-render every visual to exact-frame
-   clips, swap each hook still for its Veo clip, add the 2 s chapter cards,
+   clips, swap each hook still for its Veo clip, add the chapter cards (cream
+   thumbnail layout zooming into the chapter's first scene),
    draw each text-card row's `overlay` word on its blank carrier the
    same way, author and import the FCP7 XML, verify by readback and
    screenshot. Media is staged at the series
    `staging_path`, never inside OneDrive.
 2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
    nearly every scene, Elevated on ≤10% with confirmed targets, Static
-   only on text-cards, no transitions
+   on hook clips, text-cards, film-open scenes and chapter-card landings,
+   no transitions
    (`video.md`'s `transitions` turns black sweeps on, for chapter ends,
    once proven on the locked Resolve version). **The operator edits the
    plan** — pacing and emphasis stay human.

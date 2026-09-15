@@ -12,7 +12,7 @@ Reads   claude/scene-timing.md                  scene_id, segment, start_seconds
         <staging>/voiceovers/<segment>.wav|.mp3 audio per segment; sorted stems = playback order
         <staging>/scenes/<scene_id>.mp4         pre-rendered, exact-frame, at --fps
         <staging>/hook/*.mp4                    optional cold open, played first, in --hook-order
-        <staging>/cards/<scene_id>.mp4          --cards: level card over the start of that scene (V2)
+        <staging>/cards/<scene_id>.mp4          --cards: chapter card from that scene's first frame (V2)
         claude/sfx-plan.md + <staging>/sfx/<scene_id>.wav
                                                 --sfx: baked spot SFX at scene start + offset_s
 Writes  <xml>                                   <xmeml version="5">: one sequence, V1 = hook clips
@@ -128,11 +128,14 @@ def build_cards(staging, scenes, fps, count):
         if sid not in by_id:
             sys.exit(f"ABORT: card {p} names no scene in the timing file")
         nf = video_frames(p, fps, count)
-        if nf > by_id[sid]["frames"]:
-            sys.exit(f"ABORT: card {sid} ({nf} frames) is longer than its scene ({by_id[sid]['frames']})")
         cards.append({"name": "card-" + sid[:3], "path": p, "start_frame": by_id[sid]["start_frame"], "frames": nf})
     if not cards:
         sys.exit("ABORT: --cards given but no clips in <staging>/cards")
+    cards.sort(key=lambda c: c["start_frame"])
+    end = scenes[-1]["start_frame"] + scenes[-1]["frames"]
+    for a, b in zip(cards, cards[1:] + [{"start_frame": end, "name": "the timeline end"}]):
+        if a["start_frame"] + a["frames"] > b["start_frame"]:
+            sys.exit(f"ABORT: {a['name']} ({a['frames']} frames) runs into {b['name']}")
     return cards
 
 
@@ -145,10 +148,11 @@ def build_sfx(project, staging, scenes, fps):
         if not os.path.isfile(p):
             sys.exit(f"ABORT: sfx clip missing: {p} (run sfx.py)")
         sc = by_id[r["scene_id"]]
+        last = by_id[r["until"]] if r.get("until") else sc
         start = sc["start_frame"] + frames(r["offset"], fps)
         nf = frames(audio_duration(p), fps)
-        if start + nf > sc["start_frame"] + sc["frames"]:
-            sys.exit(f"ABORT: sfx {r['scene_id']} runs past its scene")
+        if start + nf > last["start_frame"] + last["frames"]:
+            sys.exit(f"ABORT: sfx {r['scene_id']} runs past {r.get('until') or 'its scene'}")
         item = {"stem": "sfx-" + r["scene_id"][:3], "path": p, "start_frame": start, "end_frame": start + nf}
         for t in tracks:
             if t[-1]["end_frame"] <= start:

@@ -13,13 +13,21 @@ Reads   claude/scene-timing.md             frame plan (same rule as build_timeli
         claude/hook-plan.md                shot -> scene_id; hook/shot-NN.mp4 replaces that still
         claude/scene-prompts/*.md          `overlay: "<word>"` in a row's notes -> drawn on the carrier
         claude/script.md                   `## ` chapter headings (before Handoff notes) -> chapter cards
+        ../series.md                       `thumbnail.*` colours and font for the cards
 Writes  <staging>/scenes/<scene_id>.mp4    one clip per timing row, exactly its planned frames
-        <staging>/cards/<scene_id>.mp4     2 s black card for each chapter's first scene
+        <staging>/cards/<scene_id>.mp4     2.2 s chapter card landing on that scene
 
---grade mixes a 3D LUT over every hook clip and still (never cards) at --grade-mix.
+A chapter card is the thumbnail layout: cream ground, `CHAPTER N` and the chapter name on
+the left, the scene it lands on as a tilted outlined card on the right. The card grows,
+straightens and fills the frame, its last frame identical to the scene's frame under it.
+It lands on the chapter's first scene (or the first scene after --film-until when the
+chapter opens inside the film); an all-hook chapter (the cold open) gets none. The landing
+scene holds still under the card, then pushes in (text-card rows stay still).
+
+--grade mixes a 3D LUT over every hook clip and still (never card grounds) at --grade-mix.
 --film-until gives every visual up to and including that scene the film look (gate weave,
 flicker, vignette, grain, grey edge falloff, 2.39:1 letterbox); the next scene opens its
-bars over the first 0.6 s.
+bars over 0.6 s once its card has landed.
 
 Hook clips are scaled to the timeline size, trimmed to the scene's frames or held on
 their last frame. Overlay words sit centred unless --overlay-pos gives top-left fractions.
@@ -34,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 sys.path.insert(0, os.path.dirname(__file__))
 from build_timeline import audio_duration, frames, read_timing, resolve_project  # noqa: E402
@@ -67,6 +75,7 @@ def esc_path(p):
 
 
 BAR_OPEN_S = 0.6
+CARD_S, PUSH = 2.2, 0.08
 
 
 def letterbox_bar(W, H):
@@ -98,9 +107,9 @@ def film_chain(W, H, falloff):
             f"movie='{esc_path(falloff)}',format=rgba[fg];[fb][fg]overlay=format=auto,pad={W}:{H}:0:{bar}")
 
 
-def bars_open_chain(fps, W, H):
+def bars_open_chain(fps, W, H, delay=0.0):
     bar = letterbox_bar(W, H)
-    e = f"(1-pow(1-min(t/{BAR_OPEN_S},1),3))"
+    e = f"(1-pow(1-clip((t-{delay:.3f})/{BAR_OPEN_S},0,1),3))"
     return (f"null[ob];color=black:s={W}x{bar}:r={fps}[ot];color=black:s={W}x{bar}:r={fps}[ou];"
             f"[ob][ot]overlay=y='-{bar}*{e}':shortest=1[oc];[oc][ou]overlay=y='{H - bar}+{bar}*{e}':shortest=1")
 
@@ -175,23 +184,177 @@ def level_cards(project, rows):
     return list(zip(firsts, heads))
 
 
-def still_job(r, jpg, out, fps, W, H, word, pos, font, look):
+def card_targets(project, rows, hooks, film_until=None):
+    """[(landing row, heading)]: one card per chapter, none for an all-hook chapter."""
+    ids = [r["scene_id"] for r in rows]
+    film_end = ids.index(film_until) if film_until else -1
+    chap = {r["scene_id"]: re.sub(r"(\d+)[a-z]\.md$", r"\1.md", r.get("chapter") or "") for r in rows}
+    out = []
+    for r, head in level_cards(project, rows):
+        if all(s in hooks for s, c in chap.items() if c == chap[r["scene_id"]]):
+            continue
+        out.append((rows[max(ids.index(r["scene_id"]), film_end + 1)], head))
+    return out
+
+
+def series_look(project):
+    keys = {}
+    for line in open(os.path.join(os.path.dirname(project), "series.md"), encoding="utf-8"):
+        m = re.match(r"\|\s*`([^`]+)`\s*\|\s*(.+?)\s*\|\s*$", line)
+        if m:
+            code = re.search(r"`([^`]+)`", m.group(2))
+            keys[m.group(1)] = code.group(1) if code else m.group(2)
+    need = ["thumbnail.background", "thumbnail.ink", "thumbnail.accent", "thumbnail.font"]
+    if any(k not in keys for k in need):
+        sys.exit(f"ABORT: series.md needs {', '.join(need)} for the chapter cards")
+    rgb = lambda v: tuple(int(v.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))  # noqa: E731
+    return rgb(keys[need[0]]), rgb(keys[need[1]]), rgb(keys[need[2]]), keys[need[3]]
+
+
+def card_text(W, H, head, look):
+    bg, ink, accent, font = look
+    k = W / 1920
+    m = re.match(r"^(\w+\s+\d+)\.\s*(.+?)\.?$", head)
+    label, name = (m.group(1).upper(), m.group(2).upper()) if m else ("", head.rstrip(".").upper())
+    layer = Image.new("RGBA", (W, H), bg + (0,))
+    d = ImageDraw.Draw(layer)
+    x, width, lead = round(90 * k), round(760 * k), round(14 * k)
+    small = ImageFont.truetype(font, round(58 * k))
+    size = round(170 * k)
+    while True:
+        f = ImageFont.truetype(font, size)
+        lines, cur = [], ""
+        for w in name.split():
+            t = (cur + " " + w).strip()
+            if cur and d.textbbox((0, 0), t, font=f)[2] > width:
+                lines.append(cur)
+                cur = w
+            else:
+                cur = t
+        lines.append(cur)
+        if max(d.textbbox((0, 0), ln, font=f)[2] for ln in lines) <= width and len(lines) <= 3:
+            break
+        size -= 4
+    boxes = [d.textbbox((0, 0), ln, font=f) for ln in lines]
+    gap = round(30 * k) if label else 0
+    lh = d.textbbox((0, 0), label, font=small)[3] if label else 0
+    y = (H - (lh + gap + sum(b[3] - b[1] for b in boxes) + lead * (len(lines) - 1))) / 2
+    if label:
+        sb = d.textbbox((0, 0), label, font=small)
+        d.text((x - sb[0], y - sb[1]), label, font=small, fill=accent)
+        y += lh + gap
+    for ln, b in zip(lines, boxes):
+        d.text((x - b[0], y - b[1]), ln, font=f, fill=ink)
+        y += b[3] - b[1] + lead
+    return layer
+
+
+def card_frame(still, text, p, look):
+    bg, ink = look[0], look[1]
+    W, H = still.size
+    k = W / 1920
+    ar = 1.23 + (W / H - 1.23) * p
+    pw = round(880 * k + (W - 880 * k) * p)
+    ph = round(pw / ar) if p < 1 else H
+    cw = min(W, round(H * ar))
+    x0 = (W - cw) // 2
+    pic = still.crop((x0, 0, x0 + cw, H)).resize((pw, ph), Image.LANCZOS)
+    if p >= 1:
+        return pic
+    b = round(14 * k * (1 - p))
+    card = Image.new("RGBA", (pw + 2 * b, ph + 2 * b), ink + (255,))
+    card.paste(pic, (b, b))
+    card = card.rotate(-3 * (1 - p), resample=Image.BICUBIC, expand=True)
+    cx = 1370 * k + (W / 2 - 1370 * k) * p
+    pos = (round(cx - card.width / 2), round(H / 2 - card.height / 2))
+    canvas = Image.new("RGB", (W, H), bg)
+    shade = round(90 * (1 - p))
+    if shade:
+        s = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        s.paste((0, 0, 0, shade), (pos[0] + round(18 * k), pos[1] + round(24 * k)), card.split()[3])
+        s = s.filter(ImageFilter.GaussianBlur(20 * k))
+        canvas.paste(s, (0, 0), s)
+    fade = min(1.0, max(0.0, 1 - (p - 0.2) / 0.3))
+    if fade:
+        t = text.copy()
+        t.putalpha(t.split()[3].point(lambda v: int(v * fade)))
+        canvas.paste(t, (round(-160 * k * (1 - fade)), 0), t)
+    canvas.paste(card, pos, card)
+    return canvas
+
+
+def card_job(head, scene_clip, land, out, fps, W, H, look):
+    pic = out + ".land.png"
+    run(["ffmpeg", "-v", "error", "-y", "-i", scene_clip, "-vf", f"select='eq(n,{land})',scale={W}:{H}:flags=lanczos",
+         "-frames:v", "1", pic])
+    still = Image.open(pic).convert("RGB")
+    still.load()
+    os.remove(pic)
+    text = card_text(W, H, head, look)
+    n = round(CARD_S * fps)
+    proc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                             "-r", str(fps), "-i", "-", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+                             "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    for i in range(n):
+        u = i / (n - 1)
+        s = u * u * (3 - 2 * u)
+        proc.stdin.write(card_frame(still, text, s ** 3, look).tobytes())
+    proc.stdin.close()
+    err = proc.stderr.read().decode(errors="replace")
+    if proc.wait():
+        raise RuntimeError(f"card encode: {err[-400:]}")
+
+
+def push_job(r, jpg, out, fps, cw, ch, hold, look, crop):
+    """Held still for `hold` frames, then an eased push-in about the centre, drawn with subpixel
+    precision (ffmpeg's per-frame scale and zoompan both step visibly on a slow zoom)."""
+    im = Image.open(jpg).convert("RGB")
+    (iw, ih), (kw, kh) = im.size, crop
+    im = im.crop(((iw - kw) // 2, (ih - kh) // 2, (iw - kw) // 2 + kw, (ih - kh) // 2 + kh))
+    if im.size != (cw, ch):
+        im = im.resize((cw, ch), Image.LANCZOS)
+    args = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{cw}x{ch}", "-r", str(fps),
+            "-i", "-"]
+    if look:
+        args += ["-filter_complex", ",".join(look)]
+    proc = subprocess.Popen(args + ["-frames:v", str(r["frames"]), "-c:v", "libx264", "-crf", "18", "-pix_fmt",
+                                    "yuv420p", "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    held = im.tobytes()
+    span = r["frames"] - 1 - hold
+    for i in range(r["frames"]):
+        if i <= hold:
+            proc.stdin.write(held)
+            continue
+        z = 1 + PUSH * ((i - hold) / span) ** 2
+        a = 1 / z
+        proc.stdin.write(im.transform((cw, ch), Image.AFFINE, (a, 0, cw / 2 * (1 - a), 0, a, ch / 2 * (1 - a)),
+                                      resample=Image.BICUBIC).tobytes())
+    proc.stdin.close()
+    err = proc.stderr.read().decode(errors="replace")
+    if proc.wait():
+        raise RuntimeError(f"push encode {r['scene_id']}: {err[-400:]}")
+
+
+def still_job(r, jpg, out, fps, W, H, word, pos, font, look, hold=0):
     iw, ih = image_size(jpg)
     if iw * 9 > ih * 16:
         cw, ch = (ih * 16 // 9) // 2 * 2, ih // 2 * 2
     else:
         cw, ch = iw // 2 * 2, (iw * 9 // 16) // 2 * 2
     vf = [f"crop={cw}:{ch}"]
+    crop = (cw, ch)
     if cw < W:
         vf.append(f"scale={W}:{H}:flags=lanczos")
         cw, ch = W, H
+    look = [x(cw, ch) if callable(x) else x for x in look]
+    if hold and not word and r["frames"] > hold + 1:
+        return push_job(r, jpg, out, fps, cw, ch, hold, look, crop)
     if word:
         x, y = pos or (0.5, 0.5)
         txt = out + ".txt"
         open(txt, "w", encoding="utf-8").write(word)
         vf.append(f"drawtext=fontfile='{esc_path(font)}':textfile='{esc_path(txt)}':fontcolor=0x2a1d14:"
                   f"fontsize={int(ch * 0.11)}:x={x}*w-text_w/2:y={y}*h-text_h/2")
-    look = [x(cw, ch) if callable(x) else x for x in look]
     tune = [] if look else ["-tune", "stillimage"]
     run(["ffmpeg", "-v", "error", "-y", "-loop", "1", "-framerate", str(fps), "-i", jpg,
          "-filter_complex", ",".join(vf + look), "-frames:v", str(r["frames"]), "-r", str(fps),
@@ -206,15 +369,6 @@ def hook_job(r, clip, out, fps, W, H, look):
          ",".join([f"scale={W}:{H}:flags=lanczos,fps={fps},tpad=stop_mode=clone:stop_duration={hold:.3f}"] + look),
          "-frames:v", str(r["frames"]), "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", "-an", out])
     return have
-
-
-def card_job(text, out, fps, W, H, font):
-    txt = out + ".txt"
-    open(txt, "w", encoding="utf-8").write(text.upper())
-    run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"color=c=black:s={W}x{H}:r={fps}",
-         "-vf", f"drawtext=fontfile='{esc_path(font)}':textfile='{esc_path(txt)}':fontcolor=white:"
-                f"fontsize={int(H * 0.06)}:x=(w-text_w)/2:y=(h-text_h)/2",
-         "-frames:v", str(2 * fps), "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-an", out])
 
 
 def main():
@@ -254,43 +408,22 @@ def main():
         sys.exit(f"ABORT: --film-until {a.film_until} is not in scene-timing.md")
     film_end = ids.index(a.film_until) if a.film_until else -1
     falloff = falloff_png(staging, W, H) if a.film_until else None
+    targets = {r["scene_id"]: head for r, head in card_targets(project, rows, hooks, a.film_until)}
+    card_frames = round(CARD_S * fps)
+    card_look = series_look(project)
 
     def look(i):
         parts = [grade_chain(a.grade, a.grade_mix)] if a.grade else []
         if i <= film_end:
             parts.append(film_chain(W, H, falloff))
         elif i == film_end + 1 and a.film_until:
-            parts.append(lambda w, h: bars_open_chain(fps, w, h))
+            delay = card_frames / fps if rows[i]["scene_id"] in targets else 0.0
+            parts.append(lambda w, h: bars_open_chain(fps, w, h, delay))
         return parts
 
-    jobs = {}
-    with cf.ThreadPoolExecutor(max_workers=a.jobs) as ex:
-        for i, r in enumerate(rows):
-            sid = r["scene_id"]
-            if only and sid not in only:
-                continue
-            out = os.path.join(staging, "scenes", sid + ".mp4")
-            if sid in hooks:
-                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i))] = (sid, out, r["frames"], "hook")
-            else:
-                jpg = os.path.join(project, "scene-generation", sid + ".jpg")
-                if not os.path.isfile(jpg):
-                    sys.exit(f"ABORT: missing {jpg}")
-                jobs[ex.submit(still_job, r, jpg, out, fps, W, H, words.get(sid), pos.get(sid), a.font, look(i))] = \
-                    (sid, out, r["frames"], "overlay" if sid in words else "still")
-        chapter_of = {x["scene_id"]: re.sub(r"(\d+)[a-z]\.md$", r"\1.md", x["chapter"]) for x in rows}
-        for r, head in level_cards(project, rows):
-            ch = chapter_of[r["scene_id"]]
-            if all(x in hooks for x, c in chapter_of.items() if c == ch):
-                continue  # a chapter that is all hook footage is the cold open: no card
-            if only and r["scene_id"] not in only:
-                continue
-            if r["frames"] < 2 * fps:
-                sys.exit(f"ABORT: {r['scene_id']} is shorter than its 2 s level card")
-            out = os.path.join(staging, "cards", r["scene_id"] + ".mp4")
-            jobs[ex.submit(card_job, head, out, fps, W, H, a.font)] = (r["scene_id"], out, 2 * fps, "card")
+    problems, n = [], {"hook": 0, "still": 0, "overlay": 0, "card": 0}
 
-        problems, n = [], {"hook": 0, "still": 0, "overlay": 0, "card": 0}
+    def collect(jobs):
         for f in cf.as_completed(jobs):
             sid, out, want, kind = jobs[f]
             try:
@@ -304,6 +437,39 @@ def main():
             n[kind] += 1
             if kind == "hook" and res < want:
                 print(f"hook {sid}: source {res} frames, last frame held {want - res}")
+
+    with cf.ThreadPoolExecutor(max_workers=a.jobs) as ex:
+        jobs = {}
+        for i, r in enumerate(rows):
+            sid = r["scene_id"]
+            if only and sid not in only:
+                continue
+            out = os.path.join(staging, "scenes", sid + ".mp4")
+            hold = card_frames if sid in targets else 0
+            if sid in hooks:
+                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i))] = (sid, out, r["frames"], "hook")
+            else:
+                jpg = os.path.join(project, "scene-generation", sid + ".jpg")
+                if not os.path.isfile(jpg):
+                    sys.exit(f"ABORT: missing {jpg}")
+                jobs[ex.submit(still_job, r, jpg, out, fps, W, H, words.get(sid), pos.get(sid), a.font, look(i),
+                               hold)] = (sid, out, r["frames"], "overlay" if sid in words else "still")
+        collect(jobs)
+
+        jobs = {}
+        for r in rows:
+            sid = r["scene_id"]
+            if sid not in targets or (only and sid not in only):
+                continue
+            clip = os.path.join(staging, "scenes", sid + ".mp4")
+            if not os.path.isfile(clip):
+                problems.append(f"card {sid}: its scene clip is missing")
+                continue
+            land = min(card_frames, r["frames"]) - 1
+            out = os.path.join(staging, "cards", sid + ".mp4")
+            jobs[ex.submit(card_job, targets[sid], clip, land, out, fps, W, H, card_look)] = \
+                (sid, out, card_frames, "card")
+        collect(jobs)
     for t in glob.glob(os.path.join(staging, "*", "*.txt")):
         os.remove(t)
     print(f"rendered {n} into {staging}")

@@ -56,13 +56,20 @@ verification rule: `.claude/conventions.md`.
    trims it to the scene's frames, or holds its last frame when shorter; the
    staging `hook/` folder stays empty. **Never trim the last hook clip to make
    a total fit.**
-5b. **Chapter cards**: `prerender.py` renders a 2 s black card per chapter
-   with its `## ` heading (`Level N. <Rank>.` or `Chapter N. <Name>.`)
-   from `script.md` in small white hand-lettered capitals (Ink Free), centred;
-   `build_timeline.py --cards` places each on V2 over the first two seconds
-   of that chapter's first scene. A chapter made only of hook clips is the
-   cold open and gets no card. Beat files split as `chapter-05a/05b` count as
-   one chapter.
+5b. **Chapter cards**: after the scene clips, `prerender.py` renders a 2.2 s
+   card per chapter in the thumbnail layout (`series.md` `thumbnail.*`):
+   cream ground, `CHAPTER N` in the accent colour over the chapter name from
+   the `## ` heading, and the scene the card lands on as a tilted outlined
+   card on the right. The card grows, straightens and fills the frame; its
+   last frame is that scene's frame under it, so the zoom is the cut into
+   the chapter. The landing scene holds still for the card, then pushes in
+   (baked; text-card rows stay still). `build_timeline.py --cards` places
+   each card on V2 from the landing scene's first frame; a card may run past
+   a short scene. It lands on the chapter's first scene, or on the first
+   scene after `film_open` when the chapter opens inside it. A chapter made
+   only of hook clips is the cold open and gets no card. Beat files split as
+   `chapter-05a/05b` count as one chapter. Check one card's landing: its last
+   frame against the scene clip's frame under it (SSIM ≥ 0.97).
 5c. **Text-card words**: a `text-card` row's carrier image is generated
    blank; `prerender.py` draws its `overlay: "<word>"` (from the row's
    `notes`) in hand-lettered ink-dark type, centred, or at `--overlay-pos`
@@ -84,8 +91,9 @@ verification rule: `.claude/conventions.md`.
    `--grade` mixes the `video.md` LUT over every hook clip and still at its
    mix, never over cards. `--film-until` gives every visual up to that scene
    the film look and a 2.39:1 letterbox; the next scene's bars slide off in
-   0.6 s. Film-look clips are 1920×1080 with the bars baked in, so they stay
-   static in `plan-ken-burns`. Check one frame each of a film hook clip, a
+   0.6 s, after its card has landed when it carries one. Film-look clips
+   are 1920×1080 with the bars baked in, so they stay static in
+   `plan-ken-burns`. Check one frame each of a film hook clip, a
    film still, the bar-open scene at 0 / 0.25 / 1 s and a body still (a
    subagent) before the full run.
 6. **Author the XML.**
@@ -97,7 +105,7 @@ verification rule: `.claude/conventions.md`.
    balance unchanged.
    Re-derives the frame plan from the timing file and staging inventory,
    aborts naming any clip whose frame count disagrees, writes one sequence
-   (V1 = scenes, V2 = level cards, one audio track per voice segment, then
+   (V1 = scenes, V2 = chapter cards, one audio track per voice segment, then
    SFX tracks packed without overlaps) and re-parses it to check video end
    = audio end = planned total.
 7. **Import.** Bins first (`add_subfolder` + `set_current_folder`: Hook /

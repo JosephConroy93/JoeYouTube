@@ -13,6 +13,7 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 - **`sfx.py` + `conventions.md` `sfx-plan.md`: optional `until` column** so one sound can span scenes (the projector bed under the film open).
 - **`build_timeline.py --loudness`, `video.md` `loudness`:** voice files stay −16 LUFS; every audio clip is lifted the same step to the finished target. Jim sounded low: our renders sat at −16/−17 while YouTube plays at −14 and never turns quiet videos up.
 - **`plan-ken-burns` `draft_plan.py --film-until`:** film-open scenes are static (their bars are baked in); chapter ends are computed per chapter, not per split beat file.
+- **Chapter cards rebuilt (`prerender.py` 5b):** the 2 s black text card becomes the cream thumbnail layout, which grows into the chapter's first scene and lands on its exact frame; the scene holds for the card, then a push-in is baked with subpixel PIL frames (ffmpeg's per-frame scale and zoompan both stepped visibly). The operator chose the first scene over a teaser still: the zoom only reads as a cut when it lands on what plays next. `build_timeline.py` lets a card run past a short scene and honours `until` on SFX; `draft_plan.py` keeps landings static; `check_render.py` checks the cream ground and expects landing scenes to move.
 - **WORKFLOW Step 9.4/9.6, Step 11.3b:** grade from `video.md`, render measured at `loudness`; captions SRT from the ElevenLabs alignment, which was only in memory and a hand-off note.
 
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)

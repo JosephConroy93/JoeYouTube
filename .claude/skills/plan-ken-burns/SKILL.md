@@ -52,7 +52,9 @@ The plan is a draft: the operator watches the cut and overrides it.
 Static is reserved for `scene_type = text-card`, for hook-clip rows
 (scenes replaced by `hook-plan.md` footage, which already moves) and for
 the scenes up to `video.md` `film_open` (their letterbox bars are baked in
-and a zoom would move them); nothing else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
+and a zoom would move them) and for each scene a chapter card lands on
+(`place-scenes` bakes its hold and push-in so the card's last frame
+matches); nothing else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
 motion-ising them. No particle, glow or other overlay effects.
 
 ## Dynamic Zoom preset rule
