@@ -186,8 +186,9 @@ For each chapter, in order:
    unsure row before submitting.
 2. **Submit**: `generate-scenes` for the chapter (references shrunk to 1K;
    one or two jobs).
-3. **Fetch**: a bounded background wait on `get-scenes` (the skill sets
-   the interval and cap).
+3. **Fetch**: a background wait on `get-scenes` (the skill sets the
+   interval). Always wait for the batch, however long it takes; direct
+   generation only on the operator's say-so.
 4. **Validate**: `validate-scenes` (three checks, Sonnet, one pass) or the
    operator's own look; either way the row gets `validated (n/m)`.
 5. **Fix**: a failure is resubmitted once; a second failure gets a

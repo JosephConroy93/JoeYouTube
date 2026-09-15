@@ -69,6 +69,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **write-prompts: age by posture and props only, never "old"/"elderly" on an unreferenced figure**. Why: third drawn face from age words in the Cromwell run (035 "stooped with a short grey beard", Mercy Prior's wrinkles in 058, 102's "old member"); the old line said grey hair from "old" was fine.
 - **validate-scenes calibration: the style's emotion marks (a crack across the head for shock, closed arc eyes) pass**. Why: Cromwell 086 was failed as malformed for a shock crack the Eggline entry lists as vocabulary; overruled by the driving session.
 - **`veo.ps1`: a quota 429 stops submitting but still downloads; `-Resume` downloads logged operations**. Why: the Cromwell hook's shot 5 hit the Veo quota after 4 submissions and the run died before downloading shots 1–4.
+- **Hard rule: always wait for the batch** (generate-scenes, get-scenes, WORKFLOW Step 8): a slow or stalled batch is waited out up to the API's 24 hours, the wait slows to 15-minute checks after 40 minutes, and `-Direct` runs only on the operator's explicit say-so. Why: operator, after the Cromwell overnight run went direct at about twice the price; with the process trusted, videos run on a schedule and time is not the constraint.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 

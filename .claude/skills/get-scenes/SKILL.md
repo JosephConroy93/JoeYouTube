@@ -58,7 +58,8 @@ Nothing about what the images show.
 
 - No judgment on images; that is `validate-scenes`.
 - Polling is the driving session's, never the script's: one background
-  loop of `-Action status` every 2 minutes, capped at 40 minutes, that
-  exits when no row is pending; then one `fetch`. Never a tighter
-  interval, never an unbounded loop.
+  loop of `-Action status` every 2 minutes for the first 40 minutes, then
+  every 15 minutes, that exits when no row is pending; then one `fetch`.
+  A pending batch is waited for until the API's 24-hour limit, never
+  cancelled or replaced to save time (`generate-scenes` hard rule).
 - No retries, resubmission or prompt changes.
