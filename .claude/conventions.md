@@ -105,8 +105,9 @@ in). Chapter file columns:
 
 - `scene_id` = `NNN_<kebab-slug>`; its image is `scene-generation/<scene_id>.jpg`.
 - `scene_type` = `illustrated`, or `text-card`: a carrier object (letter,
-  ledger, page) covered in illegible handwriting generated in the image; the
-  narration carries the words and nothing is drawn at the edit. A legacy
+  ledger, page) covered in illegible handwriting generated in the image; legible words
+  that fit the scene are acceptable; the narration carries the words and
+  nothing is drawn at the edit. A legacy
   `overlay: "<word>"` note still makes `prerender.py` draw the word.
 - `script_bookmark` = the verbatim script text the scene covers (parse the
   cell by column boundary, never by quote pair).
