@@ -188,8 +188,8 @@ For each chapter, in order:
 
 1. **Prompts**: dispatch the `prompt-writer` agent in the background with
    the project path and the chapter file. It follows `write-prompts` (the
-   recipe, shot-spread targets, reference rule, chapter 1's
-   `hook-plan.md`) and returns with `check-manifest.py` clean, the
+   recipe, shot-spread targets, reference rule, the first chapter's
+   `hook-plan.md`, which is the Prologue's when there is one) and returns with `check-manifest.py` clean, the
    spread line and any rows it was unsure of. Read that, and open an
    unsure row before submitting.
 2. **Submit**: `generate-scenes` for the chapter (references shrunk to 1K;
@@ -216,8 +216,10 @@ chapter `written` after its own `check-manifest.py` run), and generation
 and QC of one wave overlap with the next wave's prompts. A fix found in a
 wave is applied to the next wave's rows before they generate.
 
-After the last chapter: `finalize-scenes`, then `align-scenes`, then
-`generate-hook`. Set `status: generated`.
+After the last chapter: `finalize-scenes/scripts/promote-latest.py --apply`
+(each scene's passing attempt takes the canonical name), `finalize-scenes`,
+`align-scenes --source api`, then `generate-hook` (Veo lite allows about four
+submissions a day, so a longer hook spans the reset). Set `status: generated`.
 
 ## Step 9 — Edit 🟢
 
