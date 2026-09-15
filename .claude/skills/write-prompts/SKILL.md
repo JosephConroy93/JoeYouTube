@@ -28,6 +28,9 @@ are written from what the previous chapter's QC found, so read that first.
 `[shot] [[ID]] [action, then emotion in the style's own marks] [setting: one
 clause, 2–3 props, dressed] [light].`
 
+- **A comma after every `[[ID]]`**: a cast line ends on a garment ("a
+  black flat cap"), so the action needs its own clause; name a figure once
+  per row (a second token prints the costume twice).
 - **Shot**: `Close shot`, `Medium shot`, `Medium two-shot`, `Wide shot`. The
   first two words of every prompt, so the spread can be counted.
 - **Figures**: one or two. A third only when the beat needs one, and then
