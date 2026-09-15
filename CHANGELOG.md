@@ -20,6 +20,7 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 - **`check_render.py` card check samples the top-left corner:** the left-third mean read three-line chapter names as off-cream (Cromwell full render, cards 044/104/157).
 - **`align-scenes`: check the `api` alignment's end against the audio duration.** Cromwell voice_02 (`eleven_v3`): alignment ended at 219 s of a 256 s file; scene cuts in that segment landed up to ~2 s off.
 - **`align-scenes`: whisper on the timeline WAV is the timing authority; the TTS alignment is kept only where it agrees (p95 ≤ 0.5 s).** Cromwell's eleven_v3 alignment ran 2–6.5 s early by each segment's end and 30 s early through most of voice_02 (it came back 37 s short); scenes were cutting ahead of the narration. Also: whisper transcribes the tempo-applied WAV, not the raw mp3 (10% long at tempo 1.10); `timed_audio` stamps each JSON; model tiny → base; matching survives hyphenated numbers, ordinals, merged words and misheard openings; unmatched scenes at a segment edge interpolate inside it. Captions (WORKFLOW 11.3b) time from whisper, not the alignment.
+- **`align.py`: the first scene starts at 0.** Whisper times the first word at 0.58 s; `build_timeline.py` refuses a gap before the first scene.
 - **WORKFLOW Step 9.4/9.6, Step 11.3b:** grade from `video.md`, render measured at `loudness`; captions SRT from the ElevenLabs alignment, which was only in memory and a hand-off note.
 
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)

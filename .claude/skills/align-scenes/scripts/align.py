@@ -514,6 +514,7 @@ def main():
     unresolved = [s["scene_id"] for s in scenes if not s["match"]]
     if unresolved:
         sys.exit("ABORT: rows without timing: " + ", ".join(unresolved))
+    scenes[0]["start"] = 0.0  # the first picture covers the lead-in before the first word
 
     out = a.out or os.path.join(project, "claude", "scene-timing.md")
     write_timing(out, scenes, a.source, segments)
