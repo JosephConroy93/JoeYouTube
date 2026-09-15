@@ -334,6 +334,11 @@ function Expand-Prompt($Blocks, $Row) {
         $lead = if ($attached) { "Preserve every attached reference image's exact colouring and locked attributes" } else { 'Keep these locked attributes exactly' }
         $out += " ${lead}: $($guards -join '; '). Do not reinterpret, recolour, invent or substitute any of them."
     }
+    if ($guards.Count -eq 0 -and $text -match 'no people') {
+        # an object insert: the figure rules in _closing invite a figure, so state the emptiness instead
+        $out += ' This is an empty still life: no person, head, hand, arm or figure appears anywhere in the frame, not even partly at the edges.'
+        return $out
+    }
     if ($Row.scene_type -eq 'illustrated' -and $Blocks.ContainsKey('_closing')) {
         # sentence by sentence, so a row already carrying part of the closing gains only the rest
         foreach ($sentence in [regex]::Split($Blocks['_closing'].Text, '(?<=[.!?])\s+')) {

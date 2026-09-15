@@ -62,6 +62,8 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **`gemini-batch.ps1 -Direct`** (generate-scenes stalled-queue rule): the same requests as one interactive `generateContent` call per row, saved and logged as `fetched`. Why: the Cromwell pilot's three batch jobs sat 3h40m with every request pending and no update, overnight with the operator away; cancelled and regenerated directly at about twice the batch price.
 - **write-prompts: object inserts say "no people anywhere in the frame"**. Why: the Cromwell pilot's two figure-less rows (008 the will, 015 a text-card parchment) both came back with an unprompted figure; each passed on resubmit, and the line stops the pattern before chapters 2–9.
 - **write-prompts: comma after every `[[ID]]`, one token per figure per row**. Why: the Prologue and Chapter 3 agents both found expanded prompts running the costume into the action ("a black flat cap bowing low") and one row printing a costume twice.
+- **Object inserts expand without the figure rules** (`gemini-batch.ps1` Expand-Prompt): a row with no cast token that says "no people" skips `_closing` and gains an explicit empty-still-life sentence (no head, hand or figure even at the edges). Why: third figure on an object-only row (008, 015, 036), the last despite the write-prompts line; `_closing` describes every figure, close-up ones included.
+- **Cromwell cast sheet: the `EXTRA` guard is white head and hands only** (dropped "russet jerkin and brown flat cap"). Why: the guard is appended to every expanded prompt, so role-costumed extras were told to keep the russet (006).
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 
