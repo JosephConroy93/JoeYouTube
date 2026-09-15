@@ -68,9 +68,15 @@ clause, 2–3 props, dressed] [light].`
   carries the facts, the image carries the atmosphere.
 - A beat joined from two rows (`; ` in `notes`, from `merge-floor.py`) gets
   the image for the moment its last line lands, not a split composition.
-- An extra needing a role detail keeps the `[[EXTRA]]` token and adds the
-  detail in words after it (`[[EXTRA]] wearing a plain white sash as a
-  lector`).
+- An extra needing a small role detail keeps the `[[EXTRA]]` token and adds
+  the detail in words after it (`[[EXTRA]] wearing a plain white sash as a
+  lector`). An extra in a **different costume colour** (a scarlet livery,
+  a monk's black habit, a crimson gown) is written in words with no
+  `[[EXTRA]]` token and no reference ("a bearer in a scarlet livery coat,
+  blank white egg head and white hands"): the extra reference pulls its
+  own colours back.
+- A woman in a hood or coif, and a monk in a hood: the hood "frames a
+  blank white egg face, no hair showing", in the same clause.
 
 ## Shot spread (from the source channel's census)
 
