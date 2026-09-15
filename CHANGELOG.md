@@ -67,6 +67,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **validate-scenes calibration: far-side and under-chin shading and a short neck over a collar are the style**; pseudo-handwriting with no real words passes. Why: a Sonnet group failed all eight of Cromwell 068–075 as "dimensional face shading"; against passed scenes 044/045 and a full-size crop of 070 they are the Eggline look, and the operator overrule rule puts it in the calibration.
 - **write-prompts: recoloured extras go in words without the extra token or reference; hoods frame a blank egg face**. Why: the Cromwell extra reference pulled a scarlet-coated extra back to russet three times (006, 062 twice; the rewrite without the reference passed), and hooded women and monks drew hair and faces (043, 058, 065; the hood wording fixed 058 and 065).
 - **write-prompts: age by posture and props only, never "old"/"elderly" on an unreferenced figure**. Why: third drawn face from age words in the Cromwell run (035 "stooped with a short grey beard", Mercy Prior's wrinkles in 058, 102's "old member"); the old line said grey hair from "old" was fine.
+- **validate-scenes calibration: the style's emotion marks (a crack across the head for shock, closed arc eyes) pass**. Why: Cromwell 086 was failed as malformed for a shock crack the Eggline entry lists as vocabulary; overruled by the driving session.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 

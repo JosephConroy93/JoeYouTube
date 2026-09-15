@@ -42,6 +42,8 @@ One verdict per image, coarse, at the size a viewer sees:
    fails. Soft airbrushed shading on the far side of a head or under the
    chin, and a short neck above a collar, are the style's own rendering
    (the style block asks for them): never a fail, not even a note.
+   The style's own emotion marks (tears, sweat drops, blush, a crack
+   across the head for shock, closed arc eyes for a smile) are the style.
    Document scribble that reads as pseudo-handwriting but no real words
    passes. Face rules apply to figures only: a mask, statue or carving
    keeps its own modelled face. A figure rendered with no face at all
