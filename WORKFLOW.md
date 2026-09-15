@@ -182,7 +182,7 @@ Set `visual_guardrails` to `claude/cast.md` and
 verbatim bookmarks, a ten-word beat per row, hook-shot marks in chapter 1,
 `content_prompt` empty, every chapter `beats`. Run
 `generate-scenes/scripts/check-manifest.py`; a floor band well over ~10%
-means `merge-floor.py` (sub-floor rows join a neighbour, ids renumber);
+means `merge-floor.py` (sub-floor rows join a neighbour, over-ceiling rows split at a sentence, ids renumber);
 any FAIL goes back as a Mode 3 edit. Under ten minutes.
 
 ## Step 8 — Prompts and generation, one chapter per loop 🟡
