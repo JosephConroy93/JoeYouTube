@@ -17,6 +17,7 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 - **`sfx.py` measures sub-2 s sounds looped:** integrated loudness gates in 400 ms blocks, so a 0.2–0.4 s hit read −70 LUFS and was baked about +42 dB hot (three Cromwell picks peaked near 0 dBFS).
 - **`check_render.py --film-until`:** film-open scenes (weave, grain, flicker) are reported, not failed as moving Static rows. Proving render on Cromwell: frames, −15.2 LUFS against −15.1 predicted, L = R, cream card, In/Out/Pan all moving, cut frame-exact.
 - **Ken Burns baked by `prerender.py --motion`; `apply-fusion` becomes the fallback; WORKFLOW 9.1/9.2 swap (plan before place).** On Cromwell the Fusion Lua batch stalled twice at ~37 scenes with the RX 5500 XT's video memory full; baking the same curves (Size and Center per frame, PIL affine from a 1.2× source) removes the comps, and the render check reads the same plan kinds.
+- **`check_render.py` card check samples the top-left corner:** the left-third mean read three-line chapter names as off-cream (Cromwell full render, cards 044/104/157).
 - **WORKFLOW Step 9.4/9.6, Step 11.3b:** grade from `video.md`, render measured at `loudness`; captions SRT from the ElevenLabs alignment, which was only in memory and a hand-off note.
 
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)

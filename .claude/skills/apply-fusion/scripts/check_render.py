@@ -13,8 +13,8 @@ The render must start at timeline frame --mark-in. Checks, each printed with its
            (In/Out/Focal/Pan) must change (SSIM < 0.97); a Static still must not (> 0.99);
            hook clips and film-open scenes (weave, grain, flicker) are reported only. A chapter card's landing scene is sampled after the
            card and must move (its push-in is baked), unless it is a text-card.
-  cards    every chapter card in range: 0.3 s in, the left third is the series' cream
-           (mean RGB within 30 of thumbnail.background per channel)
+  cards    every chapter card in range: 0.3 s in, the top-left corner (clear of the text) is the
+           series' cream (mean RGB within 20 of thumbnail.background per channel)
   sfx      every sfx-plan row in range: the render minus the voiceover, lag and gain fitted on
            the neighbouring second (before or after) that carries more voice, is louder inside
            the sound's window than in that second by 6 dB+
@@ -53,8 +53,8 @@ def ssim(a, b):
     return float(m.group(1)) if m else float("nan")
 
 
-def mean_rgb(png, x_frac):
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", png, "-vf", f"crop=iw*{x_frac}:ih:0:0,scale=1:1:flags=area",
+def corner_rgb(png):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", png, "-vf", "crop=iw*0.12:ih*0.15:0:0,scale=1:1:flags=area",
                           "-pix_fmt", "rgb24", "-f", "rawvideo", "-"], capture_output=True).stdout
     return tuple(raw[:3]) if len(raw) >= 3 else (float("nan"),) * 3
 
@@ -153,9 +153,9 @@ def main():
         if not ok:
             fails.append(f"motion {sid[:3]}")
         if sid in cards:
-            rgb = mean_rgb(frame_png(a.render, s0 - m_in + round(0.3 * fps), os.path.join(tmp, "c.png"), fps), 0.3)
-            ok = all(abs(v - c) <= 30 for v, c in zip(rgb, cream))
-            print(f"card    {'ok ' if ok else 'BAD'} {sid[:3]} left third RGB {rgb} vs cream {cream}")
+            rgb = corner_rgb(frame_png(a.render, s0 - m_in + round(0.3 * fps), os.path.join(tmp, "c.png"), fps))
+            ok = all(abs(v - c) <= 20 for v, c in zip(rgb, cream))
+            print(f"card    {'ok ' if ok else 'BAD'} {sid[:3]} corner RGB {rgb} vs cream {cream}")
             if not ok:
                 fails.append(f"card {sid[:3]}")
 
