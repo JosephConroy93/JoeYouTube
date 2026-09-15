@@ -54,6 +54,9 @@ clause, 2–3 props, dressed] [light].`
   your wrist got slapped" → that scene's image): copy its latest file to
   `scene-generation/<scene_id>.jpg`, write `reuse: NNN` in `notes`, and
   leave the row out of the `generate-scenes` id list.
+- **An object insert says so**: a row with no figure (a document, a
+  text-card carrier, a table of objects) ends its setting clause with "no
+  people anywhere in the frame"; without it the model adds someone.
 - **No words in the image.** Name a document by what it is, not what it
   says ("a rolled papyrus tied with string", never "a contract"): the
   model writes the word on it in English. A `text-card` row describes its carrier blank;

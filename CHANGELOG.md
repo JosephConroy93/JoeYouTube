@@ -60,6 +60,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **`merge-floor.py` bands from `wpm_measured`, hook rows exempt** (also no floor warning for hook rows in `check-manifest.py`): floor and ceiling default to 4 s and 11 s in words at the video's pace, and a `hook:` row never merges. Why: the defaults were 169-wpm word counts, and a prologue hook is one short physical sentence per shot.
 - **`creator-costs.md` per series** (close-video checklist): one rough row per video (images, hook, voice share, other, total) plus monthly plans, filled at publish and close-out. Why: operator wants video-versus-cost at a glance without per-spend logging.
 - **`gemini-batch.ps1 -Direct`** (generate-scenes stalled-queue rule): the same requests as one interactive `generateContent` call per row, saved and logged as `fetched`. Why: the Cromwell pilot's three batch jobs sat 3h40m with every request pending and no update, overnight with the operator away; cancelled and regenerated directly at about twice the batch price.
+- **write-prompts: object inserts say "no people anywhere in the frame"**. Why: the Cromwell pilot's two figure-less rows (008 the will, 015 a text-card parchment) both came back with an unprompted figure; each passed on resubmit, and the line stops the pattern before chapters 2–9.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 
