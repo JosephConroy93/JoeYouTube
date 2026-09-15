@@ -120,9 +120,12 @@ gaps with a short capped web check.
    for register and structure only; say which part is being reused.
 2. `script-writer` Mode 1 (WRITE) with the format from `video.md` →
    `claude/script.md` with handoff notes.
-3. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
+3. `python tools/script-lint/lint_script.py content/<series>/<slug>/claude/script.md`:
+   counts the prose tells and spellings off `voice.english`, quoting each
+   line. Zero em dashes is a hard bar; the rest go to Mode 2 with the score.
+4. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
    format module. Revise with Mode 2 until it passes. Lock.
-4. Set `status: scripted`.
+5. Set `status: scripted`.
 
 ## Step 5 — Voiceover and timing 🟡 (new position: straight after script lock)
 

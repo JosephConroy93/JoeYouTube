@@ -28,7 +28,7 @@ Read before writing, in this order:
    else `series.md`'s. It supplies register, opening, structure, ending,
    runtime, the Stage 2 rubric and its own mandatory reads. Read those too,
    only the sections the module names.
-3. **`series.md`** — `voice.*`, `wpm_measured`, `cta`, and
+3. **`series.md`** — `voice.*` (including `voice.english`), `wpm_measured`, `cta`, and
    `concepts_location` (whether `concepts.md`/`sources.md` sit at series or
    slug level). From `concepts.md` read **only this video's concept
    section** (find its heading with grep); from `sources.md` only this
@@ -123,6 +123,30 @@ Write every sentence originally. Secondary sources are for verification
 only, never phrasing. Quoted primary-source translations are the sole
 exception and are always presented as quotes.
 
+### Prose
+
+The register rules set the voice; these keep the surface clean of the habits
+that mark machine writing. `tools/script-lint/lint_script.py` counts them at
+Step 4 and the scorer docks Voice points for each.
+
+- Spelling, vocabulary and idiom follow `series.md` `voice.english`
+  (British: -ise, colour, towards, grey, autumn, "got" never "gotten";
+  dates day-month).
+- No em dashes; a full stop, comma or colon instead.
+- No reveal-flip ("This isn't X. It is Y." / "not X, but Y"): state the
+  true thing once.
+- No question-then-answer fragment ("The result? Ruin."); write the statement.
+- No aphorism or mirrored-callback closing line; end on a concrete detail.
+- No summary tag re-labelling the last sentence ("That's the difference.").
+- No characterised quote ("what sounded like mercy:"); quote, then the next fact.
+- No announced moves ("here's the thing", "let that sink in", "make no mistake").
+- Hedge words (kind of, very, really, perhaps) only where the companion
+  voice earns them, never as padding.
+- One deliberate fragment run per chapter; an inventory ("Beeswax. Plant
+  oils. Resin.") is a list, not drama.
+- "You" may open consecutive sentences; any other word opens at most two
+  in a row.
+
 ### Shape
 
 Apply the register, opening, structure, ending and runtime rules from the
@@ -159,6 +183,8 @@ Write to `content/<series>/<slug>/claude/script.md` with a closing
    draft. **Do not read another script before writing.**
 5. The opening does not give away what the title promised.
 6. Nothing implies an outcome the research leaves unknown.
+7. Prose: zero em dashes, nothing from the Prose list, spelling and idiom
+   per `voice.english`.
 
 State the result plainly. If something fails, fix it before returning;
 never return a draft with a known problem and a note about it.
@@ -213,6 +239,8 @@ kind of fact it is:
 Load the dimension table and floors from the format module. A script below
 any floor fails regardless of total. A hedge delivered as meta-commentary
 costs Voice points, not G4 — the fact is accurate, only the voice breaks.
+So does each prose tell (the Prose list) and each spelling off
+`voice.english`; the lint's counts are evidence, the quoted line is the finding.
 
 ### Output
 

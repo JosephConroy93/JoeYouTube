@@ -64,7 +64,7 @@ moral. Never an outcome the research leaves unknown.
 | Opening, first 30 s: hook within 20 s (8) · hard sourced fact delivered casually (8) · multiple small open loops (7) · voice established immediately (7) | 30 | 18 |
 | Ending: reversal then cyclical image (8) · lands what outlived them (7) · does not overstate the research (5) | 20 | 12 |
 | Body: escalation holds (7) · chapter names open loops the chapters pay off (6) · personal thread carried (6) · pacing varies (6) | 25 | — |
-| Voice: second-person present sustained (5) · dry not portentous (5) · legends told as stories in-scene, never as fact or as meta-commentary (5) | 15 | — |
+| Voice: second-person present sustained (5) · dry not portentous, no prose tells, spelling per `voice.english` (5) · legends told as stories in-scene, never as fact or as meta-commentary (5) | 15 | — |
 | Research utilisation: obscure documented specifics over the well-known ones (5) · corrections to common retellings used (5) | 10 | — |
 
 A script below either floor fails regardless of total.

@@ -49,7 +49,7 @@ summary list.
 | Opening: question/misconception not answer (8) · hard sourced fact (8) · structure promised once (5) · voice established (4) | 25 | 15 |
 | Ending: returns to the question with the answer earned (8) · honest open consequence (7) | 15 | 9 |
 | Body: dependency order holds (8) · one concrete example per section (8) · running tension thread (7) · no list-reading (7) | 30 | — |
-| Voice: register sustained (8) · hedges in-voice (7) | 15 | — |
+| Voice: register sustained, no prose tells, spelling per `voice.english` (8) · hedges in-voice (7) | 15 | — |
 | Research utilisation: obscure specifics (8) · flagged uncertainties preserved (7) | 15 | — |
 
 ## Mandatory reads before writing

@@ -68,7 +68,7 @@ script and say so.
 | Opening, first 30 s: withholds the title's promise (8) · hard sourced fact delivered casually (8) · multiple small open loops (7) · voice established immediately (7) | 30 | 18 |
 | Ending: reflective/cyclical (8) · lands the interpretive angle (7) · does not overstate the research (5) | 20 | 12 |
 | Body: escalation holds (7) · first reveal as a scene ~60–90 s (6) · open loops paid off (6) · pacing varies (6) | 25 | — |
-| Voice: second-person present sustained (5) · dry not portentous (5) · consistent register; a hedge delivered as meta-commentary loses points here (5) | 15 | — |
+| Voice: second-person present sustained (5) · dry not portentous (5) · consistent register; a hedge delivered as meta-commentary, a prose tell or a spelling off `voice.english` loses points here (5) | 15 | — |
 | Research utilisation: obscure specifics over generic ones (5) · hedges handled as features (5) | 10 | — |
 
 A script below either floor fails regardless of total.
