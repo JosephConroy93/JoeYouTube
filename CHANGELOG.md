@@ -64,6 +64,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **write-prompts: comma after every `[[ID]]`, one token per figure per row**. Why: the Prologue and Chapter 3 agents both found expanded prompts running the costume into the action ("a black flat cap bowing low") and one row printing a costume twice.
 - **Object inserts expand without the figure rules** (`gemini-batch.ps1` Expand-Prompt): a row with no cast token that says "no people" skips `_closing` and gains an explicit empty-still-life sentence (no head, hand or figure even at the edges). Why: third figure on an object-only row (008, 015, 036), the last despite the write-prompts line; `_closing` describes every figure, close-up ones included.
 - **Cromwell cast sheet: the `EXTRA` guard is white head and hands only** (dropped "russet jerkin and brown flat cap"). Why: the guard is appended to every expanded prompt, so role-costumed extras were told to keep the russet (006).
+- **validate-scenes calibration: far-side and under-chin shading and a short neck over a collar are the style**; pseudo-handwriting with no real words passes. Why: a Sonnet group failed all eight of Cromwell 068–075 as "dimensional face shading"; against passed scenes 044/045 and a full-size crop of 070 they are the Eggline look, and the operator overrule rule puts it in the calibration.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 
