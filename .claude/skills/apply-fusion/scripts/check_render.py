@@ -3,6 +3,7 @@
 
 Usage:
     check_render.py <series>/<slug> --staging <dir> --fps N --render <file.mp4> --mark-in F [--mark-out F]
+                    [--film-until <scene_id>]
 
 The render must start at timeline frame --mark-in. Checks, each printed with its numbers:
   frames   video frame count equals mark-out - mark-in + 1 (when --mark-out is given)
@@ -10,7 +11,7 @@ The render must start at timeline frame --mark-in. Checks, each printed with its
            silent channel, L and R within 1 dB
   motion   every scene wholly in range: SSIM between an early and a late frame. A moving row
            (In/Out/Focal/Pan) must change (SSIM < 0.97); a Static still must not (> 0.99);
-           hook clips are reported only. A chapter card's landing scene is sampled after the
+           hook clips and film-open scenes (weave, grain, flicker) are reported only. A chapter card's landing scene is sampled after the
            card and must move (its push-in is baked), unless it is a text-card.
   cards    every chapter card in range: 0.3 s in, the left third is the series' cream
            (mean RGB within 30 of thumbnail.background per channel)
@@ -92,6 +93,7 @@ def main():
     ap.add_argument("--mark-out", type=int)
     ap.add_argument("--lufs", type=float, help="expected integrated LUFS of the range (the voice file's, same span)")
     ap.add_argument("--skip-motion", action="store_true", help="skip the per-scene motion and card checks")
+    ap.add_argument("--film-until", help="video.md film_open: scenes up to it are reported, not judged")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -101,6 +103,8 @@ def main():
     scenes = plan(project, staging, fps)
     zoom = plan_rows(project)
     hooks = set(hook_map(project))
+    ids = [s["scene_id"] for s in scenes]
+    film = set(ids[: ids.index(a.film_until) + 1]) if a.film_until else set()
     fails = []
 
     counted = run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries",
@@ -140,8 +144,8 @@ def main():
         if last - first < fps:
             continue
         v = ssim(frame_png(a.render, first, os.path.join(tmp, "a.png"), fps), frame_png(a.render, last, os.path.join(tmp, "b.png"), fps))
-        if sid in hooks:
-            print(f"motion  --  {sid[:3]} hook clip SSIM {v:.3f}")
+        if sid in hooks or sid in film:
+            print(f"motion  --  {sid[:3]} {'hook clip' if sid in hooks else 'film open'} SSIM {v:.3f}")
             continue
         moving = kind in ("In", "Out", "Focal", "Pan") or (sid in cards and sid not in text_cards)
         ok = v < 0.97 if moving else v > 0.99
