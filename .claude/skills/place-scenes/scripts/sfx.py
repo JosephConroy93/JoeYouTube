@@ -55,7 +55,9 @@ def library_root(root_dir):
 
 
 def measure(path):
-    r = subprocess.run(["ffmpeg", "-nostats", "-i", path, "-af",
+    # integrated loudness gates in 400 ms blocks: a shorter sound reads -70 and would be boosted ~40 dB
+    loop = ["-stream_loop", str(int(2.0 / max(duration(path), 0.05)) + 1)] if duration(path) < 2.0 else []
+    r = subprocess.run(["ffmpeg", "-nostats", *loop, "-i", path, "-af",
                         "ebur128,astats=measure_perchannel=RMS_level:measure_overall=none",
                         "-f", "null", "-"], capture_output=True, text=True)
     i = re.findall(r"I:\s+(-?[\d.]+|-inf) LUFS", r.stderr)
