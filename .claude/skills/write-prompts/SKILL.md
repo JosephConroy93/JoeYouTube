@@ -28,6 +28,9 @@ are written from what the previous chapter's QC found, so read that first.
 `[shot] [[ID]] [action, then emotion in the style's own marks] [setting: one
 clause, 2–3 props, dressed] [light].`
 
+- **A comma after every `[[ID]]`**: a cast line ends on a garment ("a
+  black flat cap"), so the action needs its own clause; name a figure once
+  per row (a second token prints the costume twice).
 - **Shot**: `Close shot`, `Medium shot`, `Medium two-shot`, `Wide shot`. The
   first two words of every prompt, so the spread can be counted.
 - **Figures**: one or two. A third only when the beat needs one, and then
@@ -38,9 +41,10 @@ clause, 2–3 props, dressed] [light].`
   clause **verbatim**; change angle, action and figure count instead of the
   room. Dressed even behind a close-up (a shelf of jars, a hanging cloth).
   A recurring place may be a `[[SETTING]]` block in the cast sheet.
-- **Age by posture and props** (a stoop, a staff, slow hands); "old"
-  alone may add grey hair or a beard, which is fine (the style allows hair
-  and headwear that suit a role).
+- **Age by posture and props only** (a stoop, a walking stick, slow hands),
+  and "blank white egg face" on that figure: never "old", "elderly" or
+  "aged" on a figure without a reference, which draws wrinkles, ears and a
+  nose. A beard or grey hair the role needs is written on its own.
 - **Emotion** in the style's vocabulary only (Eggline: brow angle, mouth
   line, sweat drop, tear, blush marks); never "looks sad".
 - **A close shot on an object stays attached to its figure**: "[[ID]] seen
@@ -54,6 +58,9 @@ clause, 2–3 props, dressed] [light].`
   your wrist got slapped" → that scene's image): copy its latest file to
   `scene-generation/<scene_id>.jpg`, write `reuse: NNN` in `notes`, and
   leave the row out of the `generate-scenes` id list.
+- **An object insert says so**: a row with no figure (a document, a
+  text-card carrier, a table of objects) ends its setting clause with "no
+  people anywhere in the frame"; without it the model adds someone.
 - **No words in the image.** Name a document by what it is, not what it
   says ("a rolled papyrus tied with string", never "a contract"): the
   model writes the word on it in English. A `text-card` row describes its carrier blank;
@@ -62,9 +69,15 @@ clause, 2–3 props, dressed] [light].`
   carries the facts, the image carries the atmosphere.
 - A beat joined from two rows (`; ` in `notes`, from `merge-floor.py`) gets
   the image for the moment its last line lands, not a split composition.
-- An extra needing a role detail keeps the `[[EXTRA]]` token and adds the
-  detail in words after it (`[[EXTRA]] wearing a plain white sash as a
-  lector`).
+- An extra needing a small role detail keeps the `[[EXTRA]]` token and adds
+  the detail in words after it (`[[EXTRA]] wearing a plain white sash as a
+  lector`). An extra in a **different costume colour** (a scarlet livery,
+  a monk's black habit, a crimson gown) is written in words with no
+  `[[EXTRA]]` token and no reference ("a bearer in a scarlet livery coat,
+  blank white egg head and white hands"): the extra reference pulls its
+  own colours back.
+- A woman in a hood or coif, and a monk in a hood: the hood "frames a
+  blank white egg face, no hair showing", in the same clause.
 
 ## Shot spread (from the source channel's census)
 

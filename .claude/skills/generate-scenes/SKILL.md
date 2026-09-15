@@ -51,6 +51,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .claude/skills/generate-
   -Action submit -Project <series>/<slug> -Chapter <file> [-SceneIds 012,013] [-Notes "..."]
 ```
 
+**Always wait for the batch (hard rule).** A slow or stalled batch is waited
+out, however long it takes (the API allows up to 24 hours); never cancel it
+to go faster. `-Direct` (one interactive `generateContent` call per row, about
+twice the batch price, saved as `fetch` would and logged at `fetched` with
+`batch_id` `direct`) runs only when the operator says so in chat, for the
+rows they name.
+
 `-DryRun -OutDir <dir>` writes the request bodies and posts nothing; use it
 on a new chapter shape or after a manifest edit. `-Action expand` prints
 each selected row's prompt after block expansion, nothing else.

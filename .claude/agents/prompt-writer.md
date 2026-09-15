@@ -26,7 +26,11 @@ Read before writing:
 
 Write only the `content_prompt` and reference cells of this chapter's rows,
 `notes` additions the skill calls for (`reuse: NNN`), and, for chapter 1,
-`claude/hook-plan.md`. Leave every other chapter untouched.
+`claude/hook-plan.md`. Leave every other chapter untouched. When other
+chapters are being written in parallel, do not edit the index: run
+`check-manifest.py` on a scratch copy of the project's `claude/` folder in
+your own scratch directory with only your row set to `written`, and leave
+the real index to the driving session.
 
 ## Finish
 

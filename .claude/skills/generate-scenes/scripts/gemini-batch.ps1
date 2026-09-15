@@ -77,6 +77,7 @@ param(
     [string]$BatchId,
     [string]$Notes,
     [switch]$DryRun,
+    [switch]$Direct,    # submit: one interactive generateContent call per row (about twice the batch price), saved and logged as fetched; use when the batch queue stalls
     [string]$OutDir,
     [string]$Root,
     [int]$RefMaxPx = 1376   # 0 sends references as they are on disk
@@ -333,6 +334,11 @@ function Expand-Prompt($Blocks, $Row) {
         $lead = if ($attached) { "Preserve every attached reference image's exact colouring and locked attributes" } else { 'Keep these locked attributes exactly' }
         $out += " ${lead}: $($guards -join '; '). Do not reinterpret, recolour, invent or substitute any of them."
     }
+    if ($guards.Count -eq 0 -and $text -match 'no people') {
+        # an object insert: the figure rules in _closing invite a figure, so state the emptiness instead
+        $out += ' This is an empty still life: no person, head, hand, arm or figure appears anywhere in the frame, not even partly at the edges.'
+        return $out
+    }
     if ($Row.scene_type -eq 'illustrated' -and $Blocks.ContainsKey('_closing')) {
         # sentence by sentence, so a row already carrying part of the closing gains only the rest
         foreach ($sentence in [regex]::Split($Blocks['_closing'].Text, '(?<=[.!?])\s+')) {
@@ -527,7 +533,39 @@ function Invoke-Submit($P) {
             $json = ConvertTo-JsonText $entry
             $size = [Text.Encoding]::UTF8.GetByteCount($json)
             if ($size -gt $SplitBytes) { Fail "request for $($r.scene_id) alone is $([math]::Round($size/1MB,1)) MB (> 14 MB); shrink its reference images first." }
-            [void]$items.Add([pscustomobject]@{ Json = $json; Size = $size; Row = $r; Refs = $refPaths.Count })
+            [void]$items.Add([pscustomobject]@{ Json = $json; Size = $size; Row = $r; Refs = $refPaths.Count; Request = $request })
+        }
+
+        if ($Direct -and -not $DryRun) {
+            if (-not (Test-Path $P.SceneDir)) { New-Item -ItemType Directory -Path $P.SceneDir | Out-Null }
+            $saved = 0; $errors = New-Object System.Collections.ArrayList
+            foreach ($it in $items) {
+                $sid = $it.Row.scene_id
+                $bytes = [Text.Encoding]::UTF8.GetBytes((ConvertTo-JsonText $it.Request))
+                $resp = $null
+                for ($try = 1; $try -le 3 -and $null -eq $resp; $try++) {
+                    try { $resp = Invoke-Gemini 'POST' "$ApiBase/models/${m}:generateContent" $bytes }
+                    catch { if ($try -lt 3 -and "$_" -match '429|500|502|503|504|timed out') { Write-Output "  RETRY  $sid  ($try)"; Start-Sleep -Seconds 30 } else { [void]$errors.Add("$sid ($($_.ToString().Split("`n")[0]))"); Write-Output "  NO-IMAGE  $sid  request failed"; break } }
+                }
+                if ($null -eq $resp) { continue }
+                $img = Get-ImagePart @{ response = $resp }
+                if ($null -eq $img) { [void]$errors.Add("$sid (no image part in response)"); Write-Output "  NO-IMAGE  $sid  no image part in response"; continue }
+                $target = Get-TargetFileName $P.SceneDir $sid
+                [IO.File]::WriteAllBytes($target, [Convert]::FromBase64String([string](Get-Key $img 'data')))
+                $saved++
+                Write-Output "  SAVED  $sid  -> $target"
+            }
+            $range = Format-SceneRange @($items | ForEach-Object { $_.Row.prefix })
+            $styles = (@($items | ForEach-Object { $_.Row.style } | Select-Object -Unique) -join ',')
+            $noteText = "$res; $styles; direct generateContent"
+            if ($errors.Count -gt 0) { $noteText += "; no image for: " + ($errors -join ', ') }
+            if ($Notes) { $noteText += "; $Notes" }
+            Add-LogRow $P @{
+                batch_id = 'direct'; scenes = "$($chapters -join ',') $range"; model = $m
+                requested_at = (Now-Utc); status = 'fetched'; checked_at = ''; fetched_at = (Now-Utc); notes = $noteText
+            }
+            Write-Output "DIRECT  model=$m res=$res saved=$saved missing=$($errors.Count)"
+            continue
         }
 
         # split into chunks of <= 14 MB

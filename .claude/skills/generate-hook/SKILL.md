@@ -42,9 +42,13 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 `--shot N` regenerates one shot. A plain rerun skips shots already in
 `hook/raw/`. Every submitted operation name is appended to
 `hook/raw/operations.txt` before polling, and a 429 (Veo allows only a few
-submissions a minute) waits 60 s and retries; if a run still dies, list
-`models/<model>:operations` with the API key, download the finished ones
-and match each to its still by first frame.
+submissions a minute) waits 60 s and retries. A 429 that outlasts the
+retries is the daily quota (the lite preview has allowed about four
+submissions before it runs out, resetting around 08:00 UK, so a hook of more
+than four shots spans the reset): the run stops submitting, downloads what it
+submitted, and names the shots left; `-Resume` downloads every logged
+operation not yet on disk, and `-Shot N` submits a missing shot once the
+quota resets.
 
 ## API facts the public docs get wrong (verified live)
 

@@ -39,7 +39,13 @@ One verdict per image, coarse, at the size a viewer sees:
    detail on any figure (a faint nose curve, a brow crease, a doubled
    mouth mark) and a short neck like the source frames' own are notes, not
    regenerates; a fully drawn face (nose with nostrils, ears, irised eyes)
-   fails. Face rules apply to figures only: a mask, statue or carving
+   fails. Soft airbrushed shading on the far side of a head or under the
+   chin, and a short neck above a collar, are the style's own rendering
+   (the style block asks for them): never a fail, not even a note.
+   The style's own emotion marks (tears, sweat drops, blush, a crack
+   across the head for shock, closed arc eyes for a smile) are the style.
+   Document scribble that reads as pseudo-handwriting but no real words
+   passes. Face rules apply to figures only: a mask, statue or carving
    keeps its own modelled face. A figure rendered with no face at all
    fails. White skin running into white linen is not a costume change.
    References are stricter: a reference with any nose line is
@@ -53,8 +59,14 @@ drawn at the edit.
 ## Dispatch
 
 Subagents on **Sonnet**, 5–8 images each, returning per image `PASS` or
-`FAIL | check | one-line reason`, plus framing and figure count. Escalate a
-disputed image to Opus, never a group.
+`FAIL | check | one-line reason`, plus framing and figure count. Each brief
+names the image files, the cast sheet, two source frames, the prompts as
+sent (`gemini-batch.ps1 -Action expand … | Out-File` to a scratch file) and a
+short watch list for that chapter (who appears, what they wear, the known
+risks). Escalate a disputed image to Opus, never a group. A group that fails
+wholesale on style is looked at by the driving session against scenes that
+already passed before anything is resubmitted: a Sonnet group once failed
+eight images for the style's own shading.
 
 ## Writing results
 

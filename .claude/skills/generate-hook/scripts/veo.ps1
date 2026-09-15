@@ -13,6 +13,7 @@ param(
   [ValidateSet('720p','1080p')] [string] $Resolution = '720p',
   [int]    $Shot = 0,
   [switch] $DryRun,
+  [switch] $Resume,        # download every operation in hook/raw/operations.txt whose clip is not on disk yet; submits nothing
   # single-clip test mode
   [string] $Image = '',
   [string] $Prompt = '',
@@ -104,6 +105,16 @@ if ($Shot -gt 0) { $rows = @($rows | Where-Object shot -eq $Shot) }
 $ops = @()
 $rawDir = Join-Path (Join-Path $videoDir 'hook') 'raw'; New-Item -ItemType Directory -Force $rawDir | Out-Null
 $opsLog = Join-Path $rawDir 'operations.txt'   # every submitted operation name, so a failed run can still be downloaded
+if ($Resume) {
+  if (-not (Test-Path $opsLog)) { throw "No $opsLog to resume from" }
+  foreach ($line in Get-Content $opsLog) {
+    if ($line -notmatch '^(shot-\d\d)\s+(\S+)$') { continue }
+    $out = Join-Path $rawDir "$($Matches[1]).mp4"
+    if (Test-Path $out) { Write-Host "  $($Matches[1]) already downloaded"; continue }
+    Download-Op (Wait-Op $Matches[2]) $out
+  }
+  return
+}
 foreach ($r in $rows) {
   $still = Get-ChildItem (Join-Path $videoDir 'scene-generation') -File | Where-Object { $_.BaseName -eq $r.scene_id } | Select-Object -First 1
   if (-not $still) { throw "shot $($r.shot): no canonical image for scene_id $($r.scene_id)" }
@@ -111,7 +122,12 @@ foreach ($r in $rows) {
   $label = ('shot-{0:D2}' -f $r.shot)
   if (-not $DryRun -and $Shot -eq 0 -and (Test-Path (Join-Path $rawDir "$label.mp4"))) { Write-Host "  $label already downloaded; skipping"; continue }
   if ($DryRun) { $p = Join-Path $scratch "$label.request.json"; [IO.File]::WriteAllText($p, $body, (New-Object Text.UTF8Encoding($false))); Write-Host "[dry-run] $label -> $p"; continue }
-  $opName = Submit $body $label
+  try { $opName = Submit $body $label }
+  catch {
+    # quota spent (not a per-minute limit): stop submitting, still download what was submitted; rerun with -Shot N later
+    Write-Warning "$label not submitted: $($_.ToString().Split("`n")[0]). Download continues; submit the rest later with -Shot N."
+    break
+  }
   Add-Content -Path $opsLog -Value "$label $opName"
   $ops += [pscustomobject]@{ label = $label; op = $opName; dur = $r.dur }
 }
