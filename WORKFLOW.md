@@ -264,7 +264,7 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
 ## Step 11 — Publish 🟡
 
 1. Channel identity check: name, About copy, icon/banner match the series
-   (`content/<series>/mascot/watcher-concept.md` holds the copy for Watcher POV).
+   (`series.md` names the channel; `content/<series>/mascot/watcher-concept.md` holds its About copy).
 2. Description: citation list plus a "People & Sites Mentioned" section;
    disclose dramatised composites where the format uses them.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
