@@ -23,6 +23,7 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 - **`align.py`: the first scene starts at 0.** Whisper times the first word at 0.58 s; `build_timeline.py` refuses a gap before the first scene.
 - **`align-scenes/scripts/captions.py`:** builds `publish/captions.srt` from the voiced segment text timed by whisper on the timeline WAVs (difflib word mapping, interpolation for misheard words, two-line cues). First run: Cromwell, 302 cues, "In Rome" at 04:42.15 against the measured 04:42.35 onset.
 - **WORKFLOW Step 9.4/9.6, Step 11.3b:** grade from `video.md`, render measured at `loudness`; captions SRT from the ElevenLabs alignment, which was only in memory and a hand-off note.
+- **`tools/verify-sources/`: `verify-links.py` + `check-metadata.py`.** A cloud session gathered 117 candidate reference works across eight topics with no web access, so nothing was fetched. The link check proves each URL resolves and the metadata check proves each Archive.org / Gutenberg link is the work claimed; only rows both pass are shelved in `content/sources/shelf/` and indexed from `content/SOURCES.md`. Why: the project rule that nothing is done until a measured artefact proves it, and the next sourcing round will need the same proof.
 
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)
 
