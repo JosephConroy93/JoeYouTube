@@ -82,7 +82,12 @@ script; facts are independently verified in Step 3.
 ## Step 3 — Research 🟢
 
 Output: `content/<series>/<slug>/research-<slug>.md`, the script's sole
-factual authority.
+factual authority. The pattern that works: two or three Sonnet gathering
+agents in parallel (the facts spine, ground-level texture, competitors and
+comments), each writing notes to `research-notes/` with every claim tagged
+DOCUMENTED / SCHOLARLY / STORY / DISPUTED and sourced; then one Opus
+synthesis agent writes the research file from those notes, closing flagged
+gaps with a short capped web check.
 
 1. Check `content/SOURCES.md` before acquiring anything; propose paid
    sources with a stated justification.
@@ -162,7 +167,10 @@ scene that attaches the reference inherits it; re-roll a wrong one once,
 and otherwise let that figure run on its line alone. The extra is a real
 costume of the era and place, never a bare or towel-clad stand-in, saved as
 `Extra-<Role>.jpg`. Settings and
-objects get no reference. Set `visual_guardrails` to `claude/cast.md` and
+objects get no reference. Figures that recur without a reference (a
+wife, a son, a mother-in-law) go in the sheet's "Recurring figures written
+inline" list, one fixed line each that every prompt copies word for word.
+Set `visual_guardrails` to `claude/cast.md` and
 `status: prompted`.
 
 ## Step 7 — Beat sheet 🟡 (once per video)
@@ -201,7 +209,12 @@ For each chapter, in order:
    chapter's agent is dispatched; the next agent reads it from there.
 
 The first chapter is the pilot: the operator looks at all of its images
-before chapter 2's agent is dispatched.
+before chapter 2's agent is dispatched. After the pilot, chapters may run
+in parallel waves of two or three: each wave's agents read the previous
+wave's QC notes, never edit the index (the driving session marks each
+chapter `written` after its own `check-manifest.py` run), and generation
+and QC of one wave overlap with the next wave's prompts. A fix found in a
+wave is applied to the next wave's rows before they generate.
 
 After the last chapter: `finalize-scenes`, then `align-scenes`, then
 `generate-hook`. Set `status: generated`.

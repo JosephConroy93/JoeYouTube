@@ -38,7 +38,8 @@ No web tools, by design. An unknown is flagged in `notes`, never looked up.
 Run once per video on the whole script. Writes the index
 `claude/scene-prompts.md` (chapter → file → range → status) and one chapter
 file per `chapter.heading` match, `≤25` rows each (a longer chapter splits
-`a`/`b`), every chapter at status `beats`.
+`a`/`b`), every chapter at status `beats`. A `## Prologue.` heading is its own
+chapter, file `chapter-00.md`, numbered from 001 like any other.
 
 ### Segmentation
 

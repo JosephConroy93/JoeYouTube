@@ -59,8 +59,14 @@ drawn at the edit.
 ## Dispatch
 
 Subagents on **Sonnet**, 5–8 images each, returning per image `PASS` or
-`FAIL | check | one-line reason`, plus framing and figure count. Escalate a
-disputed image to Opus, never a group.
+`FAIL | check | one-line reason`, plus framing and figure count. Each brief
+names the image files, the cast sheet, two source frames, the prompts as
+sent (`gemini-batch.ps1 -Action expand … | Out-File` to a scratch file) and a
+short watch list for that chapter (who appears, what they wear, the known
+risks). Escalate a disputed image to Opus, never a group. A group that fails
+wholesale on style is looked at by the driving session against scenes that
+already passed before anything is resubmitted: a Sonnet group once failed
+eight images for the style's own shading.
 
 ## Writing results
 
