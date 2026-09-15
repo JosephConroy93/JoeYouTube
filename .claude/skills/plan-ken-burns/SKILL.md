@@ -1,6 +1,6 @@
 ---
 name: plan-ken-burns
-description: Plans per-scene Ken Burns motion and black-sweep transitions for a video whose scenes are generated and timed, writing `ken-burns-plan.md` for `apply-fusion` (or the operator) to execute. Two tiers — Baseline zoom (default) and Elevated pan/focal zoom on a confirmed off-centre target (≤10%); Static is text-cards only; no particle effects. Delegates every image read to subagents. Never touches Resolve.
+description: Plans per-scene Ken Burns motion and black-sweep transitions for a video whose scenes are generated and timed, writing `ken-burns-plan.md` for `place-scenes --motion` to bake (or `apply-fusion` as the Fusion fallback). Two tiers — Baseline zoom (default) and Elevated pan/focal zoom on a confirmed off-centre target (≤10%); Static is text-cards only; no particle effects. Delegates every image read to subagents. Never touches Resolve.
 ---
 
 # plan-ken-burns
@@ -49,9 +49,12 @@ The plan is a draft: the operator watches the cut and overrides it.
 | **Baseline** (default) | In or Out zoom, centre pivot | none — expect ~90%+ | `apply-fusion` batch script, or the Dynamic Zoom panel |
 | **Elevated** | `Pan` or `Focal` on a target confirmed in the real image | ≤10% | `apply-fusion`, per scene |
 
-Static is reserved for `scene_type = text-card` and for hook-clip rows
-(scenes replaced by `hook-plan.md` footage, which already moves); nothing
-else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
+Static is reserved for `scene_type = text-card`, for hook-clip rows
+(scenes replaced by `hook-plan.md` footage, which already moves) and for
+the scenes up to `video.md` `film_open` (their letterbox bars are baked in
+and a zoom would move them) and for each scene a chapter card lands on
+(`place-scenes` bakes its hold and push-in so the card's last frame
+matches); nothing else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
 motion-ising them. No particle, glow or other overlay effects.
 
 ## Dynamic Zoom preset rule
@@ -84,7 +87,7 @@ this — their `ease` is a curve shape.
 4. **Draft the plan** with the picks; the script applies every per-scene
    rule below to the other rows:
    ```
-   python .claude/skills/plan-ken-burns/scripts/draft_plan.py <series>/<slug> --fps N --pan 012:right[:note] --focal 044:0.58,0.77[:note] --caution 052:<note> [--summary-extra "<candidates left at Baseline, rejected on the image>"]
+   python .claude/skills/plan-ken-burns/scripts/draft_plan.py <series>/<slug> --fps N --pan 012:right[:note] --focal 044:0.58,0.77[:note] --caution 052:<note> [--film-until <video.md film_open>] [--summary-extra "<candidates left at Baseline, rejected on the image>"]
    ```
    It refuses to overwrite an existing plan (the operator may have edited
    it) unless `--replace`, which archives the old one.
@@ -129,7 +132,7 @@ scene carrying a caution note.
 
 ## Does not
 
-- Open, drive or script Resolve — `apply-fusion` executes the plan.
+- Open, drive or script Resolve — `place-scenes --motion` bakes the plan; `apply-fusion` is the Fusion fallback.
 - Decide captions, loudness, or any transition other than the sweep.
 - Read images in the main context, or any image outside the shortlist. For
   unshortlisted scenes, if the real composition differs from the prompt,

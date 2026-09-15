@@ -4,7 +4,7 @@
 Usage:
     build_timeline.py <project-path> --staging <dir> --fps N --out <xml>
                       [--hook-order a.mp4,b.mp4,...] [--name NAME] [--cards] [--sfx]
-                      [--width 1920 --height 1080] [--count-frames]
+                      [--width 1920 --height 1080] [--count-frames] [--loudness -14]
 
 <project-path> is `<series>/<slug>` (resolved under content/) or a directory.
 
@@ -12,7 +12,7 @@ Reads   claude/scene-timing.md                  scene_id, segment, start_seconds
         <staging>/voiceovers/<segment>.wav|.mp3 audio per segment; sorted stems = playback order
         <staging>/scenes/<scene_id>.mp4         pre-rendered, exact-frame, at --fps
         <staging>/hook/*.mp4                    optional cold open, played first, in --hook-order
-        <staging>/cards/<scene_id>.mp4          --cards: level card over the start of that scene (V2)
+        <staging>/cards/<scene_id>.mp4          --cards: chapter card from that scene's first frame (V2)
         claude/sfx-plan.md + <staging>/sfx/<scene_id>.wav
                                                 --sfx: baked spot SFX at scene start + offset_s
 Writes  <xml>                                   <xmeml version="5">: one sequence, V1 = hook clips
@@ -26,7 +26,8 @@ clip on disk must hold exactly that many frames or the build aborts naming the c
 Resolve imports every XMEML audio track as a MONO track panned centre, which plays 3 dB
 under the file and takes channel 1 only. Each audio clip therefore carries an Audio Levels
 filter of +MONO_PAN_LAW_DB (the API cannot set clip volume; the XML can), and the WAVs
-must be dual-mono.
+must be dual-mono. --loudness lifts every audio clip by the same amount again, from the
+voice files' -16 LUFS to the finished video's target, so voice and SFX keep their balance.
 """
 import argparse
 import glob
@@ -108,6 +109,8 @@ def video_frames(path, fps, count):
 
 
 MONO_PAN_LAW_DB = 3.0
+VOICE_FILE_LUFS = -16.0
+LEVEL_DB = MONO_PAN_LAW_DB
 
 
 def frames(seconds, fps):
@@ -125,11 +128,14 @@ def build_cards(staging, scenes, fps, count):
         if sid not in by_id:
             sys.exit(f"ABORT: card {p} names no scene in the timing file")
         nf = video_frames(p, fps, count)
-        if nf > by_id[sid]["frames"]:
-            sys.exit(f"ABORT: card {sid} ({nf} frames) is longer than its scene ({by_id[sid]['frames']})")
         cards.append({"name": "card-" + sid[:3], "path": p, "start_frame": by_id[sid]["start_frame"], "frames": nf})
     if not cards:
         sys.exit("ABORT: --cards given but no clips in <staging>/cards")
+    cards.sort(key=lambda c: c["start_frame"])
+    end = scenes[-1]["start_frame"] + scenes[-1]["frames"]
+    for a, b in zip(cards, cards[1:] + [{"start_frame": end, "name": "the timeline end"}]):
+        if a["start_frame"] + a["frames"] > b["start_frame"]:
+            sys.exit(f"ABORT: {a['name']} ({a['frames']} frames) runs into {b['name']}")
     return cards
 
 
@@ -142,10 +148,11 @@ def build_sfx(project, staging, scenes, fps):
         if not os.path.isfile(p):
             sys.exit(f"ABORT: sfx clip missing: {p} (run sfx.py)")
         sc = by_id[r["scene_id"]]
+        last = by_id[r["until"]] if r.get("until") else sc
         start = sc["start_frame"] + frames(r["offset"], fps)
         nf = frames(audio_duration(p), fps)
-        if start + nf > sc["start_frame"] + sc["frames"]:
-            sys.exit(f"ABORT: sfx {r['scene_id']} runs past its scene")
+        if start + nf > last["start_frame"] + last["frames"]:
+            sys.exit(f"ABORT: sfx {r['scene_id']} runs past {r.get('until') or 'its scene'}")
         item = {"stem": "sfx-" + r["scene_id"][:3], "path": p, "start_frame": start, "end_frame": start + nf}
         for t in tracks:
             if t[-1]["end_frame"] <= start:
@@ -293,7 +300,7 @@ def clipitem(track, cid, name, path, fps, start, nframes, width, height, audio):
         par = sub(eff, "parameter")
         sub(par, "name", "Level")
         sub(par, "parameterid", "level")
-        sub(par, "value", f"{10 ** (MONO_PAN_LAW_DB / 20):.7f}")
+        sub(par, "value", f"{10 ** (LEVEL_DB / 20):.7f}")
         sub(par, "valuemin", "1e-05")
         sub(par, "valuemax", "31.6228")
 
@@ -371,7 +378,10 @@ def main():
     ap.add_argument("--count-frames", action="store_true", help="decode every clip to count frames (slow, exact)")
     ap.add_argument("--cards", action="store_true", help="place <staging>/cards/<scene_id>.mp4 on V2")
     ap.add_argument("--sfx", action="store_true", help="place claude/sfx-plan.md clips from <staging>/sfx/")
+    ap.add_argument("--loudness", type=float, default=VOICE_FILE_LUFS, help="finished video's integrated LUFS")
     a = ap.parse_args()
+    global LEVEL_DB
+    LEVEL_DB = MONO_PAN_LAW_DB + a.loudness - VOICE_FILE_LUFS
 
     project = resolve_project(a.project)
     staging = os.path.abspath(a.staging)
@@ -390,7 +400,7 @@ def main():
     print(f"  video: {len(hook)} hook + {len(scenes)} scenes = {nv} items, {vf} frames; "
           f"first scene at frame {scenes[0]['start_frame']}, last ends {scenes[-1]['start_frame'] + scenes[-1]['frames']}")
     print(f"  audio: {len(audio)} voice tracks, ends frame {audio[-1]['end_frame']}; "
-          f"{sum(len(t) for t in sfx)} sfx on {len(sfx)} tracks")
+          f"{sum(len(t) for t in sfx)} sfx on {len(sfx)} tracks; clip level +{LEVEL_DB:.1f} dB")
     for c in cards:
         print(f"  {c['name']}: V2 frames {c['start_frame']}-{c['start_frame'] + c['frames']}")
     for h in hook:

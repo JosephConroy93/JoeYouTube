@@ -87,6 +87,9 @@ A key/value table. Keys:
 | `visual_guardrails` | pointer to the cast sheet, `claude/cast.md` (Step 6) |
 | `sfx` | the video's sound-effect policy (default: spot effects for on-screen actions only, no ambience beds) |
 | `transitions` | `none` (default) or `sweep` (black sweeps at chapter ends, once proven on the Resolve version in use) |
+| `grade` | a `.cube` LUT under `content/styles/luts/` and its mix (0–1), baked by `place-scenes` into every hook clip and still; default none |
+| `film_open` | the last `scene_id` of an opening in the film look (gate weave, flicker, vignette, grain, grey edge falloff, 2.39:1 letterbox); the next scene opens the bars; default none |
+| `loudness` | the finished video's integrated LUFS (default −16, the voice files' level; YouTube plays at −14) |
 | `thumbnail` | the chosen file(s) in `thumbnails/` with the `make-thumbnail` arguments that built them; two names are a Test & Compare pair |
 | `notes` | anything the next session needs |
 
@@ -167,14 +170,15 @@ Y-flip. `transition` = `sweep` or blank.
 
 ## `sfx-plan.md`
 
-`| scene_id | source | in_s | dur_s | offset_s | lufs | note |`
+`| scene_id | source | in_s | dur_s | offset_s | lufs | note | until |`
 
 `source` is relative to the SFX library root named in
 `content/sfx/sfx-index.md`; `in_s` is the start inside the source; blank
 `dur_s` = to the end of the file; `offset_s` is from the scene's start and
-the sound must end inside the scene; `lufs` is the baked clip's integrated
-loudness (voice sits at −16). `note` names the metadata description and the
-on-screen action.
+the sound must end inside the scene, or inside the optional `until` scene
+(a sound held across scenes; blank `dur_s` then runs to that scene's end);
+`lufs` is the baked clip's integrated loudness (voice files sit at −16).
+`note` names the metadata description and the on-screen action.
 
 ## Verification rule (every Resolve step)
 

@@ -5,6 +5,9 @@ description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve
 
 # apply-fusion
 
+Fallback only: `place-scenes --motion` bakes the plan into the clips and is
+the default. Use this skill when a move must be adjusted inside Resolve.
+
 Invocation: `<series>/<slug>` — see `.claude/conventions.md`.
 
 ## Reads and writes
@@ -130,14 +133,14 @@ Per `conventions.md`: a `success` return or a readback is not proof.
    cross-check with `get_tool_list`.
 2. **Render ranges for confirmation** (`render set_settings` MarkIn /
    MarkOut → `add_job` → `start` → `verify_output`): the hook and first
-   level card, a stretch with a pan, a focal and an SFX, and the last scene.
+   chapter card, a stretch with a pan, a focal and an SFX, and the last scene.
    Then
    ```
-   python .claude/skills/apply-fusion/scripts/check_render.py <series>/<slug> --staging <dir> --fps N --render <mp4> --mark-in F --mark-out F --lufs <voice LUFS over the span>
+   python .claude/skills/apply-fusion/scripts/check_render.py <series>/<slug> --staging <dir> --fps N --render <mp4> --mark-in F --mark-out F --lufs <voice LUFS over the span, plus video.md loudness + 16> [--film-until <video.md film_open>]
    ```
    checks frame count, loudness and per-channel RMS, SSIM change on every
    moving scene (a normal move lands 0.4–0.75; ≥ 0.97 means nothing moved),
-   card blackness, and each SFX's presence as the render-minus-voice
+   each chapter card's cream ground, and each SFX's presence as the render-minus-voice
    residual. Then look at a few frames: a metric proves change, not the
    right change — a sliding black bar also scores as movement.
    `ExportVideo: true` can fail to stick on the first `set_settings` after

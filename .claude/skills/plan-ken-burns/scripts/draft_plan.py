@@ -2,7 +2,7 @@
 """draft_plan.py -- write ken-burns-plan.md from the timing, the manifest and the confirmed picks.
 
 Usage:
-    draft_plan.py <series>/<slug> --fps N [--out <file>] [--replace]
+    draft_plan.py <series>/<slug> --fps N [--out <file>] [--replace] [--film-until <scene_id>]
                   [--pan NNN:right|left|down|up[:note]] ...
                   [--focal NNN:x,y[:note]] ...
                   [--caution NNN:note] ...
@@ -12,7 +12,9 @@ The judgment stays with the planner: which scenes are Elevated (image-confirmed 
 and which carry a caution. This script applies the mechanical rules of the skill to every
 other row, so they hold across 150 scenes:
 
-  Static    hook-clip rows (claude/hook-plan.md) and text-card rows
+  Static    hook-clip rows (claude/hook-plan.md), text-card rows, and every row up to
+            --film-until (video.md film_open: letterbox bars baked into the clip), and every
+            scene a chapter card lands on (prerender bakes its hold and push-in)
   Pan       static Size 1.20, Transform Center travels +-0.08 (camera right = Center.x falls)
   Focal     pivot at the target, Size 1.00 -> 1.20, EI
   last scene of each chapter      Out + EO (the release)
@@ -36,6 +38,7 @@ from collections import Counter
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "..", "place-scenes", "scripts"))
 from build_timeline import audio_duration, frames, read_timing, resolve_project  # noqa: E402
+from prerender import card_targets  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
 TRAVEL, PAN_SIZE = 0.08, 1.2
@@ -110,6 +113,7 @@ def main():
     ap.add_argument("--focal", action="append", default=[])
     ap.add_argument("--caution", action="append", default=[])
     ap.add_argument("--summary-extra", default="")
+    ap.add_argument("--film-until", help="video.md film_open: last scene_id with baked letterbox bars")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -141,21 +145,31 @@ def main():
         n, note, rest = split_pick(c, "--caution")
         caution[n] = note + (":" + rest if rest else "")
 
+    ids = [r["scene_id"] for r in rows]
+    if a.film_until and a.film_until not in ids:
+        sys.exit(f"ABORT: --film-until {a.film_until} is not in the frame plan")
+    film = set(ids[: ids.index(a.film_until) + 1]) if a.film_until else set()
+    landing = {r["scene_id"] for r, _ in card_targets(project, rows, hook, a.film_until)}
+    chapter = {r["scene_id"]: re.sub(r"(\d+)[a-z]\.md$", r"\1.md", r["chapter"]) for r in rows}
     last_of = {}
     for r in rows:
-        last_of[r["chapter"]] = r["scene_id"]
+        last_of[chapter[r["scene_id"]]] = r["scene_id"]
     plan, prev = [], []
     for r in rows:
         sid, n = r["scene_id"], r["scene_id"][:3]
         prompt, note = man[sid]["prompt"].lower(), ""
         if sid in hook:
             zoom, ease, note = "Static", "", "Hook clip (the footage already moves)."
+        elif sid in film:
+            zoom, ease, note = "Static", "", "Film open: letterbox bars baked in."
+        elif sid in landing and man[sid]["type"] != "text-card":
+            zoom, ease, note = "Static", "", "Chapter card lands here; hold and push-in baked by prerender."
         elif man[sid]["type"] == "text-card":
             zoom, ease, note = "Static", "", "Text-card; overlay word drawn at the edit."
         elif n in elev:
             zoom, ease, note = elev[n]
         else:
-            if sid == last_of[r["chapter"]]:
+            if sid == last_of[chapter[sid]]:
                 zoom, ease = "Out", "EO"
             elif prompt.startswith("wide"):
                 zoom, ease = "Out", "L"
@@ -180,7 +194,7 @@ def main():
          "`Focal (x,y)` = pivot at the target (top-left image fractions), Size 1.00→1.20, EI. "
          f"`Pan <dir> (x,y)→(x,y)` = Transform `Center` start→end in top-left fractions (`apply-fusion` flips Y), static Size {PAN_SIZE:.2f} "
          f"for headroom (travel ±{TRAVEL:.2f}), linear, no animated zoom; camera travelling right = `Center.x` falling. "
-         "Static = hook clips and text-cards."]
+         "Static = hook clips, text-cards, film-open scenes and chapter-card landings (motion baked)."]
     cur = None
     for i, (r, zoom, ease, note) in enumerate(plan, 1):
         if r["chapter"] != cur:

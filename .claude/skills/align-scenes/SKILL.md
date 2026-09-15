@@ -16,17 +16,33 @@ this file says what it reads, writes, and what must be true.
 - `voiceovers/<slug>_voice_NN.mp3` — sorted filename order is playback order.
   A `claude/voiceover-segments/*.txt` with no matching audio is ignored
   and reported.
+- `voiceovers/normalized/<slug>_voice_NN.wav` — **the audio that is timed**:
+  the timeline copy, tempo already applied. The raw mp3 is timed only when
+  no WAV exists; a stretched voice timed from the mp3 lands 10% long.
 - Timing source, one of:
   - `api`: `claude/transcripts/<slug>_voice_NN.alignment.json` from
     `generate-voiceover` (`characters`, `character_start_times_seconds`,
-    `character_end_times_seconds`), converted to word timestamps in the
-    script. Missing files abort.
-  - `whisper` (default): `claude/transcripts/<slug>_voice_NN.json`. A segment
-    without one is transcribed by the `whisper` CLI with `--model tiny
-    --word_timestamps True --output_format json` — only the timing
-    matters, not the spelling. Run the script in the background; a
-    segment can take minutes. Never use the MCP `media_analysis` wrapper:
-    it has an internal 90 s cap and starts a fresh subprocess per call.
+    `character_end_times_seconds`, tempo-scaled), converted to word
+    timestamps in the script. Missing files abort.
+  - `whisper` (default): `claude/transcripts/<slug>_voice_NN.json`, made by
+    the `whisper` CLI (`--model base --word_timestamps True`) from the
+    timeline WAV; the JSON's `timed_audio` names that file, and a JSON made
+    from any other audio is redone. Only the timing matters, not the
+    spelling. Run the script in the background; a segment takes a few
+    minutes on CPU. Never use the MCP `media_analysis` wrapper: it has an
+    internal 90 s cap and starts a fresh subprocess per call.
+- **Whisper is the timing authority.** Every segment's timing must cover
+  its audio (last word within max(6 s, 4%) of the end, else abort). Under
+  `api` each segment's alignment is compared word by word with whisper's
+  and kept only if 95% of shared word starts agree within 0.5 s; otherwise
+  that segment is timed by whisper (the output header names it). The
+  `eleven_v3` alignment drifts: on a 20-minute voice it ran 2–6.5 s early
+  by each segment's end, and one segment came back 37 s short.
+- Matching tolerates whisper's mishearings: hyphenated number words split
+  and numeralise, ordinals drop their suffix, a fuzzy window may anchor on
+  any of the bookmark's first three words, and insertions or merges
+  (`in to` / `into`) are allowed. An unmatched scene at a segment's end or
+  start is interpolated inside that segment.
 
 ## Output
 
@@ -77,11 +93,8 @@ fix the bookmark or accept the interpolation knowingly.
 
 ## Known limits
 
-- Fuzzy matching is same-length positional: an insertion or deletion in
-  the transcript defeats it and the row falls to interpolation.
 - Standalone small numbers (`seven`) are not always digits in whisper
   output.
-- The `api` path is untested against a real TTS file.
 
 ## Not this skill's job
 

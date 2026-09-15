@@ -226,22 +226,26 @@ submissions a day, so a longer hook spans the reset). Set `status: generated`.
 All in Resolve Studio through the MCP server. **Verification rule** (conventions.md):
 nothing is done until a rendered or measured artefact proves it.
 
-1. `place-scenes`: decide fps, pre-render every visual to exact-frame
-   clips, swap each hook still for its Veo clip, add the 2 s chapter cards,
-   draw each text-card row's `overlay` word on its blank carrier the
-   same way, author and import the FCP7 XML, verify by readback and
-   screenshot. Media is staged at the series
-   `staging_path`, never inside OneDrive.
-2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
+1. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
    nearly every scene, Elevated on ≤10% with confirmed targets, Static
-   only on text-cards, no transitions
+   on hook clips, text-cards, film-open scenes and chapter-card landings,
+   no transitions
    (`video.md`'s `transitions` turns black sweeps on, for chapter ends,
    once proven on the locked Resolve version). **The operator edits the
    plan** — pacing and emphasis stay human.
-3. `apply-fusion`: motion from the plan; render-verify one scene of each
-   motion type before the batch. No particle effects.
-4. Grade hook clips only (CDL matched by measurement, per `place-scenes`);
-   the body stays ungraded.
+2. `place-scenes`: decide fps, pre-render every visual to exact-frame
+   clips with the plan's motion baked in (`--motion`), swap each hook still
+   for its Veo clip, add the chapter cards (cream thumbnail layout zooming
+   into the chapter's first scene), draw each text-card row's `overlay`
+   word on its blank carrier the same way, author and import the FCP7 XML,
+   verify by readback and screenshot. Media is staged at the series
+   `staging_path`, never inside OneDrive.
+3. Motion needs nothing in Resolve. `apply-fusion` (Fusion keyframes) is
+   the fallback only: on a small GPU its comps fill video memory and the
+   batch stalls. No particle effects.
+4. Grade and film open are baked by `place-scenes` from `video.md`
+   (`grade` LUT and mix on every visual; `film_open` film look, letterbox
+   and bar-open); nothing is graded in Resolve.
 5. **Spot SFX only**: a short sound for an action on screen (a pot
    clattering, water splashing, a lamp or fire crackling), a handful per
    chapter, placed on the scene that shows it. No ambience beds or loops
@@ -252,7 +256,8 @@ nothing is done until a rendered or measured artefact proves it.
 6. Render ranges first and measure them (`apply-fusion` verification:
    `check_render.py` for frames, LUFS **and per-channel RMS**, motion, cards
    and SFX). The full render waits for the operator's go. Measure it the
-   same way, watch it through, set `status: edited`.
+   same way (integrated LUFS at `video.md` `loudness`), watch it through,
+   set `status: edited`.
 
 Automate the mechanical (sequencing, sync, loudness, export); keep the
 editorial human — templated structure is a named inauthentic-content trigger.
@@ -284,6 +289,14 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
    disclose dramatised composites where the format uses them.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
    headings.
+3b. Captions: build `publish/captions.srt` with the script's own words
+   timed by the whisper word timestamps of the timeline audio
+   (`claude/transcripts/<segment>.json`, the same timing `align-scenes`
+   used) plus each segment's offset (the sum of the normalized WAV
+   durations before it, as `place-scenes` computes them), and upload it as
+   the caption track. Never time captions from the TTS alignment: it drifts.
+   `python .claude/skills/align-scenes/scripts/captions.py <series>/<slug>`
+   writes it; spot-check a few cues against the video before uploading.
 4. Record `published_id` and publish date in `video.md`; add the title to
    the competitor-titles index under the channel's own section.
    Set `status: published`.

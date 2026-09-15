@@ -3,6 +3,7 @@
 
 Usage:
     check_render.py <series>/<slug> --staging <dir> --fps N --render <file.mp4> --mark-in F [--mark-out F]
+                    [--film-until <scene_id>]
 
 The render must start at timeline frame --mark-in. Checks, each printed with its numbers:
   frames   video frame count equals mark-out - mark-in + 1 (when --mark-out is given)
@@ -10,8 +11,10 @@ The render must start at timeline frame --mark-in. Checks, each printed with its
            silent channel, L and R within 1 dB
   motion   every scene wholly in range: SSIM between an early and a late frame. A moving row
            (In/Out/Focal/Pan) must change (SSIM < 0.97); a Static still must not (> 0.99);
-           hook clips are reported only. Level-card scenes are sampled after the card.
-  cards    every level card in range: mean luma of its middle frame < 0.15
+           hook clips and film-open scenes (weave, grain, flicker) are reported only. A chapter card's landing scene is sampled after the
+           card and must move (its push-in is baked), unless it is a text-card.
+  cards    every chapter card in range: 0.3 s in, the top-left corner (clear of the text) is the
+           series' cream (mean RGB within 20 of thumbnail.background per channel)
   sfx      every sfx-plan row in range: the render minus the voiceover, lag and gain fitted on
            the neighbouring second (before or after) that carries more voice, is louder inside
            the sound's window than in that second by 6 dB+
@@ -29,7 +32,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "..", "place-scenes", "scripts"))
-from prerender import hook_map, plan, resolve_project  # noqa: E402
+from prerender import CARD_S, hook_map, overlays, plan, resolve_project, series_look  # noqa: E402
 from sfx import read_plan  # noqa: E402
 
 SR = 48000
@@ -50,10 +53,10 @@ def ssim(a, b):
     return float(m.group(1)) if m else float("nan")
 
 
-def luma(png):
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", png, "-vf", "scale=1:1:flags=area,format=gray",
-                          "-f", "rawvideo", "-"], capture_output=True).stdout
-    return raw[0] / 255 if raw else float("nan")
+def corner_rgb(png):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", png, "-vf", "crop=iw*0.12:ih*0.15:0:0,scale=1:1:flags=area",
+                          "-pix_fmt", "rgb24", "-f", "rawvideo", "-"], capture_output=True).stdout
+    return tuple(raw[:3]) if len(raw) >= 3 else (float("nan"),) * 3
 
 
 def pcm(path, start=None, dur=None, mono=True):
@@ -90,6 +93,7 @@ def main():
     ap.add_argument("--mark-out", type=int)
     ap.add_argument("--lufs", type=float, help="expected integrated LUFS of the range (the voice file's, same span)")
     ap.add_argument("--skip-motion", action="store_true", help="skip the per-scene motion and card checks")
+    ap.add_argument("--film-until", help="video.md film_open: scenes up to it are reported, not judged")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -99,6 +103,8 @@ def main():
     scenes = plan(project, staging, fps)
     zoom = plan_rows(project)
     hooks = set(hook_map(project))
+    ids = [s["scene_id"] for s in scenes]
+    film = set(ids[: ids.index(a.film_until) + 1]) if a.film_until else set()
     fails = []
 
     counted = run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0", "-show_entries",
@@ -127,28 +133,29 @@ def main():
         fails.append("audio level or channels")
 
     cards = {os.path.splitext(os.path.basename(p))[0] for p in glob.glob(os.path.join(staging, "cards", "*.mp4"))}
+    card_frames, cream, text_cards = round(CARD_S * fps), series_look(project)[0], set(overlays(project))
     for s in ([] if a.skip_motion else scenes):
         sid, s0, nf = s["scene_id"], s["start_frame"], s["frames"]
         if s0 < m_in or s0 + nf - 1 > m_out:
             continue
         kind = zoom.get(sid, "?")
-        first = s0 - m_in + (2 * fps + 2 if sid in cards else 1)
+        first = s0 - m_in + (card_frames + 2 if sid in cards else 1)
         last = s0 - m_in + nf - 2
         if last - first < fps:
             continue
         v = ssim(frame_png(a.render, first, os.path.join(tmp, "a.png"), fps), frame_png(a.render, last, os.path.join(tmp, "b.png"), fps))
-        if sid in hooks:
-            print(f"motion  --  {sid[:3]} hook clip SSIM {v:.3f}")
+        if sid in hooks or sid in film:
+            print(f"motion  --  {sid[:3]} {'hook clip' if sid in hooks else 'film open'} SSIM {v:.3f}")
             continue
-        moving = kind in ("In", "Out", "Focal", "Pan")
+        moving = kind in ("In", "Out", "Focal", "Pan") or (sid in cards and sid not in text_cards)
         ok = v < 0.97 if moving else v > 0.99
         print(f"motion  {'ok ' if ok else 'BAD'} {sid[:3]} {kind:6s} SSIM {v:.3f}")
         if not ok:
             fails.append(f"motion {sid[:3]}")
         if sid in cards:
-            y = luma(frame_png(a.render, s0 - m_in + fps, os.path.join(tmp, "c.png"), fps))
-            ok = y < 0.15
-            print(f"card    {'ok ' if ok else 'BAD'} {sid[:3]} mean luma {y:.3f}")
+            rgb = corner_rgb(frame_png(a.render, s0 - m_in + round(0.3 * fps), os.path.join(tmp, "c.png"), fps))
+            ok = all(abs(v - c) <= 20 for v, c in zip(rgb, cream))
+            print(f"card    {'ok ' if ok else 'BAD'} {sid[:3]} corner RGB {rgb} vs cream {cream}")
             if not ok:
                 fails.append(f"card {sid[:3]}")
 
