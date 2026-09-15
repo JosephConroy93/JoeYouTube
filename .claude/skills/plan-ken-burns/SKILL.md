@@ -1,6 +1,6 @@
 ---
 name: plan-ken-burns
-description: Plans per-scene Ken Burns motion and black-sweep transitions for a video whose scenes are generated and timed, writing `ken-burns-plan.md` for `apply-fusion` (or the operator) to execute. Two tiers — Baseline zoom (default) and Elevated pan/focal zoom on a confirmed off-centre target (≤10%); Static is text-cards only; no particle effects. Delegates every image read to subagents. Never touches Resolve.
+description: Plans per-scene Ken Burns motion and black-sweep transitions for a video whose scenes are generated and timed, writing `ken-burns-plan.md` for `place-scenes --motion` to bake (or `apply-fusion` as the Fusion fallback). Two tiers — Baseline zoom (default) and Elevated pan/focal zoom on a confirmed off-centre target (≤10%); Static is text-cards only; no particle effects. Delegates every image read to subagents. Never touches Resolve.
 ---
 
 # plan-ken-burns
@@ -132,7 +132,7 @@ scene carrying a caution note.
 
 ## Does not
 
-- Open, drive or script Resolve — `apply-fusion` executes the plan.
+- Open, drive or script Resolve — `place-scenes --motion` bakes the plan; `apply-fusion` is the Fusion fallback.
 - Decide captions, loudness, or any transition other than the sweep.
 - Read images in the main context, or any image outside the shortlist. For
   unshortlisted scenes, if the real composition differs from the prompt,

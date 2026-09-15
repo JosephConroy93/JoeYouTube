@@ -1,6 +1,6 @@
 ---
 name: place-scenes
-description: Builds a video's first cut in DaVinci Resolve from `claude/scene-timing.md` — every scene image, hook clip and voiceover segment at its measured frame position. Pre-renders each visual to an exact-frame clip with ffmpeg, authors an FCP7 XML with `scripts/build_timeline.py` and imports it, because the scripting API cannot set a still's duration or trim a placed clip. Use after `align-scenes`, before `plan-ken-burns`.
+description: Builds a video's first cut in DaVinci Resolve from `claude/scene-timing.md` — every scene image, hook clip and voiceover segment at its measured frame position. Pre-renders each visual to an exact-frame clip with ffmpeg, authors an FCP7 XML with `scripts/build_timeline.py` and imports it, because the scripting API cannot set a still's duration or trim a placed clip. Use after `align-scenes` and `plan-ken-burns`.
 ---
 
 # place-scenes
@@ -40,8 +40,14 @@ verification rule: `.claude/conventions.md`.
    end equals the audio end.
 4. **Pre-render every visual** (steps 4, 5, 5b and 5c in one run):
    ```
-   python .claude/skills/place-scenes/scripts/prerender.py <series>/<slug> --staging <dir> --fps N [--grade <lut> --grade-mix M] [--film-until <scene_id>] [--overlay-pos <scene_id>=x,y] [--jobs 8] [--only id,id]
+   python .claude/skills/place-scenes/scripts/prerender.py <series>/<slug> --staging <dir> --fps N [--grade <lut> --grade-mix M] [--film-until <scene_id>] [--motion] [--overlay-pos <scene_id>=x,y] [--jobs 8] [--only id,id]
    ```
+   `--motion` bakes every In, Out, Focal and Pan row of
+   `claude/ken-burns-plan.md` (with its ease) into the clip at the timeline
+   size, drawn with subpixel precision, so the timeline needs no Fusion
+   comps; Static rows render as before. Check one clip of each move (step
+   size between frames rises for EI, stays level for L, falls for EO; no
+   single-frame jumps) before the full run.
    Copies the normalised WAVs to `<staging>/voiceovers/`, then writes
    `<staging>/scenes/<scene_id>.mp4` at exactly each scene's planned frame
    count (`-frames:v`, never `-t`; `-an`; stills cropped to 16:9, never
@@ -153,6 +159,6 @@ verification rule: `.claude/conventions.md`.
 
 ## Not this skill's job
 
-Motion (`plan-ken-burns`, `apply-fusion`), the hook→body
+Deciding motion (`plan-ken-burns`), the hook→body
 transition, captions, ambience beds, export, or judging
 whether a measured duration reads well.

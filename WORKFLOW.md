@@ -226,22 +226,23 @@ submissions a day, so a longer hook spans the reset). Set `status: generated`.
 All in Resolve Studio through the MCP server. **Verification rule** (conventions.md):
 nothing is done until a rendered or measured artefact proves it.
 
-1. `place-scenes`: decide fps, pre-render every visual to exact-frame
-   clips, swap each hook still for its Veo clip, add the chapter cards (cream
-   thumbnail layout zooming into the chapter's first scene),
-   draw each text-card row's `overlay` word on its blank carrier the
-   same way, author and import the FCP7 XML, verify by readback and
-   screenshot. Media is staged at the series
-   `staging_path`, never inside OneDrive.
-2. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
+1. `plan-ken-burns` → `claude/ken-burns-plan.md`: Baseline motion on
    nearly every scene, Elevated on ≤10% with confirmed targets, Static
    on hook clips, text-cards, film-open scenes and chapter-card landings,
    no transitions
    (`video.md`'s `transitions` turns black sweeps on, for chapter ends,
    once proven on the locked Resolve version). **The operator edits the
    plan** — pacing and emphasis stay human.
-3. `apply-fusion`: motion from the plan; render-verify one scene of each
-   motion type before the batch. No particle effects.
+2. `place-scenes`: decide fps, pre-render every visual to exact-frame
+   clips with the plan's motion baked in (`--motion`), swap each hook still
+   for its Veo clip, add the chapter cards (cream thumbnail layout zooming
+   into the chapter's first scene), draw each text-card row's `overlay`
+   word on its blank carrier the same way, author and import the FCP7 XML,
+   verify by readback and screenshot. Media is staged at the series
+   `staging_path`, never inside OneDrive.
+3. Motion needs nothing in Resolve. `apply-fusion` (Fusion keyframes) is
+   the fallback only: on a small GPU its comps fill video memory and the
+   batch stalls. No particle effects.
 4. Grade and film open are baked by `place-scenes` from `video.md`
    (`grade` LUT and mix on every visual; `film_open` film look, letterbox
    and bar-open); nothing is graded in Resolve.

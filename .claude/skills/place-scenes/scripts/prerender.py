@@ -5,7 +5,7 @@ Usage:
     prerender.py <series>/<slug> --staging <dir> --fps N
                  [--width 1920 --height 1080] [--font C:/Windows/Fonts/Inkfree.ttf]
                  [--overlay-pos <scene_id>=x,y ...] [--jobs 8] [--only id,id]
-                 [--grade <lut.cube> --grade-mix 0.5] [--film-until <scene_id>]
+                 [--grade <lut.cube> --grade-mix 0.5] [--film-until <scene_id>] [--motion]
 
 Reads   claude/scene-timing.md             frame plan (same rule as build_timeline.py)
         voiceovers/normalized/<segment>.wav copied to <staging>/voiceovers/
@@ -23,6 +23,9 @@ straightens and fills the frame, its last frame identical to the scene's frame u
 It lands on the chapter's first scene (or the first scene after --film-until when the
 chapter opens inside the film); an all-hook chapter (the cold open) gets none. The landing
 scene holds still under the card, then pushes in (text-card rows stay still).
+
+--motion bakes each `claude/ken-burns-plan.md` move (In, Out, Focal, Pan with its ease) into the
+clip at the timeline size, so Resolve needs no Fusion comps; Static rows stay as they are.
 
 --grade mixes a 3D LUT over every hook clip and still (never card grounds) at --grade-mix.
 --film-until gives every visual up to and including that scene the film look (gate weave,
@@ -305,37 +308,61 @@ def card_job(head, scene_clip, land, out, fps, W, H, look):
         raise RuntimeError(f"card encode: {err[-400:]}")
 
 
-def push_job(r, jpg, out, fps, cw, ch, hold, look, crop):
-    """Held still for `hold` frames, then an eased push-in about the centre, drawn with subpixel
-    precision (ffmpeg's per-frame scale and zoompan both step visibly on a slow zoom)."""
+EASE = {"L": lambda p: p, "EI": lambda p: p * p, "EO": lambda p: 1 - (1 - p) ** 2}
+
+
+def plan_moves(project):
+    """ken-burns-plan.md -> {scene_id: curve(i, frames) -> (size, image_anchor, output_anchor)}."""
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "apply-fusion", "scripts"))
+    from plan_to_spec import FOCAL, IN, OUT, PAN_SIZE, PT
+    moves = {}
+    for line in open(os.path.join(project, "claude", "ken-burns-plan.md"), encoding="utf-8"):
+        c = [x.strip() for x in line.strip().strip("|").split("|")]
+        if len(c) < 7 or not re.fullmatch(r"`?\d{3}_[A-Za-z0-9-]+`?", c[1]):
+            continue
+        sid, zoom, ease = c[1].strip("`"), c[3], EASE.get(c[4] or "L", EASE["L"])
+        kind = zoom.split()[0].lower()
+        pts = [(float(x), float(y)) for x, y in re.findall(PT, zoom)]
+        if kind in ("in", "out"):
+            s0, s1 = IN if kind == "in" else OUT
+            moves[sid] = lambda p, s0=s0, s1=s1, e=ease: (s0 + (s1 - s0) * e(p), (0.5, 0.5), (0.5, 0.5))
+        elif kind == "focal":
+            (fx, fy), = pts
+            moves[sid] = lambda p, e=ease, f=(fx, fy): (FOCAL[0] + (FOCAL[1] - FOCAL[0]) * e(p), f, f)
+        elif kind == "pan":
+            (x0, y0), (x1, y1) = pts
+            moves[sid] = lambda p, e=ease, a=(x0, y0), b=(x1, y1): (
+                PAN_SIZE, (0.5, 0.5), (a[0] + (b[0] - a[0]) * e(p), a[1] + (b[1] - a[1]) * e(p)))
+    return moves
+
+
+def motion_job(r, jpg, out, fps, W, H, look, crop, curve, hold=0):
+    """Frames drawn with subpixel precision (ffmpeg's per-frame scale and zoompan both step visibly
+    on a slow zoom). An image point x maps to the output at out_anchor + (x - image_anchor) * size;
+    the first `hold` frames repeat frame 0."""
     im = Image.open(jpg).convert("RGB")
     (iw, ih), (kw, kh) = im.size, crop
     im = im.crop(((iw - kw) // 2, (ih - kh) // 2, (iw - kw) // 2 + kw, (ih - kh) // 2 + kh))
-    if im.size != (cw, ch):
-        im = im.resize((cw, ch), Image.LANCZOS)
-    args = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{cw}x{ch}", "-r", str(fps),
+    sw, sh = round(W * 1.2), round(H * 1.2)
+    im = im.resize((sw, sh), Image.LANCZOS)
+    args = ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(fps),
             "-i", "-"]
     if look:
         args += ["-filter_complex", ",".join(look)]
     proc = subprocess.Popen(args + ["-frames:v", str(r["frames"]), "-c:v", "libx264", "-crf", "18", "-pix_fmt",
                                     "yuv420p", "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    held = im.tobytes()
-    span = r["frames"] - 1 - hold
+    span = max(1, r["frames"] - 1 - hold)
     for i in range(r["frames"]):
-        if i <= hold:
-            proc.stdin.write(held)
-            continue
-        z = 1 + PUSH * ((i - hold) / span) ** 2
-        a = 1 / z
-        proc.stdin.write(im.transform((cw, ch), Image.AFFINE, (a, 0, cw / 2 * (1 - a), 0, a, ch / 2 * (1 - a)),
-                                      resample=Image.BICUBIC).tobytes())
+        size, (ix, iy), (ox, oy) = curve(min(1.0, max(0.0, (i - hold) / span)))
+        coeffs = (sw / (W * size), 0, sw * (ix - ox / size), 0, sh / (H * size), sh * (iy - oy / size))
+        proc.stdin.write(im.transform((W, H), Image.AFFINE, coeffs, resample=Image.BICUBIC).tobytes())
     proc.stdin.close()
     err = proc.stderr.read().decode(errors="replace")
     if proc.wait():
-        raise RuntimeError(f"push encode {r['scene_id']}: {err[-400:]}")
+        raise RuntimeError(f"motion encode {r['scene_id']}: {err[-400:]}")
 
 
-def still_job(r, jpg, out, fps, W, H, word, pos, font, look, hold=0):
+def still_job(r, jpg, out, fps, W, H, word, pos, font, look, hold=0, curve=None):
     iw, ih = image_size(jpg)
     if iw * 9 > ih * 16:
         cw, ch = (ih * 16 // 9) // 2 * 2, ih // 2 * 2
@@ -346,9 +373,11 @@ def still_job(r, jpg, out, fps, W, H, word, pos, font, look, hold=0):
     if cw < W:
         vf.append(f"scale={W}:{H}:flags=lanczos")
         cw, ch = W, H
+    if (hold or curve) and not word and r["frames"] > hold + 1:
+        push = lambda p: (1 + PUSH * p * p, (0.5, 0.5), (0.5, 0.5))  # noqa: E731
+        look = [x(W, H) if callable(x) else x for x in look]
+        return motion_job(r, jpg, out, fps, W, H, look, crop, push if hold else curve, hold)
     look = [x(cw, ch) if callable(x) else x for x in look]
-    if hold and not word and r["frames"] > hold + 1:
-        return push_job(r, jpg, out, fps, cw, ch, hold, look, crop)
     if word:
         x, y = pos or (0.5, 0.5)
         txt = out + ".txt"
@@ -385,6 +414,7 @@ def main():
     ap.add_argument("--grade", help="3D LUT (.cube) mixed over every hook clip and still")
     ap.add_argument("--grade-mix", type=float, default=1.0)
     ap.add_argument("--film-until", help="last scene_id with the film look and letterbox")
+    ap.add_argument("--motion", action="store_true", help="bake claude/ken-burns-plan.md moves into the clips")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -411,6 +441,7 @@ def main():
     targets = {r["scene_id"]: head for r, head in card_targets(project, rows, hooks, a.film_until)}
     card_frames = round(CARD_S * fps)
     card_look = series_look(project)
+    moves = plan_moves(project) if a.motion else {}
 
     def look(i):
         parts = [grade_chain(a.grade, a.grade_mix)] if a.grade else []
@@ -453,7 +484,7 @@ def main():
                 if not os.path.isfile(jpg):
                     sys.exit(f"ABORT: missing {jpg}")
                 jobs[ex.submit(still_job, r, jpg, out, fps, W, H, words.get(sid), pos.get(sid), a.font, look(i),
-                               hold)] = (sid, out, r["frames"], "overlay" if sid in words else "still")
+                               hold, moves.get(sid))] = (sid, out, r["frames"], "overlay" if sid in words else "still")
         collect(jobs)
 
         jobs = {}

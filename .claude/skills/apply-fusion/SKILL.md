@@ -5,6 +5,9 @@ description: Executes a video's `ken-burns-plan.md` in a running DaVinci Resolve
 
 # apply-fusion
 
+Fallback only: `place-scenes --motion` bakes the plan into the clips and is
+the default. Use this skill when a move must be adjusted inside Resolve.
+
 Invocation: `<series>/<slug>` — see `.claude/conventions.md`.
 
 ## Reads and writes
