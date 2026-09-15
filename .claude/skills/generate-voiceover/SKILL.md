@@ -38,7 +38,9 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
    the others, `output_format` `mp3_44100_128`. Save the decoded audio to
    `voiceovers/<slug>_voice_NN.mp3` and the alignment (`characters`,
    `character_start_times_seconds`, `character_end_times_seconds`) to
-   `claude/transcripts/<slug>_voice_NN.alignment.json` for `align-scenes --source api`.
+   `claude/transcripts/<slug>_voice_NN.alignment.json` for `align-scenes --source api`,
+   which keeps it only where it agrees with whisper; it is not a timing
+   authority on its own (the `eleven_v3` alignment drifts).
 3. **Normalise** each file: measure with `ebur128`, apply gain to
    **−16 LUFS integrated** with `alimiter` (`level=disabled`, otherwise it
    raises rather than tames), true peak ≤ −1.5 dBFS, export

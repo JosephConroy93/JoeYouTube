@@ -3,22 +3,30 @@
 
 Usage:
     align.py <project-path> [--source whisper|api] [--fps N] [--out PATH]
-             [--model tiny] [--fuzzy-min 0.7]
+             [--model base] [--fuzzy-min 0.7]
 
 <project-path> is `<series>/<slug>` (resolved under content/) or a directory.
 
 Reads   claude/scene-prompts.md                 index -> chapter files, in order
         claude/scene-prompts/<chapter>.md       rows: scene_id, script_bookmark
         voiceovers/<stem>.mp3                   segment stems, sorted = playback order
-        claude/transcripts/<stem>.json          whisper JSON  (--source whisper)
-        claude/transcripts/<stem>.alignment.json TTS alignment (--source api)  # UNTESTED end-to-end
-        (an mp3 with no whisper JSON is transcribed here: whisper CLI, --model tiny)
+        voiceovers/normalized/<stem>.wav        the timeline audio (tempo applied): what is timed
+        claude/transcripts/<stem>.json          whisper JSON of the timeline audio (--source whisper)
+        claude/transcripts/<stem>.alignment.json TTS alignment, tempo-scaled (--source api)
+
+Whisper always transcribes the timeline audio, never the raw mp3 (a tempo-stretched voice would
+be timed 10% long); a JSON made from other audio is redone. Every segment's timing must cover its
+audio: a last word ending more than max(6 s, 4%) before the audio ends aborts. Under --source api
+each segment's alignment is compared word by word with whisper's; unless 95% of shared word starts
+agree within 0.5 s, that segment is timed by whisper (TTS alignments drift: eleven_v3 ran up to
+6.5 s early by a segment's end, and one came back 37 s short of its audio).
 Writes  claude/scene-timing.md                  (or --out)
 
 Schema: | scene_id | chapter | segment | start_seconds | end_seconds | match |
 match = exact | fuzzy(NN%) | interpolated | api ; seconds are segment-relative.
 """
 import argparse
+import difflib
 import glob
 import json
 import os
@@ -148,7 +156,7 @@ PUNCT = ".,;:!?\"'’—-"
 
 
 def norm(s):
-    return s.strip().lower().strip(PUNCT)
+    return re.sub(r"^(\d+)(st|nd|rd|th)$", r"\1", s.strip().lower().strip(PUNCT))
 
 
 def numeralize(tokens):
@@ -177,7 +185,7 @@ def numeralize(tokens):
 
 
 def tokenize(text):
-    return numeralize([w for w in (norm(t) for t in text.split()) if w])
+    return numeralize([w for w in (norm(t) for t in re.sub(r"(?<=\w)[-–](?=\w)", " ", text).split()) if w])
 
 
 # ----------------------------------------------------------------------------- timing sources
@@ -205,8 +213,7 @@ def words_from_whisper(data):
     out = []
     for seg in data.get("segments", []):
         for w in seg.get("words", []):
-            n = norm(w["word"])
-            if n:
+            for n in tokenize(w["word"]):
                 out.append({"norm": n, "start": float(w["start"]), "end": float(w["end"])})
     return out
 
@@ -237,38 +244,84 @@ def words_from_api(data):
     return out
 
 
-def transcribe(project, stems, model):
-    """One sequential whisper loop over every stem lacking a JSON. Run this script in the background.
-    # UNTESTED in this script (the same command line was used by hand to make the existing JSONs)"""
+def timeline_audio(project, stem):
+    """The audio the timeline plays: the normalised WAV (tempo applied) when it exists."""
+    wav = os.path.join(project, "voiceovers", "normalized", stem + ".wav")
+    return wav if os.path.isfile(wav) else os.path.join(project, "voiceovers", stem + ".mp3")
+
+
+def audio_seconds(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=duration",
+                          "-of", "csv=p=0", path], capture_output=True, text=True).stdout.strip()
+    return float(out)
+
+
+def covers(words, seconds):
+    return seconds - words[-1]["end"] <= max(6.0, 0.04 * seconds)
+
+
+def transcribe(project, stem, model):
+    """whisper on the timeline audio, word timestamps; the JSON records which audio it timed."""
     tdir = os.path.join(project, "claude", "transcripts")
     os.makedirs(tdir, exist_ok=True)
-    for stem in stems:
-        mp3 = os.path.join(project, "voiceovers", stem + ".mp3")
-        if not os.path.isfile(mp3):
-            sys.exit(f"ABORT: no transcript and no audio for segment {stem} ({mp3})")
-        print(f"whisper: {stem} ...", flush=True)
-        r = subprocess.run(["whisper", mp3, "--model", model, "--word_timestamps", "True",
-                            "--output_format", "json", "--output_dir", tdir])
-        if r.returncode != 0:
-            sys.exit(f"ABORT: whisper failed on {stem} (exit {r.returncode})")
+    audio = timeline_audio(project, stem)
+    if not os.path.isfile(audio):
+        sys.exit(f"ABORT: no audio for segment {stem} ({audio})")
+    print(f"whisper ({model}): {os.path.relpath(audio, project)} ...", flush=True)
+    r = subprocess.run(["whisper", audio, "--model", model, "--language", "en", "--word_timestamps", "True",
+                        "--fp16", "False", "--output_format", "json", "--output_dir", tdir])
+    path = os.path.join(tdir, stem + ".json")
+    if r.returncode != 0 or not os.path.isfile(path):
+        sys.exit(f"ABORT: whisper failed on {stem} (exit {r.returncode})")
+    data = json.load(open(path, encoding="utf-8"))
+    data["timed_audio"] = os.path.relpath(audio, project).replace("\\", "/")
+    json.dump(data, open(path, "w", encoding="utf-8"))
+    return data
+
+
+def whisper_words(project, stem, model):
+    path = os.path.join(project, "claude", "transcripts", stem + ".json")
+    want = os.path.relpath(timeline_audio(project, stem), project).replace("\\", "/")
+    data = json.load(open(path, encoding="utf-8")) if os.path.isfile(path) else None
+    if not data or data.get("timed_audio") != want:
+        data = transcribe(project, stem, model)
+    return words_from_whisper(data)
+
+
+def disagreement(api_words, whisper_words):
+    """95th percentile of |start difference| over the words both sources share, in order."""
+    a, w = [x["norm"] for x in api_words], [x["norm"] for x in whisper_words]
+    diffs = sorted(abs(whisper_words[b.b + k]["start"] - api_words[b.a + k]["start"])
+                   for b in difflib.SequenceMatcher(None, a, w, autojunk=False).get_matching_blocks()
+                   for k in range(b.size))
+    return diffs[int(0.95 * (len(diffs) - 1))] if diffs else float("inf")
 
 
 def load_segments(project, source, model):
     stems = segment_stems(project)
     tdir = os.path.join(project, "claude", "transcripts")
-    suffix = ".alignment.json" if source == "api" else ".json"
-    missing = [s for s in stems if not os.path.isfile(os.path.join(tdir, s + suffix))]
-    if missing:
-        if source == "api":
-            sys.exit("ABORT: --source api needs claude/transcripts/<stem>.alignment.json for: " + ", ".join(missing))
-        transcribe(project, missing, model)
     segments = []
     for stem in stems:
-        data = json.load(open(os.path.join(tdir, stem + suffix), encoding="utf-8"))
-        words = words_from_api(data) if source == "api" else words_from_whisper(data)
+        seconds = audio_seconds(timeline_audio(project, stem))
+        used = source
+        if source == "api":
+            path = os.path.join(tdir, stem + ".alignment.json")
+            if not os.path.isfile(path):
+                sys.exit(f"ABORT: --source api needs {path}")
+            words = words_from_api(json.load(open(path, encoding="utf-8")))
+            heard = whisper_words(project, stem, model)
+            p95 = disagreement(words, heard) if words else float("inf")
+            if p95 > 0.5 or not covers(words, seconds):
+                print(f"check: {stem} alignment disagrees with whisper (p95 {p95:.2f} s) -- timed by whisper")
+                words, used = heard, "whisper"
+        else:
+            words = whisper_words(project, stem, model)
         if not words:
             sys.exit(f"ABORT: transcript for {stem} has no words")
-        segments.append({"stem": stem, "words": words, "duration": words[-1]["end"]})
+        if not covers(words, seconds):
+            sys.exit(f"ABORT: {stem} timing ends at {words[-1]['end']:.1f} s of {seconds:.1f} s audio")
+        print(f"check: {stem} timed by {used}, last word {words[-1]['end']:.1f} s of {seconds:.1f} s audio")
+        segments.append({"stem": stem, "words": words, "duration": words[-1]["end"], "source": used})
     return segments
 
 
@@ -285,21 +338,33 @@ def exact_hits(words, target):
 
 
 def fuzzy_match(words, target, min_ratio):
-    n = len(target)
-    best, best_score = None, 0
-    for i in range(len(words) - n + 1):
-        ratio = sum(1 for j in range(n) if words[i + j]["norm"] == target[j]) / n
+    """Best window by shared-token count (order kept, insertions and deletions allowed), anchored on
+    a word matching one of the bookmark's first three tokens; when the anchor is token k > 0 (the
+    opening words were misheard), the start backs off 0.35 s a token, never before the previous word."""
+    n, norms = len(target), [w["norm"] for w in words]
+    best, best_score = None, 0.0
+    for i in range(len(words)):
+        if norms[i] not in target[:3]:
+            continue
+        k = target.index(norms[i])
+        window = norms[i:i + n + 2 - k]
+        blocks = difflib.SequenceMatcher(None, target[k:], window, autojunk=False).get_matching_blocks()
+        ratio = sum(b.size for b in blocks) / n
+        last = max((b.b + b.size - 1 for b in blocks if b.size), default=0)
+        start = words[i]["start"] - 0.35 * k
+        if i > 0:
+            start = max(start, words[i - 1]["end"])
         if ratio > best_score:
-            best_score, best = ratio, (words[i]["start"], words[i + n - 1]["end"], ratio)
+            best_score, best = ratio, (start, words[i + last]["end"], ratio)
     return best if best and best_score >= min_ratio else None
 
 
-def match_all(scenes, segments, fuzzy_min, source):
+def match_all(scenes, segments, fuzzy_min):
     """Steps 1-5: exact hits across every segment; an ambiguous exact is resolved by
     playback order (the one hit between its matched neighbours), else best fuzzy;
     still nothing -> left for interpolation and flagged."""
     flags, seg_index = [], {s["stem"]: k for k, s in enumerate(segments)}
-    kind = "api" if source == "api" else "exact"
+    kind = lambda k: "api" if segments[k]["source"] == "api" else "exact"  # noqa: E731
     pending = []
     for sc in scenes:
         sc.update(segment=None, start=None, end=None, match=None)
@@ -310,7 +375,7 @@ def match_all(scenes, segments, fuzzy_min, source):
         hits = [(k, s, e) for k, seg in enumerate(segments) for s, e in exact_hits(seg["words"], target)]
         if len(hits) == 1:
             k, s, e = hits[0]
-            sc.update(segment=segments[k]["stem"], start=s, end=e, match=kind)
+            sc.update(segment=segments[k]["stem"], start=s, end=e, match=kind(k))
         else:
             pending.append((sc, target, hits))
 
@@ -325,7 +390,7 @@ def match_all(scenes, segments, fuzzy_min, source):
             ok = [h for h in hits if (prev is None or (h[0], h[1]) >= prev) and (nxt is None or (h[0], h[2]) <= nxt)]
             if len(ok) == 1:
                 k, s, e = ok[0]
-                sc.update(segment=segments[k]["stem"], start=s, end=e, match=kind)
+                sc.update(segment=segments[k]["stem"], start=s, end=e, match=kind(k))
                 continue
             flags.append(f"{sc['scene_id']}: exact match at {len(hits)} positions, {len(ok)} in playback order "
                          "-- interpolated instead; resolve by hand")
@@ -338,7 +403,7 @@ def match_all(scenes, segments, fuzzy_min, source):
         if best:
             seg, (s, e, r) = best
             sc.update(segment=seg["stem"], start=s, end=e,
-                      match="api" if source == "api" else f"fuzzy({round(r * 100)}%)")
+                      match="api" if seg["source"] == "api" else f"fuzzy({round(r * 100)}%)")
         else:
             flags.append(f"{sc['scene_id']}: no exact or fuzzy match -- \"{sc['bookmark']}\"")
     return flags
@@ -362,6 +427,10 @@ def interpolate(scenes, segments, wide_span=12.0):
             stem, lo, hi = prev["segment"], prev["end"], seg_dur[prev["segment"]]
         elif nxt and not prev:  # UNTESTED: run at the very start of the first segment
             stem, lo, hi = nxt["segment"], 0.0, nxt["start"]
+        elif prev and nxt and seg_dur[prev["segment"]] - prev["end"] >= 1.0:
+            stem, lo, hi = prev["segment"], prev["end"], seg_dur[prev["segment"]]  # run closes prev's segment
+        elif prev and nxt and nxt["start"] >= 1.0:
+            stem, lo, hi = nxt["segment"], 0.0, nxt["start"]  # run opens next's segment
         else:
             ids = ", ".join(s["scene_id"] for s in run)
             sys.exit(f"ABORT: unmatched run straddles a segment boundary, cannot interpolate: {ids}")
@@ -403,11 +472,13 @@ def match_counts(scenes):
     return counts
 
 
-def write_timing(path, scenes, source):
+def write_timing(path, scenes, source, segments):
     summary = ", ".join(f"{v} {k}" for k, v in sorted(match_counts(scenes).items()))
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write("# Scene timing\n\n")
-        f.write(f"Written by `align-scenes` (`--source {source}`). Seconds are segment-relative; "
+        fell = [s["stem"] for s in segments if s["source"] != source]
+        note = f" Timed by whisper (alignment failed the cross-check): {', '.join(fell)}." if fell else ""
+        f.write(f"Written by `align-scenes` (`--source {source}`).{note} Seconds are segment-relative; "
                 f"`match` = `exact` / `fuzzy(NN%)` / `interpolated` / `api`. "
                 f"{len(scenes)} scenes: {summary}.\n\n")
         f.write("| scene_id | chapter | segment | start_seconds | end_seconds | match |\n")
@@ -423,7 +494,7 @@ def main():
     ap.add_argument("--source", choices=["whisper", "api"], default="whisper")
     ap.add_argument("--fps", type=int, help="frame-overlap report only; default from video.md / series.md")
     ap.add_argument("--out", help="write here instead of claude/scene-timing.md")
-    ap.add_argument("--model", default="tiny", help="whisper model (timing only, accuracy of text is irrelevant)")
+    ap.add_argument("--model", default="base", help="whisper model (word timing; tiny times words loosely)")
     ap.add_argument("--fuzzy-min", type=float, default=0.7)
     a = ap.parse_args()
 
@@ -438,14 +509,14 @@ def main():
     segments = load_segments(project, a.source, a.model)
     print("segments: " + ", ".join(f"{s['stem']} ({len(s['words'])} words)" for s in segments))
 
-    flags = match_all(scenes, segments, a.fuzzy_min, a.source)
+    flags = match_all(scenes, segments, a.fuzzy_min)
     flags += interpolate(scenes, segments)
     unresolved = [s["scene_id"] for s in scenes if not s["match"]]
     if unresolved:
         sys.exit("ABORT: rows without timing: " + ", ".join(unresolved))
 
     out = a.out or os.path.join(project, "claude", "scene-timing.md")
-    write_timing(out, scenes, a.source)
+    write_timing(out, scenes, a.source, segments)
     if fps:
         print(f"frames @ {fps} fps:")
         print("\n".join(frame_report(scenes, segments, fps)))

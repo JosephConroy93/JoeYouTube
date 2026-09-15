@@ -289,11 +289,12 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
    disclose dramatised composites where the format uses them.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
    headings.
-3b. Captions: build `publish/captions.srt` from the saved ElevenLabs
-   alignment (`claude/transcripts/<segment>.alignment.json`) plus each
-   segment's offset (the sum of the normalized WAV durations before it, as
-   `place-scenes` computes them), and upload it as the caption track, so the
-   words are the script's own and the timings frame-true.
+3b. Captions: build `publish/captions.srt` with the script's own words
+   timed by the whisper word timestamps of the timeline audio
+   (`claude/transcripts/<segment>.json`, the same timing `align-scenes`
+   used) plus each segment's offset (the sum of the normalized WAV
+   durations before it, as `place-scenes` computes them), and upload it as
+   the caption track. Never time captions from the TTS alignment: it drifts.
 4. Record `published_id` and publish date in `video.md`; add the title to
    the competitor-titles index under the channel's own section.
    Set `status: published`.
