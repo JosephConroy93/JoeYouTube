@@ -18,6 +18,7 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 - **`check_render.py --film-until`:** film-open scenes (weave, grain, flicker) are reported, not failed as moving Static rows. Proving render on Cromwell: frames, −15.2 LUFS against −15.1 predicted, L = R, cream card, In/Out/Pan all moving, cut frame-exact.
 - **Ken Burns baked by `prerender.py --motion`; `apply-fusion` becomes the fallback; WORKFLOW 9.1/9.2 swap (plan before place).** On Cromwell the Fusion Lua batch stalled twice at ~37 scenes with the RX 5500 XT's video memory full; baking the same curves (Size and Center per frame, PIL affine from a 1.2× source) removes the comps, and the render check reads the same plan kinds.
 - **`check_render.py` card check samples the top-left corner:** the left-third mean read three-line chapter names as off-cream (Cromwell full render, cards 044/104/157).
+- **`align-scenes`: check the `api` alignment's end against the audio duration.** Cromwell voice_02 (`eleven_v3`): alignment ended at 219 s of a 256 s file; scene cuts in that segment landed up to ~2 s off.
 - **WORKFLOW Step 9.4/9.6, Step 11.3b:** grade from `video.md`, render measured at `loudness`; captions SRT from the ElevenLabs alignment, which was only in memory and a hand-off note.
 
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)

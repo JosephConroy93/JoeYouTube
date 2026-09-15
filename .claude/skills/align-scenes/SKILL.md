@@ -81,7 +81,11 @@ fix the bookmark or accept the interpolation knowingly.
   the transcript defeats it and the row falls to interpolation.
 - Standalone small numbers (`seven`) are not always digits in whisper
   output.
-- The `api` path is untested against a real TTS file.
+- **Check the `api` alignment against the audio before trusting it:** its
+  last character end must sit within ~5 s of the timeline WAV's duration.
+  An `eleven_v3` segment returned an alignment 37 s shorter than its audio
+  and cut scenes up to ~2 s off the narration; any segment that fails goes
+  through `--source whisper` instead.
 
 ## Not this skill's job
 
