@@ -19,10 +19,12 @@ Invoked with a project path `<series>/<slug>` per `.claude/conventions.md`.
 Paths below are relative to `content/<series>/<slug>/`; schemas (manifest
 columns, index table, status words) live in conventions.md.
 
-Config read every run: `series.md` (`chapter.heading`, `chapter.file`,
-`chapter.spoken`, `wpm_measured`, the optional `mascot` block) and `video.md`
-(`style`, `hook`, and any `chapter.*` or `wpm_measured` override: a video
-voiced with a different model or tempo measures its own pace).
+Config read every run: `video.md` (`format`, `style`, `hook`, and any
+`chapter.*` or `wpm_measured` override: a video voiced with a different model
+or tempo measures its own pace), then the format module's Naming table
+(`.claude/formats/<format>.md`: `chapter.heading`, `chapter.file`,
+`chapter.spoken`), then `series.md` for anything still unset (`wpm_measured`,
+the optional `mascot` block).
 
 1. **Approved script** `claude/script.md` — treated as correct, never
    re-litigated. Handoff notes are not an input.

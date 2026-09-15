@@ -31,6 +31,19 @@ A companion, not a documentary voice. Hedges are dramatised in-scene.
 - One hard, specific, sourced fact early, delivered casually.
 - No CTA before the first reveal; CTA policy comes from `series.md`.
 
+## Naming
+
+Chapters: narrative videos use them, rank videos use levels (operator).
+Readers look in `video.md`, then this table, then `series.md`. The card is
+the series' cream chapter card with the `CHAPTER N` label.
+
+| key | value |
+|---|---|
+| `chapter.unit` | `chapter` |
+| `chapter.heading` | `Chapter N. <Name>.` |
+| `chapter.file` | `chapter-NN.md` |
+| `chapter.spoken` | `no` |
+
 ## Chapters
 
 - 8–10 chapters, ~300–400 words each, heading `## Chapter N. <Name>.`

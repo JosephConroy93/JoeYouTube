@@ -95,7 +95,11 @@ def main():
         fail(f'video.md style "{style}" has no "## {style}" entry in the style bible')
     hook = (table_value(os.path.join(vdir, 'video.md'), 'hook') or '').strip()
     mascot = (table_value(os.path.join(sdir, 'series.md'), 'mascot.bible') or '')
+    fmt_cell = table_value(os.path.join(vdir, 'video.md'), 'format') or table_value(os.path.join(sdir, 'series.md'), 'format') or ''
+    fmt_name = re.sub(r'[`*]', '', fmt_cell.split()[0]) if fmt_cell.split() else ''
+    fmt_path = os.path.join(a.root, '.claude', 'formats', fmt_name + '.md')  # the format's Naming table sits between video.md and series.md
     spoken = (table_value(os.path.join(vdir, 'video.md'), 'chapter.spoken')
+              or (table_value(fmt_path, 'chapter.spoken') if os.path.exists(fmt_path) else None)
               or table_value(os.path.join(sdir, 'series.md'), 'chapter.spoken') or 'yes').strip(' `').lower() != 'no'
 
     # blocks

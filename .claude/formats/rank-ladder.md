@@ -6,6 +6,19 @@ when `video.md` (or `series.md`) says `format: rank-ladder`. The sourcing
 contract, gates and self-check live in the agent; this file holds only what
 is specific to the shape.
 
+## Naming
+
+Levels, spoken: every rank video uses them (operator). Readers look in
+`video.md`, then this table, then `series.md`. The card is the series'
+cream chapter card with the `LEVEL N` label.
+
+| key | value |
+|---|---|
+| `chapter.unit` | `level` |
+| `chapter.heading` | `Level N. <Rank>.` |
+| `chapter.file` | `level-NN.md` |
+| `chapter.spoken` | `yes` |
+
 ## Two categories — classify the concept before research
 
 - **A — narrative/pacing levels.** The writer chooses how to divide the

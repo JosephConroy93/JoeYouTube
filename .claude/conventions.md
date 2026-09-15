@@ -69,7 +69,7 @@ A key/value table. Keys:
 | `voice.speed`, `voice.stability`, `voice.style`, `voice.tempo` | ElevenLabs voice settings (defaults 1.0, 0.5, 0) and a post-generation time-stretch (default 1.0; pitch kept, alignment scaled to match; the only pace control on `eleven_v3`, which ignores `speed`); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
-| `chapter.unit`, `chapter.heading`, `chapter.file`, `chapter.spoken` | e.g. `chapter`, `Chapter N. <Name>.`, `chapter-NN.md`, `no`; `chapter.spoken: no` puts the heading on the chapter card only (not narrated, not bookmarked), `yes` (default) narrates it as a callout; `video.md` may override any `chapter.*` key |
+| `chapter.unit`, `chapter.heading`, `chapter.file`, `chapter.spoken` | set by the format module's Naming table (rank-ladder: `level`, `Level N. <Rank>.`, `level-NN.md`, `yes`; life-story: `chapter`, `Chapter N. <Name>.`, `chapter-NN.md`, `no`); `video.md` overrides, `series.md` is the last fallback; `chapter.spoken: no` puts the heading on the chapter card only (not narrated, not bookmarked), `yes` (default) narrates it as a callout; `video.md` may override any `chapter.*` key |
 | `protagonist` | optional: a reused series "you" figure (`content/<series>/protagonist/` holds its cast line and reference); Step 6 copies it into the video's cast sheet and re-dresses it per rung |
 | `mascot.bible`, `mascot.reference`, `mascot.cameo` | optional; `cameo` = `manual` (operator picks the row at QC) or `none` |
 | `cta` | `none` or the house CTA text/placement |

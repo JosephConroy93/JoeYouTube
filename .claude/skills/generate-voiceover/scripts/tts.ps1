@@ -86,7 +86,9 @@ if (-not $apiKey) { $apiKey = $env:ELEVENLABS_API_KEY }
 if (-not $apiKey -and -not $DryRun) { throw "ELEVENLABS_API_KEY not set in the user environment" }
 
 # ---------- segmentation ----------
-$spokenCfg = if ($vid['chapter.spoken']) { $vid['chapter.spoken'] } else { $cfg['chapter.spoken'] }
+$fmtName = ((Cfg-Token $(if ($vid['format']) { $vid['format'] } else { $cfg['format'] })) -replace '[`*]', '')
+$fmt = Read-ConfigTable (Join-Path $Root ".claude\formats\$fmtName.md")   # the format module's Naming table sits between video.md and series.md
+$spokenCfg = if ($vid['chapter.spoken']) { $vid['chapter.spoken'] } elseif ($fmt['chapter.spoken']) { $fmt['chapter.spoken'] } else { $cfg['chapter.spoken'] }
 $headingsSpoken = -not ($spokenCfg -and $spokenCfg.Trim().ToLower() -eq 'no')
 $raw = Get-Content $script -Raw -Encoding UTF8
 # drop handoff notes and any front matter
