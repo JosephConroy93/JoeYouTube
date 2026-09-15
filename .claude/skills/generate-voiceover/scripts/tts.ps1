@@ -93,6 +93,7 @@ $headingsSpoken = -not ($spokenCfg -and $spokenCfg.Trim().ToLower() -eq 'no')
 $raw = Get-Content $script -Raw -Encoding UTF8
 # drop handoff notes and any front matter
 $raw = ($raw -split '(?m)^## Handoff notes')[0]
+$raw = [regex]::Replace($raw, '(?s)<!--.*?-->', '')   # HTML comments are notes to the pipeline, never narration
 # chapters: a markdown heading or a --- rule starts a new chunk
 $chunks = [System.Collections.Generic.List[string]]::new()
 $cur = [System.Text.StringBuilder]::new()
