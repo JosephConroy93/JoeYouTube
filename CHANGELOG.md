@@ -59,6 +59,7 @@ Operator direction after Embalmer chapter 1: over-specification was the problem,
 - **`tts.ps1` second loudness pass**: when the normalised WAV misses −16 LUFS by more than 0.3 dB, the gain is corrected once from the measured output. Why: every `eleven_v3` segment landed at −16.9 to −17.3 LUFS on a single pass (segment 5 re-run: −16.9 → −16.4).
 - **`merge-floor.py` bands from `wpm_measured`, hook rows exempt** (also no floor warning for hook rows in `check-manifest.py`): floor and ceiling default to 4 s and 11 s in words at the video's pace, and a `hook:` row never merges. Why: the defaults were 169-wpm word counts, and a prologue hook is one short physical sentence per shot.
 - **`creator-costs.md` per series** (close-video checklist): one rough row per video (images, hook, voice share, other, total) plus monthly plans, filled at publish and close-out. Why: operator wants video-versus-cost at a glance without per-spend logging.
+- **`gemini-batch.ps1 -Direct`** (generate-scenes stalled-queue rule): the same requests as one interactive `generateContent` call per row, saved and logged as `fetched`. Why: the Cromwell pilot's three batch jobs sat 3h40m with every request pending and no update, overnight with the operator away; cancelled and regenerated directly at about twice the batch price.
 
 ## 2026-09-13 — Core refactor: docs pruned to run-instructions, series-agnostic config, scripts extracted, ElevenLabs earmarked
 

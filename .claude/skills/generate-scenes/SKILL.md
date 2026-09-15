@@ -51,6 +51,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .claude/skills/generate-
   -Action submit -Project <series>/<slug> -Chapter <file> [-SceneIds 012,013] [-Notes "..."]
 ```
 
+**Stalled queue**: a batch whose `batchStats` still shows every request
+pending and no `updateTime` change after about an hour has stalled. Cancel it
+(`POST batches/<id>:cancel`), mark its log row `failed` with the reason, and
+resubmit the same rows with `-Direct`: one interactive `generateContent`
+call per row (about twice the batch price), images saved as `fetch` would
+save them and one log row written at `fetched` with `batch_id` `direct`.
+
 `-DryRun -OutDir <dir>` writes the request bodies and posts nothing; use it
 on a new chapter shape or after a manifest edit. `-Action expand` prints
 each selected row's prompt after block expansion, nothing else.
