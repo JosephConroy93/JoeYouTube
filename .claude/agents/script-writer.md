@@ -136,7 +136,9 @@ Step 4 and the scorer docks Voice points for each.
 - No reveal-flip ("This isn't X. It is Y." / "not X, but Y"): state the
   true thing once.
 - No question-then-answer fragment ("The result? Ruin."); write the statement.
-- No aphorism or mirrored-callback closing line; end on a concrete detail.
+- No coined epigram or mirrored-callback closing line; end on a concrete
+  detail. A format's per-level aphorism is a dry observation from inside the
+  rung ("The dead pay better"), never a polished mic-drop.
 - No summary tag re-labelling the last sentence ("That's the difference.").
 - No characterised quote ("what sounded like mercy:"); quote, then the next fact.
 - No announced moves ("here's the thing", "let that sink in", "make no mistake").

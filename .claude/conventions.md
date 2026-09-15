@@ -65,6 +65,7 @@ A key/value table. Keys:
 | `format` | default format module name |
 | `voice.provider`, `voice.name`, `voice.id`, `voice.model` | TTS voice actually used |
 | `voice.english` | National English the narration is written in (`British`, `American`): spelling, vocabulary and idiom follow it |
+| `voice.chapter_gap` | Seconds of silence at the end of each chapter's voice segment (one segment per chapter), the breath before the next chapter card; default 0 |
 | `voice.speed`, `voice.stability`, `voice.style`, `voice.tempo` | ElevenLabs voice settings (defaults 1.0, 0.5, 0) and a post-generation time-stretch (default 1.0; pitch kept, alignment scaled to match; the only pace control on `eleven_v3`, which ignores `speed`); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
@@ -103,9 +104,10 @@ in). Chapter file columns:
 `| scene_id | script_bookmark | scene_type | content_prompt | style | characters_present / reference_images | notes |`
 
 - `scene_id` = `NNN_<kebab-slug>`; its image is `scene-generation/<scene_id>.jpg`.
-- `scene_type` = `illustrated`, or `text-card`: a blank carrier object whose
-  word (`overlay: "<word>"` in `notes`) is drawn at the edit, never by the
-  image model.
+- `scene_type` = `illustrated`, or `text-card`: a carrier object (letter,
+  ledger, page) covered in illegible handwriting generated in the image; the
+  narration carries the words and nothing is drawn at the edit. A legacy
+  `overlay: "<word>"` note still makes `prerender.py` draw the word.
 - `script_bookmark` = the verbatim script text the scene covers (parse the
   cell by column boundary, never by quote pair).
 - `style` = a bare style-bible entry name; never expanded text.
@@ -121,7 +123,7 @@ in). Chapter file columns:
 The cast sheet. A table `| block | text | guard |`, one row per figure
 (`YOU-<stage>` per costume stage of the protagonist, e.g. `YOU-BOY`, `YOU-CLERK`; `FATHER`; `ID.variant` binds to `ID`'s reference), an
 optional row per recurring setting (`YARD`), and `_closing`; then a short
-list of era don'ts and an overlays table `| scene | text |`. Written by hand
+list of era don'ts. Written by hand
 in Step 6; `gemini-batch.ps1` reads the table (falls back to a legacy
 `prompt-blocks.md`).
 

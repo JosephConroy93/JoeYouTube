@@ -15,10 +15,11 @@ Reads   claude/scene-timing.md             frame plan (same rule as build_timeli
         claude/script.md                   `## ` chapter headings (before Handoff notes) -> chapter cards
         ../series.md                       `thumbnail.*` colours and font for the cards
 Writes  <staging>/scenes/<scene_id>.mp4    one clip per timing row, exactly its planned frames
-        <staging>/cards/<scene_id>.mp4     2.2 s chapter card landing on that scene
+        <staging>/cards/<scene_id>.mp4     chapter card (CARD_HOLD_S still, then CARD_GROW_S) landing on that scene
 
 A chapter card is the thumbnail layout: cream ground, `CHAPTER N` and the chapter name on
-the left, the scene it lands on as a tilted outlined card on the right. The card grows,
+the left, the scene it lands on as a tilted outlined card on the right. The card holds still
+long enough to read (CARD_HOLD_S, over the spoken callout), then grows,
 straightens and fills the frame, its last frame identical to the scene's frame under it.
 It lands on the chapter's first scene (or the first scene after --film-until when the
 chapter opens inside the film); an all-hook chapter (the cold open) gets none. The landing
@@ -78,7 +79,8 @@ def esc_path(p):
 
 
 BAR_OPEN_S = 0.6
-CARD_S, PUSH = 2.2, 0.08
+CARD_HOLD_S, CARD_GROW_S, PUSH = 2.0, 1.8, 0.08   # card readable and still for 2 s, then grows into the scene
+CARD_S = CARD_HOLD_S + CARD_GROW_S
 
 
 def letterbox_bar(W, H):
@@ -295,11 +297,12 @@ def card_job(head, scene_clip, land, out, fps, W, H, look):
     os.remove(pic)
     text = card_text(W, H, head, look)
     n = round(CARD_S * fps)
+    hold = round(CARD_HOLD_S * fps)
     proc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
                              "-r", str(fps), "-i", "-", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
                              "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     for i in range(n):
-        u = i / (n - 1)
+        u = max(0, i - hold) / max(1, n - 1 - hold)
         s = u * u * (3 - 2 * u)
         proc.stdin.write(card_frame(still, text, s ** 3, look).tobytes())
     proc.stdin.close()

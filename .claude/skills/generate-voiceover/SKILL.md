@@ -24,7 +24,10 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
 
 ## What it does
 
-1. **Segment** the script: split at chapter boundaries, merging chapters
+1. **Segment** the script: split at chapter boundaries. With `voice.chapter_gap`
+   set (seconds; `-ChapterGap`), every chapter is its own segment and its
+   normalised WAV ends on that much silence (not the last), so each chapter
+   card gets a breath before it on the timeline; otherwise merge chapters
    until a segment reaches ~4,500 characters (well inside the model's
    per-request limit; enough context for continuity). Strip markdown; chapter headings are
    spoken unless `chapter.spoken: no` (then the card carries them). Write each segment to

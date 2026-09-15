@@ -53,8 +53,8 @@ One verdict per image, coarse, at the size a viewer sees:
 3. **Malformed**: extra or missing limbs, warped anatomy, garbled hands,
    nonsense composition.
 
-A `text-card` row passes when its carrier object is blank; the word is
-drawn at the edit.
+A `text-card` row passes when its carrier shows handwriting or figures
+that cannot be read as words; a legible English word is a fail.
 
 ## Dispatch
 

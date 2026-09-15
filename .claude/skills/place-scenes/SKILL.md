@@ -62,8 +62,9 @@ verification rule: `.claude/conventions.md`.
    trims it to the scene's frames, or holds its last frame when shorter; the
    staging `hook/` folder stays empty. **Never trim the last hook clip to make
    a total fit.**
-5b. **Chapter cards**: after the scene clips, `prerender.py` renders a 2.2 s
-   card per chapter in the thumbnail layout (`series.md` `thumbnail.*`):
+5b. **Chapter cards**: after the scene clips, `prerender.py` renders a
+   card per chapter (2 s still and readable over the spoken callout, then a
+   1.8 s grow) in the thumbnail layout (`series.md` `thumbnail.*`):
    cream ground, `CHAPTER N` in the accent colour over the chapter name from
    the `## ` heading, and the scene the card lands on as a tilted outlined
    card on the right. The card grows, straightens and fills the frame; its
@@ -76,9 +77,9 @@ verification rule: `.claude/conventions.md`.
    only of hook clips is the cold open and gets no card. Beat files split as
    `chapter-05a/05b` count as one chapter. Check one card's landing: its last
    frame against the scene clip's frame under it (SSIM ≥ 0.97).
-5c. **Text-card words**: a `text-card` row's carrier image is generated
-   blank; `prerender.py` draws its `overlay: "<word>"` (from the row's
-   `notes`) in hand-lettered ink-dark type, centred, or at `--overlay-pos`
+5c. **Text-card words** (legacy): text-card carriers now show illegible
+   handwriting generated in the image and need nothing here. Only a row whose
+   `notes` still carry `overlay: "<word>"` gets a drawn word: `prerender.py` draws it in hand-lettered ink-dark type, centred, or at `--overlay-pos`
    when the blank patch sits off-centre. Check each overlay frame (a
    subagent) for the word sitting on the patch.
 5d. **Spot SFX**: write `claude/sfx-plan.md` (schema in `conventions.md`)

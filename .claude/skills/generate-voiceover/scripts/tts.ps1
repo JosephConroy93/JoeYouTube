@@ -32,6 +32,7 @@ param(
   [double] $Style = -1,                         # voice_settings.style; -1 = voice.style from config, else 0
   [double] $Tempo = 0,                          # post-generation time-stretch (pitch kept), e.g. 1.10 for eleven_v3, which ignores speed; 0 = voice.tempo from config, else 1
   [int]    $MaxChars = 4500,
+  [double] $ChapterGap = -1,                    # seconds of silence after each chapter (one segment per chapter); -1 = voice.chapter_gap from config, else 0 (merge to MaxChars)
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
 )
@@ -112,6 +113,12 @@ function Clean-Text([string] $t) {
   $t = $t -replace '(?m)^\s*>\s?', ''          # blockquotes
   return ($t -replace "[ \t]+`n", "`n").Trim()
 }
+
+if ($ChapterGap -lt 0) {
+  $cfgGap = if ($vid['voice.chapter_gap']) { $vid['voice.chapter_gap'] } else { $cfg['voice.chapter_gap'] }
+  $ChapterGap = Cfg-Num $cfgGap 0
+}
+if ($ChapterGap -gt 0) { $MaxChars = 1 }   # one segment per chapter, so each chapter's WAV can end on its own silence
 
 # merge chunks until MaxChars
 $segments = [System.Collections.Generic.List[string]]::new()
@@ -212,14 +219,15 @@ foreach ($i in $todo) {
   $gain = [math]::Round(-16 - $lufs, 2)
   $wav = Join-Path $normDir "$label.wav"
   $tempoFilter = if ($Tempo -ne 1) { "atempo=$Tempo," } else { '' }
-  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+  $gapFilter = if ($ChapterGap -gt 0 -and $i -lt $segments.Count - 1) { ",apad=pad_dur=$ChapterGap" } else { '' }   # the breath before the next chapter card; loudness gating ignores silence
+  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50${gapFilter}`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
   if (-not (Test-Path $wav)) { throw "normalise failed for $label" }
   $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
   $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
   if ([math]::Abs([double]$chk + 16) -gt 0.3) {
     # second pass: the measured output misses the target (eleven_v3 lands ~1 dB low), so correct the gain once
     $gain = [math]::Round($gain + (-16 - [double]$chk), 2)
-    $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+    $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50${gapFilter}`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
     $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
     $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
   }
@@ -234,6 +242,6 @@ foreach ($i in $todo) {
 if (-not $DryRun) {
   $total = 0.0
   Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double]((Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$($_.FullName)`"").Trim()) }
-  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}, tempo {8}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style, $Tempo)
+  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}, tempo {8}, chapter gap {9}s." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style, $Tempo, $ChapterGap)
   Write-Host "Now: log the voice in voice-register.md and video.md; then scene-prompter Mode 2, then align-scenes --source api."
 }

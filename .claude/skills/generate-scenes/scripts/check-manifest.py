@@ -262,8 +262,8 @@ def main():
                 if o > len(refs):
                     fail(f'{sid}: prompt names the attached reference #{o} but only {len(refs)} are attached')
             if r['type'] == 'text-card':
-                if not re.search(r'overlay:\s*"[^"]+"', r['notes']):
-                    warn(f'{sid}: text-card without an overlay: "<word>" note')
+                if not re.search(r'illegible', prompt, re.I):
+                    warn(f'{sid}: text-card prompt should ask for illegible handwriting or figures on its carrier')
                 if re.search(r'\b(reading|lettering|inscribed)\b', prompt, re.I) and re.search(r'"[^"]+"', prompt):
                     fail(f'{sid}: text-card asks the image model for text; generate the carrier blank')
         tot = sum(shots.values())

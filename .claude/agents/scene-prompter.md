@@ -63,11 +63,11 @@ narration, and the first row starts at the chapter's first spoken words.
 |---|---|
 | `scene_id` | `NNN_<kebab-slug>` from the bookmark; continuous across chapters. |
 | `script_bookmark` | The full verbatim span the scene covers. |
-| `scene_type` | `illustrated`, or `text-card` for a hard number, date, quoted line or single word the edit will draw on screen. |
+| `scene_type` | `illustrated`, or `text-card` for a document, letter or ledger the narration quotes or reads from: the page shows illegible handwriting and the narration carries the words. |
 | `content_prompt` | **Empty.** |
 | `style` | The bare style name from `video.md`. |
 | `characters_present / reference_images` | Empty unless `video.md` names a reference to attach for a figure; then `image1 = <File> (ID)`. |
-| `notes` | The beat: ≤12 words, who does what where (`YOU-BOY scrubs bowl at vat; FATHER approaches`); `hook: shot N` on hook rows; `overlay: "<word>"` on text-card rows. Nothing about the mascot. |
+| `notes` | The beat: ≤12 words, who does what where (`YOU-BOY scrubs bowl at vat; FATHER approaches`); `hook: shot N` on hook rows. Nothing about the mascot. |
 
 ### Hook shots
 
