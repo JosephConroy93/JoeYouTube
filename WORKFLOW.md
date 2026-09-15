@@ -240,8 +240,9 @@ nothing is done until a rendered or measured artefact proves it.
    plan** — pacing and emphasis stay human.
 3. `apply-fusion`: motion from the plan; render-verify one scene of each
    motion type before the batch. No particle effects.
-4. Grade hook clips only (CDL matched by measurement, per `place-scenes`);
-   the body stays ungraded.
+4. Grade and film open are baked by `place-scenes` from `video.md`
+   (`grade` LUT and mix on every visual; `film_open` film look, letterbox
+   and bar-open); nothing is graded in Resolve.
 5. **Spot SFX only**: a short sound for an action on screen (a pot
    clattering, water splashing, a lamp or fire crackling), a handful per
    chapter, placed on the scene that shows it. No ambience beds or loops
@@ -252,7 +253,8 @@ nothing is done until a rendered or measured artefact proves it.
 6. Render ranges first and measure them (`apply-fusion` verification:
    `check_render.py` for frames, LUFS **and per-channel RMS**, motion, cards
    and SFX). The full render waits for the operator's go. Measure it the
-   same way, watch it through, set `status: edited`.
+   same way (integrated LUFS at `video.md` `loudness`), watch it through,
+   set `status: edited`.
 
 Automate the mechanical (sequencing, sync, loudness, export); keep the
 editorial human — templated structure is a named inauthentic-content trigger.
@@ -284,6 +286,11 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
    disclose dramatised composites where the format uses them.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
    headings.
+3b. Captions: build `publish/captions.srt` from the saved ElevenLabs
+   alignment (`claude/transcripts/<segment>.alignment.json`) plus each
+   segment's offset (the sum of the normalized WAV durations before it, as
+   `place-scenes` computes them), and upload it as the caption track, so the
+   words are the script's own and the timings frame-true.
 4. Record `published_id` and publish date in `video.md`; add the title to
    the competitor-titles index under the channel's own section.
    Set `status: published`.

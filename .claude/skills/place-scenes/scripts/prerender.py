@@ -5,6 +5,7 @@ Usage:
     prerender.py <series>/<slug> --staging <dir> --fps N
                  [--width 1920 --height 1080] [--font C:/Windows/Fonts/Inkfree.ttf]
                  [--overlay-pos <scene_id>=x,y ...] [--jobs 8] [--only id,id]
+                 [--grade <lut.cube> --grade-mix 0.5] [--film-until <scene_id>]
 
 Reads   claude/scene-timing.md             frame plan (same rule as build_timeline.py)
         voiceovers/normalized/<segment>.wav copied to <staging>/voiceovers/
@@ -14,6 +15,11 @@ Reads   claude/scene-timing.md             frame plan (same rule as build_timeli
         claude/script.md                   `## ` chapter headings (before Handoff notes) -> chapter cards
 Writes  <staging>/scenes/<scene_id>.mp4    one clip per timing row, exactly its planned frames
         <staging>/cards/<scene_id>.mp4     2 s black card for each chapter's first scene
+
+--grade mixes a 3D LUT over every hook clip and still (never cards) at --grade-mix.
+--film-until gives every visual up to and including that scene the film look (gate weave,
+flicker, vignette, grain, grey edge falloff, 2.39:1 letterbox); the next scene opens its
+bars over the first 0.6 s.
 
 Hook clips are scaled to the timeline size, trimmed to the scene's frames or held on
 their last frame. Overlay words sit centred unless --overlay-pos gives top-left fractions.
@@ -27,6 +33,8 @@ import re
 import shutil
 import subprocess
 import sys
+
+from PIL import Image
 
 sys.path.insert(0, os.path.dirname(__file__))
 from build_timeline import audio_duration, frames, read_timing, resolve_project  # noqa: E402
@@ -56,6 +64,45 @@ def image_size(path):
 def esc_path(p):
     """A path inside an ffmpeg filter argument: forward slashes, escaped drive colon."""
     return p.replace("\\", "/").replace(":", "\\:")
+
+
+BAR_OPEN_S = 0.6
+
+
+def letterbox_bar(W, H):
+    return (H - round(W / 2.39 / 2) * 2) // 2
+
+
+def grade_chain(cube, mix):
+    return (f"format=gbrp,split[ga][gb];[gb]lut3d=file='{esc_path(cube)}'[gl];"
+            f"[ga][gl]blend=all_mode=normal:all_opacity={mix}")
+
+
+def falloff_png(staging, W, H):
+    ph = H - 2 * letterbox_bar(W, H)
+    path = os.path.join(staging, "film", f"falloff-{W}x{ph}.png")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fall = Image.radial_gradient("L").resize((W, ph)).point(lambda v: int(max(0, v - 90) * 0.75))
+    grey = Image.new("RGBA", (W, ph), (70, 72, 70, 0))
+    grey.putalpha(fall)
+    grey.save(path)
+    return path
+
+
+def film_chain(W, H, falloff):
+    bar = letterbox_bar(W, H)
+    return (f"scale={W + 40}:{H + 22},crop={W}:{H}:x='20+2.2*sin(n*0.9)+1.3*sin(n*2.3)':"
+            "y='11+1.6*sin(n*1.3)+1.1*sin(n*3.1)',"
+            "eq=brightness='0.012*sin(t*21)+0.007*sin(t*47)':eval=frame,vignette=PI/4.2,"
+            f"noise=alls=34:allf=t,gblur=sigma=0.9,crop={W}:{H - 2 * bar}[fb];"
+            f"movie='{esc_path(falloff)}',format=rgba[fg];[fb][fg]overlay=format=auto,pad={W}:{H}:0:{bar}")
+
+
+def bars_open_chain(fps, W, H):
+    bar = letterbox_bar(W, H)
+    e = f"(1-pow(1-min(t/{BAR_OPEN_S},1),3))"
+    return (f"null[ob];color=black:s={W}x{bar}:r={fps}[ot];color=black:s={W}x{bar}:r={fps}[ou];"
+            f"[ob][ot]overlay=y='-{bar}*{e}':shortest=1[oc];[oc][ou]overlay=y='{H - bar}+{bar}*{e}':shortest=1")
 
 
 def plan(project, staging, fps):
@@ -119,7 +166,7 @@ def level_cards(project, rows):
     heads = [m.group(1) for m in re.finditer(r"^##\s+(.+?)\s*$", text, re.M)]
     firsts, seen = [], set()
     for r in rows:
-        ch = r.get("chapter")
+        ch = re.sub(r"(\d+)[a-z]\.md$", r"\1.md", r.get("chapter") or "")
         if ch not in seen:
             seen.add(ch)
             firsts.append(r)
@@ -128,7 +175,7 @@ def level_cards(project, rows):
     return list(zip(firsts, heads))
 
 
-def still_job(r, jpg, out, fps, W, H, word, pos, font):
+def still_job(r, jpg, out, fps, W, H, word, pos, font, look):
     iw, ih = image_size(jpg)
     if iw * 9 > ih * 16:
         cw, ch = (ih * 16 // 9) // 2 * 2, ih // 2 * 2
@@ -144,16 +191,19 @@ def still_job(r, jpg, out, fps, W, H, word, pos, font):
         open(txt, "w", encoding="utf-8").write(word)
         vf.append(f"drawtext=fontfile='{esc_path(font)}':textfile='{esc_path(txt)}':fontcolor=0x2a1d14:"
                   f"fontsize={int(ch * 0.11)}:x={x}*w-text_w/2:y={y}*h-text_h/2")
+    look = [x(cw, ch) if callable(x) else x for x in look]
+    tune = [] if look else ["-tune", "stillimage"]
     run(["ffmpeg", "-v", "error", "-y", "-loop", "1", "-framerate", str(fps), "-i", jpg,
-         "-vf", ",".join(vf), "-frames:v", str(r["frames"]), "-r", str(fps),
-         "-c:v", "libx264", "-crf", "18", "-tune", "stillimage", "-pix_fmt", "yuv420p", "-an", out])
+         "-filter_complex", ",".join(vf + look), "-frames:v", str(r["frames"]), "-r", str(fps),
+         "-c:v", "libx264", "-crf", "18", *tune, "-pix_fmt", "yuv420p", "-an", out])
 
 
-def hook_job(r, clip, out, fps, W, H):
+def hook_job(r, clip, out, fps, W, H, look):
+    look = [x(W, H) if callable(x) else x for x in look]
     have = count_frames(clip)
     hold = max(0, r["frames"] - have) / fps + 0.5
-    run(["ffmpeg", "-v", "error", "-y", "-i", clip, "-vf",
-         f"scale={W}:{H}:flags=lanczos,fps={fps},tpad=stop_mode=clone:stop_duration={hold:.3f}",
+    run(["ffmpeg", "-v", "error", "-y", "-i", clip, "-filter_complex",
+         ",".join([f"scale={W}:{H}:flags=lanczos,fps={fps},tpad=stop_mode=clone:stop_duration={hold:.3f}"] + look),
          "-frames:v", str(r["frames"]), "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", "-an", out])
     return have
 
@@ -178,6 +228,9 @@ def main():
     ap.add_argument("--overlay-pos", action="append", default=[], help="scene_id=x,y (top-left fractions)")
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--only", help="comma-separated scene ids (cards for them too)")
+    ap.add_argument("--grade", help="3D LUT (.cube) mixed over every hook clip and still")
+    ap.add_argument("--grade-mix", type=float, default=1.0)
+    ap.add_argument("--film-until", help="last scene_id with the film look and letterbox")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -194,23 +247,42 @@ def main():
         pos[sid] = tuple(float(v) for v in xy.split(","))
     only = set(a.only.split(",")) if a.only else None
     W, H, fps = a.width, a.height, a.fps
+    if a.grade and not os.path.isfile(a.grade):
+        sys.exit(f"ABORT: missing LUT {a.grade}")
+    ids = [r["scene_id"] for r in rows]
+    if a.film_until and a.film_until not in ids:
+        sys.exit(f"ABORT: --film-until {a.film_until} is not in scene-timing.md")
+    film_end = ids.index(a.film_until) if a.film_until else -1
+    falloff = falloff_png(staging, W, H) if a.film_until else None
+
+    def look(i):
+        parts = [grade_chain(a.grade, a.grade_mix)] if a.grade else []
+        if i <= film_end:
+            parts.append(film_chain(W, H, falloff))
+        elif i == film_end + 1 and a.film_until:
+            parts.append(lambda w, h: bars_open_chain(fps, w, h))
+        return parts
 
     jobs = {}
     with cf.ThreadPoolExecutor(max_workers=a.jobs) as ex:
-        for r in rows:
+        for i, r in enumerate(rows):
             sid = r["scene_id"]
             if only and sid not in only:
                 continue
             out = os.path.join(staging, "scenes", sid + ".mp4")
             if sid in hooks:
-                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H)] = (sid, out, r["frames"], "hook")
+                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i))] = (sid, out, r["frames"], "hook")
             else:
                 jpg = os.path.join(project, "scene-generation", sid + ".jpg")
                 if not os.path.isfile(jpg):
                     sys.exit(f"ABORT: missing {jpg}")
-                jobs[ex.submit(still_job, r, jpg, out, fps, W, H, words.get(sid), pos.get(sid), a.font)] = \
+                jobs[ex.submit(still_job, r, jpg, out, fps, W, H, words.get(sid), pos.get(sid), a.font, look(i))] = \
                     (sid, out, r["frames"], "overlay" if sid in words else "still")
+        chapter_of = {x["scene_id"]: re.sub(r"(\d+)[a-z]\.md$", r"\1.md", x["chapter"]) for x in rows}
         for r, head in level_cards(project, rows):
+            ch = chapter_of[r["scene_id"]]
+            if all(x in hooks for x, c in chapter_of.items() if c == ch):
+                continue  # a chapter that is all hook footage is the cold open: no card
             if only and r["scene_id"] not in only:
                 continue
             if r["frames"] < 2 * fps:

@@ -49,9 +49,10 @@ The plan is a draft: the operator watches the cut and overrides it.
 | **Baseline** (default) | In or Out zoom, centre pivot | none — expect ~90%+ | `apply-fusion` batch script, or the Dynamic Zoom panel |
 | **Elevated** | `Pan` or `Focal` on a target confirmed in the real image | ≤10% | `apply-fusion`, per scene |
 
-Static is reserved for `scene_type = text-card` and for hook-clip rows
-(scenes replaced by `hook-plan.md` footage, which already moves); nothing
-else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
+Static is reserved for `scene_type = text-card`, for hook-clip rows
+(scenes replaced by `hook-plan.md` footage, which already moves) and for
+the scenes up to `video.md` `film_open` (their letterbox bars are baked in
+and a zoom would move them); nothing else qualifies. If text-cards exceed ~10% of scenes, flag it rather than
 motion-ising them. No particle, glow or other overlay effects.
 
 ## Dynamic Zoom preset rule
@@ -84,7 +85,7 @@ this — their `ease` is a curve shape.
 4. **Draft the plan** with the picks; the script applies every per-scene
    rule below to the other rows:
    ```
-   python .claude/skills/plan-ken-burns/scripts/draft_plan.py <series>/<slug> --fps N --pan 012:right[:note] --focal 044:0.58,0.77[:note] --caution 052:<note> [--summary-extra "<candidates left at Baseline, rejected on the image>"]
+   python .claude/skills/plan-ken-burns/scripts/draft_plan.py <series>/<slug> --fps N --pan 012:right[:note] --focal 044:0.58,0.77[:note] --caution 052:<note> [--film-until <video.md film_open>] [--summary-extra "<candidates left at Baseline, rejected on the image>"]
    ```
    It refuses to overwrite an existing plan (the operator may have edited
    it) unless `--replace`, which archives the old one.

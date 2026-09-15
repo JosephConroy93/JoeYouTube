@@ -2,7 +2,7 @@
 """draft_plan.py -- write ken-burns-plan.md from the timing, the manifest and the confirmed picks.
 
 Usage:
-    draft_plan.py <series>/<slug> --fps N [--out <file>] [--replace]
+    draft_plan.py <series>/<slug> --fps N [--out <file>] [--replace] [--film-until <scene_id>]
                   [--pan NNN:right|left|down|up[:note]] ...
                   [--focal NNN:x,y[:note]] ...
                   [--caution NNN:note] ...
@@ -12,7 +12,8 @@ The judgment stays with the planner: which scenes are Elevated (image-confirmed 
 and which carry a caution. This script applies the mechanical rules of the skill to every
 other row, so they hold across 150 scenes:
 
-  Static    hook-clip rows (claude/hook-plan.md) and text-card rows
+  Static    hook-clip rows (claude/hook-plan.md), text-card rows, and every row up to
+            --film-until (video.md film_open: letterbox bars baked into the clip)
   Pan       static Size 1.20, Transform Center travels +-0.08 (camera right = Center.x falls)
   Focal     pivot at the target, Size 1.00 -> 1.20, EI
   last scene of each chapter      Out + EO (the release)
@@ -110,6 +111,7 @@ def main():
     ap.add_argument("--focal", action="append", default=[])
     ap.add_argument("--caution", action="append", default=[])
     ap.add_argument("--summary-extra", default="")
+    ap.add_argument("--film-until", help="video.md film_open: last scene_id with baked letterbox bars")
     a = ap.parse_args()
 
     project = resolve_project(a.project)
@@ -141,21 +143,28 @@ def main():
         n, note, rest = split_pick(c, "--caution")
         caution[n] = note + (":" + rest if rest else "")
 
+    ids = [r["scene_id"] for r in rows]
+    if a.film_until and a.film_until not in ids:
+        sys.exit(f"ABORT: --film-until {a.film_until} is not in the frame plan")
+    film = set(ids[: ids.index(a.film_until) + 1]) if a.film_until else set()
+    chapter = {r["scene_id"]: re.sub(r"(\d+)[a-z]\.md$", r"\1.md", r["chapter"]) for r in rows}
     last_of = {}
     for r in rows:
-        last_of[r["chapter"]] = r["scene_id"]
+        last_of[chapter[r["scene_id"]]] = r["scene_id"]
     plan, prev = [], []
     for r in rows:
         sid, n = r["scene_id"], r["scene_id"][:3]
         prompt, note = man[sid]["prompt"].lower(), ""
         if sid in hook:
             zoom, ease, note = "Static", "", "Hook clip (the footage already moves)."
+        elif sid in film:
+            zoom, ease, note = "Static", "", "Film open: letterbox bars baked in."
         elif man[sid]["type"] == "text-card":
             zoom, ease, note = "Static", "", "Text-card; overlay word drawn at the edit."
         elif n in elev:
             zoom, ease, note = elev[n]
         else:
-            if sid == last_of[r["chapter"]]:
+            if sid == last_of[chapter[sid]]:
                 zoom, ease = "Out", "EO"
             elif prompt.startswith("wide"):
                 zoom, ease = "Out", "L"

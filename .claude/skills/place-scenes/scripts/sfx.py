@@ -4,10 +4,12 @@
 Usage:
     sfx.py <series>/<slug> --staging <dir> --fps N [--library <dir>]
 
-Reads   claude/sfx-plan.md   | scene_id | source | in_s | dur_s | offset_s | lufs | note |
+Reads   claude/sfx-plan.md   | scene_id | source | in_s | dur_s | offset_s | lufs | note | until |
                              source is relative to the library root; dur_s blank = to the end
+                             (of the file, or of the `until` scene when one is named)
         content/sfx/sfx-index.md  library root (first backticked path after "Library location")
-        claude/scene-timing.md    scene spans (the sound must end inside its scene)
+        claude/scene-timing.md    scene spans (the sound must end inside its scene, or inside
+                                  the optional `until` scene for a sound held across scenes)
 Writes  <staging>/sfx/<scene_id>.wav   48 kHz 16-bit dual-mono, faded, gain set to the row's
                                        integrated LUFS (the API cannot set clip volume; the
                                        timeline's audio tracks are mono, so both channels
@@ -39,7 +41,8 @@ def read_plan(project):
         if len(c) < 6 or not re.fullmatch(r"\d{3}_[A-Za-z0-9-]+", sid):
             continue
         rows.append({"scene_id": sid, "source": c[1].strip("`"), "in": float(c[2] or 0),
-                     "dur": float(c[3]) if c[3] else None, "offset": float(c[4] or 0), "lufs": float(c[5])})
+                     "dur": float(c[3]) if c[3] else None, "offset": float(c[4] or 0), "lufs": float(c[5]),
+                     "until": c[7].strip("`") if len(c) > 7 and c[7] else None})
     return rows
 
 
@@ -86,21 +89,25 @@ def main():
     lib = a.library or library_root(root_dir)
     staging = os.path.abspath(a.staging)
     os.makedirs(os.path.join(staging, "sfx"), exist_ok=True)
-    spans = {r["scene_id"]: r["frames"] / a.fps for r in plan(project, staging, a.fps)}
+    rows = plan(project, staging, a.fps)
+    starts = {r["scene_id"]: r["start_frame"] for r in rows}
+    ends = {r["scene_id"]: r["start_frame"] + r["frames"] for r in rows}
 
     problems = []
     for r in read_plan(project):
         sid = r["scene_id"]
         src = os.path.join(lib, *r["source"].split("/"))
-        if sid not in spans:
-            problems.append(f"{sid}: not in scene-timing.md")
+        last = r["until"] or sid
+        if sid not in starts or last not in ends or ends[last] <= starts[sid]:
+            problems.append(f"{sid}: scene or until {last} not in scene-timing.md, or out of order")
             continue
+        span = (ends[last] - starts[sid]) / a.fps
         if not os.path.isfile(src):
             problems.append(f"{sid}: source not found: {src}")
             continue
-        dur = r["dur"] if r["dur"] else duration(src) - r["in"]
-        if r["offset"] + dur > spans[sid] + 1e-6:
-            problems.append(f"{sid}: offset {r['offset']} + {dur:.2f} s runs past the scene's {spans[sid]:.2f} s")
+        dur = r["dur"] if r["dur"] else (span - r["offset"] if r["until"] else duration(src) - r["in"])
+        if r["offset"] + dur > span + 1e-6:
+            problems.append(f"{sid}: offset {r['offset']} + {dur:.2f} s runs past {last}'s end at {span:.2f} s")
             continue
         out = os.path.join(staging, "sfx", sid + ".wav")
         bake(src, out, r["in"], dur, 0.0)

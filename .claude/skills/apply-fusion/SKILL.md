@@ -133,7 +133,7 @@ Per `conventions.md`: a `success` return or a readback is not proof.
    level card, a stretch with a pan, a focal and an SFX, and the last scene.
    Then
    ```
-   python .claude/skills/apply-fusion/scripts/check_render.py <series>/<slug> --staging <dir> --fps N --render <mp4> --mark-in F --mark-out F --lufs <voice LUFS over the span>
+   python .claude/skills/apply-fusion/scripts/check_render.py <series>/<slug> --staging <dir> --fps N --render <mp4> --mark-in F --mark-out F --lufs <voice LUFS over the span, plus video.md loudness + 16>
    ```
    checks frame count, loudness and per-channel RMS, SSIM change on every
    moving scene (a normal move lands 0.4–0.75; ≥ 0.97 means nothing moved),

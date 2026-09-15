@@ -18,7 +18,8 @@ verification rule: `.claude/conventions.md`.
 - Staging folder from `series.md` `staging_path` (`<slug>-<fps>`), local
   and outside any synced folder (`import_to_pool` can silently import
   nothing from synced paths), with `hook/`, `scenes/`, `voiceovers/`.
-- fps and resolution from `video.md`, else `series.md` defaults.
+- fps and resolution from `video.md`, else `series.md` defaults; `grade`,
+  `film_open` and `loudness` from `video.md` (all optional).
 
 ## Steps
 
@@ -39,7 +40,7 @@ verification rule: `.claude/conventions.md`.
    end equals the audio end.
 4. **Pre-render every visual** (steps 4, 5, 5b and 5c in one run):
    ```
-   python .claude/skills/place-scenes/scripts/prerender.py <series>/<slug> --staging <dir> --fps N [--overlay-pos <scene_id>=x,y] [--jobs 8] [--only id,id]
+   python .claude/skills/place-scenes/scripts/prerender.py <series>/<slug> --staging <dir> --fps N [--grade <lut> --grade-mix M] [--film-until <scene_id>] [--overlay-pos <scene_id>=x,y] [--jobs 8] [--only id,id]
    ```
    Copies the normalised WAVs to `<staging>/voiceovers/`, then writes
    `<staging>/scenes/<scene_id>.mp4` at exactly each scene's planned frame
@@ -59,7 +60,9 @@ verification rule: `.claude/conventions.md`.
    with its `## ` heading (`Level N. <Rank>.` or `Chapter N. <Name>.`)
    from `script.md` in small white hand-lettered capitals (Ink Free), centred;
    `build_timeline.py --cards` places each on V2 over the first two seconds
-   of that chapter's first scene.
+   of that chapter's first scene. A chapter made only of hook clips is the
+   cold open and gets no card. Beat files split as `chapter-05a/05b` count as
+   one chapter.
 5c. **Text-card words**: a `text-card` row's carrier image is generated
    blank; `prerender.py` draws its `overlay: "<word>"` (from the row's
    `notes`) in hand-lettered ink-dark type, centred, or at `--overlay-pos`
@@ -74,11 +77,24 @@ verification rule: `.claude/conventions.md`.
    ```
    cuts, fades and level-sets each clip to `<staging>/sfx/<scene_id>.wav`
    (48 kHz stereo) and measures integrated LUFS and per-channel RMS on every
-   output; it aborts on a sound that runs past its scene.
+   output; it aborts on a sound that runs past its scene (or past its
+   `until` scene, for a sound held across scenes such as the film-open
+   projector).
+5e. **Grade and film open** (baked in step 4, never graded in Resolve):
+   `--grade` mixes the `video.md` LUT over every hook clip and still at its
+   mix, never over cards. `--film-until` gives every visual up to that scene
+   the film look and a 2.39:1 letterbox; the next scene's bars slide off in
+   0.6 s. Film-look clips are 1920×1080 with the bars baked in, so they stay
+   static in `plan-ken-burns`. Check one frame each of a film hook clip, a
+   film still, the bar-open scene at 0 / 0.25 / 1 s and a body still (a
+   subagent) before the full run.
 6. **Author the XML.**
    ```
-   python .claude/skills/place-scenes/scripts/build_timeline.py <series>/<slug> --staging <dir> --fps N --out <xml> --count-frames [--cards] [--sfx]
+   python .claude/skills/place-scenes/scripts/build_timeline.py <series>/<slug> --staging <dir> --fps N --out <xml> --count-frames [--cards] [--sfx] [--loudness <video.md loudness>]
    ```
+   `--loudness` raises every audio clip's level by the same step from the
+   voice files' −16 LUFS, so a render lands at the target with the SFX
+   balance unchanged.
    Re-derives the frame plan from the timing file and staging inventory,
    aborts naming any clip whose frame count disagrees, writes one sequence
    (V1 = scenes, V2 = level cards, one audio track per voice segment, then
@@ -127,15 +143,8 @@ verification rule: `.claude/conventions.md`.
 - Never drive Resolve's scripting API from an external Python process (it
   crashes); use the MCP server.
 
-## Hook grade
-
-Hook clips only; the body stays ungraded. Apply a CDL per hook item,
-solving slope/offset/power from three points on the target curve, and
-verify on a short render by measuring mean RGB and crushed-pixel % against
-the reference — a readback of the CDL values is not verification.
-
 ## Not this skill's job
 
 Motion (`plan-ken-burns`, `apply-fusion`), the hook→body
-transition, captions, ambience beds, final loudness, export, or judging
+transition, captions, ambience beds, export, or judging
 whether a measured duration reads well.

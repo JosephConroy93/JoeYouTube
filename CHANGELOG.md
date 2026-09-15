@@ -6,6 +6,15 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 
 ---
 
+## 2026-09-15 — Film open, baked grade, −14 LUFS, captions step
+
+- **`place-scenes` `prerender.py`: `--grade`, `--grade-mix`, `--film-until`.** Operator picked a Super 8 opening from samples: a LUT mixed at 50% over every visual (the pack's 188 LUTs scored against the look; none within reach, so the look was exported as `content/styles/luts/LivedIt-Film.cube`), film look and 2.39:1 letterbox through the arrest night, bars opening at the flashback line. Baked by ffmpeg so it is scripted and measurable; replaces the Resolve CDL hook grade. Bars are sized from each clip's real frame (native-resolution stills put 1920×1080 bars in the wrong place).
+- **`prerender.py` chapter cards:** split beat files (`chapter-05a/05b`) count as one chapter, and an all-hook chapter (the cold open) gets no card; Cromwell aborted on both.
+- **`sfx.py` + `conventions.md` `sfx-plan.md`: optional `until` column** so one sound can span scenes (the projector bed under the film open).
+- **`build_timeline.py --loudness`, `video.md` `loudness`:** voice files stay −16 LUFS; every audio clip is lifted the same step to the finished target. Jim sounded low: our renders sat at −16/−17 while YouTube plays at −14 and never turns quiet videos up.
+- **`plan-ken-burns` `draft_plan.py --film-until`:** film-open scenes are static (their bars are baked in); chapter ends are computed per chapter, not per split beat file.
+- **WORKFLOW Step 9.4/9.6, Step 11.3b:** grade from `video.md`, render measured at `loudness`; captions SRT from the ElevenLabs alignment, which was only in memory and a hand-off note.
+
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)
 
 Operator direction after Embalmer chapter 1: over-specification was the problem, not the model. Evidence: a 244-cut census of the source channel (`research/channels/the-explainer-boss/shot-census-streetfighter.md`: medium shots 68%, one or two figures 88%, backgrounds dressed 96%, one place held for 4–12 cuts, 22% of holds over 9 s) and a seven-scene recipe test (60-word prompts, medium framing, one or two figures: 12/12 on style; referenced 6/6 and text-only 4/6 on staging).
