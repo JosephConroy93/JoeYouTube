@@ -41,9 +41,10 @@ clause, 2–3 props, dressed] [light].`
   clause **verbatim**; change angle, action and figure count instead of the
   room. Dressed even behind a close-up (a shelf of jars, a hanging cloth).
   A recurring place may be a `[[SETTING]]` block in the cast sheet.
-- **Age by posture and props** (a stoop, a staff, slow hands); "old"
-  alone may add grey hair or a beard, which is fine (the style allows hair
-  and headwear that suit a role).
+- **Age by posture and props only** (a stoop, a walking stick, slow hands),
+  and "blank white egg face" on that figure: never "old", "elderly" or
+  "aged" on a figure without a reference, which draws wrinkles, ears and a
+  nose. A beard or grey hair the role needs is written on its own.
 - **Emotion** in the style's vocabulary only (Eggline: brow angle, mouth
   line, sweat drop, tear, blush marks); never "looks sad".
 - **A close shot on an object stays attached to its figure**: "[[ID]] seen
