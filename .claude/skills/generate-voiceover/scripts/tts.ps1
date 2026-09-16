@@ -101,7 +101,13 @@ foreach ($line in ($raw -split "`r?`n")) {
   if ($line -match '^#\s') { continue }   # the document title (H1) is never spoken
   if ($line -match '^(#{1,6}\s|---\s*$)') {
     if ($cur.Length -gt 0) { $chunks.Add($cur.ToString().Trim()); $cur.Clear() | Out-Null }
-    if ($headingsSpoken -and $line -match '^#{1,6}\s+(.*)$') { $cur.AppendLine($matches[1].Trim()) | Out-Null }  # spoken heading (e.g. "Level 1. The Vat Boy."); chapter.spoken: no leaves it to the card
+    if ($headingsSpoken -and $line -match '^#{1,6}\s+(.*)$') {
+      $head = $matches[1].Trim()
+      # a heading's number is spoken, so write it as a word: the card keeps the digit for its label
+      $numWords = @('zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty')
+      $head = [regex]::Replace($head, '^(\w+)\s+(\d{1,2})\.', { param($m) "$($m.Groups[1].Value) $($numWords[[int]$m.Groups[2].Value])." })
+      $cur.AppendLine($head) | Out-Null
+    }  # spoken heading (e.g. "Level 1. The Vat Boy."); chapter.spoken: no leaves it to the card
     continue
   }
   $cur.AppendLine($line) | Out-Null

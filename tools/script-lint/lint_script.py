@@ -74,6 +74,9 @@ def main():
     findings = {}
 
     findings["em dashes"] = [ctx(text, m, 30) for m in re.finditer(EM, text)]
+    # digits in narration are spoken as noise by the TTS; a heading's own number is fine
+    findings["digits (write numbers as words)"] = [ctx(text, m, 30) for m in re.finditer(r"(?<![\w.])\d[\d,.]*", text)
+                                                   if not re.match(r"^Level \d+\.$", ctx(text, m, 0))]
     findings["reveal-flips"] = [ctx(text, m) for m in FLIP.finditer(text)]
     findings["question-then-answer fragments"] = [ctx(text, m) for m in QA.finditer(text)]
     findings["summary tags"] = [ctx(text, m) for m in SUMTAG.finditer(text)]

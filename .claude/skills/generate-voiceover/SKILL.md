@@ -75,6 +75,10 @@ the API.
 ## Rules
 
 - Generate and listen to **one segment first**; only then the rest.
+- **After a script edit, re-voice only what changed**: write the segment texts
+  with `--dry-run`, diff them against the previous run's copies, and pass
+  `--segment NN` for each one that differs. A whole-script regeneration for a
+  few edited lines burns the month's characters.
 - Gain never changes timing; tempo does, which is why the timeline
   alignment is rewritten whenever `voice.tempo` is not 1.
 - Never send the script in one request: segment boundaries are what let a

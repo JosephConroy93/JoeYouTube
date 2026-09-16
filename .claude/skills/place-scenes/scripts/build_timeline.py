@@ -110,6 +110,7 @@ def video_frames(path, fps, count):
 
 MONO_PAN_LAW_DB = 3.0
 VOICE_FILE_LUFS = -16.0
+TAIL_S = 0.0   # seconds the last scene holds past the last word (--tail)
 LEVEL_DB = MONO_PAN_LAW_DB
 
 
@@ -163,6 +164,15 @@ def build_sfx(project, staging, scenes, fps):
     return tracks
 
 
+def build_outro(staging, fps, count, scenes, total_frames):
+    """The closing card, appended after the last scene: [] when the staging folder has none."""
+    p = os.path.join(staging, "outro.mp4")
+    if not os.path.isfile(p):
+        return []
+    nf = video_frames(p, fps, count)
+    return [{"scene_id": "outro", "path": p, "start_frame": total_frames, "frames": nf, "clip_frames": nf}]
+
+
 def build_plan(project, staging, fps, hook_order, count):
     rows = read_timing(project)
     stems = []
@@ -193,6 +203,11 @@ def build_plan(project, staging, fps, hook_order, count):
     for a, b in zip(scenes, scenes[1:]):
         a["frames"] = b["start_frame"] - a["start_frame"]
     scenes[-1]["frames"] = total_frames - scenes[-1]["start_frame"]
+    tail = frames(TAIL_S, fps)
+    if tail:
+        # the last scene holds past the last word, so the video does not stop on it
+        scenes[-1]["frames"] += tail
+        total_frames += tail
 
     problems = [f"{s['scene_id']}: planned {s['frames']} frames (non-positive)" for s in scenes if s["frames"] <= 0]
     problems += [f"{s['scene_id']}: clip missing at {s['path']}" for s in scenes if not os.path.isfile(s["path"])]
@@ -225,7 +240,7 @@ def build_plan(project, staging, fps, hook_order, count):
 
     # contiguity assertions
     assert all(a["start_frame"] + a["frames"] == b["start_frame"] for a, b in zip(hook + scenes, (hook + scenes)[1:]))
-    assert scenes[-1]["start_frame"] + scenes[-1]["frames"] == total_frames == audio[-1]["end_frame"]
+    assert scenes[-1]["start_frame"] + scenes[-1]["frames"] == total_frames == audio[-1]["end_frame"] + frames(TAIL_S, fps)
     assert all(a["end_frame"] == b["start_frame"] for a, b in zip(audio, audio[1:]))
     return hook, scenes, audio, total_frames
 
@@ -344,7 +359,7 @@ def write_xml(out, name, fps, width, height, hook, scenes, audio, total_frames, 
         tree.write(f, encoding="utf-8", xml_declaration=False)
 
 
-def validate(out, total_frames):
+def validate(out, total_frames, audio_end=None):
     """Re-parse the written file and check the ends line up."""
     seq = ET.parse(out).getroot().find("sequence")
     v = seq.find("media/video/track").findall("clipitem")
@@ -352,8 +367,9 @@ def validate(out, total_frames):
     v_end = max(int(c.findtext("end")) for c in v)
     a_end = max(int(c.findtext("end")) for c in a)
     v_frames = sum(int(c.findtext("duration")) for c in v)
-    if not (v_end == a_end == total_frames == v_frames):
-        sys.exit(f"ABORT: written XML disagrees: video end {v_end}, audio end {a_end}, "
+    if not (v_end == total_frames == v_frames and a_end == (audio_end if audio_end is not None else total_frames)):
+        sys.exit(f"ABORT: written XML disagrees: video end {v_end}, audio end {a_end} "
+                 f"(expected {audio_end if audio_end is not None else total_frames}), "
                  f"video frames {v_frames}, planned {total_frames}")
     return len(v), len(a), v_frames
 
@@ -379,8 +395,11 @@ def main():
     ap.add_argument("--cards", action="store_true", help="place <staging>/cards/<scene_id>.mp4 on V2")
     ap.add_argument("--sfx", action="store_true", help="place claude/sfx-plan.md clips from <staging>/sfx/")
     ap.add_argument("--loudness", type=float, default=VOICE_FILE_LUFS, help="finished video's integrated LUFS")
+    ap.add_argument("--tail", type=float, default=0.0,
+                    help="seconds the last scene holds past the last word, before <staging>/outro.mp4 (if present)")
     a = ap.parse_args()
-    global LEVEL_DB
+    global LEVEL_DB, TAIL_S
+    TAIL_S = a.tail
     LEVEL_DB = MONO_PAN_LAW_DB + a.loudness - VOICE_FILE_LUFS
 
     project = resolve_project(a.project)
@@ -393,10 +412,13 @@ def main():
     hook, scenes, audio, total = build_plan(project, staging, a.fps, hook_order, a.count_frames)
     cards = build_cards(staging, scenes, a.fps, a.count_frames) if a.cards else []
     sfx = build_sfx(project, staging, scenes, a.fps) if a.sfx else []
-    write_xml(a.out, name, a.fps, a.width, a.height, hook, scenes, audio, total, cards, sfx)
-    nv, na, vf = validate(a.out, total)
+    outro = build_outro(staging, a.fps, a.count_frames, scenes, total)
+    video_total = total + sum(o["frames"] for o in outro)
+    write_xml(a.out, name, a.fps, a.width, a.height, hook, scenes + outro, audio, video_total, cards, sfx)
+    nv, na, vf = validate(a.out, video_total, audio_end=total)
     print(f"wrote {a.out}")
-    print(f"  sequence '{name}' @ {a.fps} fps: {total} frames ({timecode(total, a.fps)})")
+    print(f"  sequence '{name}' @ {a.fps} fps: {video_total} frames ({timecode(video_total, a.fps)})"
+          + (f"; {a.tail:g} s tail" if a.tail else "") + (f" + outro {outro[0]['frames']} frames" if outro else ""))
     print(f"  video: {len(hook)} hook + {len(scenes)} scenes = {nv} items, {vf} frames; "
           f"first scene at frame {scenes[0]['start_frame']}, last ends {scenes[-1]['start_frame'] + scenes[-1]['frames']}")
     print(f"  audio: {len(audio)} voice tracks, ends frame {audio[-1]['end_frame']}; "

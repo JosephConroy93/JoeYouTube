@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[4]
 W, H = 1280, 720
 CARD_W, CARD_AR, CARD_CX, CARD_CY, TILT, BORDER = 610, 1.23, 945, 360, -2.5, 10
 TEXT_X, TEXT_W, TEXT_H, LEAD = 48, 540, 600, 10
+MARK_SIZE, MARK_BOTTOM, TEXT_H_MARK = 52, H - 44, 520   # channel wordmark bottom-left; hook block stays above it
 
 
 def series_keys(series):
@@ -44,7 +45,7 @@ def card(path, centre, ink):
     return framed.rotate(TILT, resample=Image.BICUBIC, expand=True)
 
 
-def text_block(canvas, lines, font):
+def text_block(canvas, lines, font, max_h=TEXT_H):
     """Each line sized to fill the column, then all scaled together to fit the height."""
     d = ImageDraw.Draw(canvas)
 
@@ -59,13 +60,23 @@ def text_block(canvas, lines, font):
         fonts = [ImageFont.truetype(font, max(20, round(s * k))) for s in sizes]
         boxes = [d.textbbox((0, 0), t, font=f) for (t, _), f in zip(lines, fonts)]
         total = sum(b[3] - b[1] for b in boxes) + LEAD * (len(lines) - 1)
-        if total <= TEXT_H:
+        if total <= max_h:
             break
         k -= 0.02
     y = (H - total) / 2
     for (t, col), b, f in zip(lines, boxes, fonts):
         d.text((TEXT_X - b[0], y - b[1]), t, font=f, fill=col)
         y += b[3] - b[1] + LEAD
+
+
+def wordmark(canvas, font, ink, accent):
+    """LIVED IT in the hook text's column, bottom-left, IT in the accent colour."""
+    d = ImageDraw.Draw(canvas)
+    f = ImageFont.truetype(font, MARK_SIZE)
+    b = d.textbbox((0, 0), "LIVED IT", font=f)
+    x, y = TEXT_X - b[0], MARK_BOTTOM - b[3]
+    d.text((x, y), "LIVED", font=f, fill=ink)
+    d.text((x + f.getlength("LIVED "), y), "IT", font=f, fill=accent)
 
 
 ap = argparse.ArgumentParser()
@@ -77,6 +88,7 @@ src.add_argument("--still", help="a named file in scene-generation/, e.g. an att
 ap.add_argument("--centre", type=float, default=0.5, help="horizontal centre of the card crop, 0-1")
 ap.add_argument("--line", action="append", required=True)
 ap.add_argument("--replace", action="store_true")
+ap.add_argument("--mark", action="store_true", help="add the LIVED IT wordmark bottom-left")
 a = ap.parse_args()
 
 series, slug = a.project.split("/")
@@ -109,7 +121,9 @@ shadow.paste((0, 0, 0, 90), (pos[0] + 12, pos[1] + 16), c.split()[3])
 shadow = shadow.filter(ImageFilter.GaussianBlur(14))
 canvas.paste(shadow, (0, 0), shadow)
 canvas.paste(c, pos, c)
-text_block(canvas, lines, font)
+text_block(canvas, lines, font, TEXT_H_MARK if a.mark else TEXT_H)
+if a.mark:
+    wordmark(canvas, font, ink, accent)
 canvas.save(out, quality=95)
 
 sheet = Image.new("RGB", (W + 360 + 168 + 80, H + 40), (15, 15, 15))

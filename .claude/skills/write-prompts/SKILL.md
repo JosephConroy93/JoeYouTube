@@ -61,6 +61,10 @@ clause, 2–3 props, dressed] [light].`
 - **An object insert says so**: a row with no figure (a document, a
   text-card carrier, a table of objects) ends its setting clause with "no
   people anywhere in the frame"; without it the model adds someone.
+- **A white garment on a blank white head loses the figure**: in a
+  blank-head style, dress a figure in off-white, ecru, cream or unbleached
+  linen rather than pure white, and keep one darker accent (a sash, a
+  border, a shadowed fold) so the head still reads against the cloth.
 - **No words in the image.** Name a document by what it is, not what it
   says ("a rolled papyrus tied with string", never "a contract"): the
   model writes the word on it in English. A `text-card` row describes its carrier covered in

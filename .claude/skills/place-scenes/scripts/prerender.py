@@ -288,6 +288,37 @@ def card_frame(still, text, p, look):
     return canvas
 
 
+def outro_job(project, out, seconds, fps, W, H, look):
+    """The closing card: the cream ground, the series name, and a thank-you, still then fading up."""
+    bg, ink, accent, font = look
+    name = ""
+    for line in open(os.path.join(os.path.dirname(project), "series.md"), encoding="utf-8"):
+        m = re.match(r"\|\s*`display_name`\s*\|\s*(.+?)\s*\|\s*$", line)
+        if m:
+            name = m.group(1).strip()
+    k = W / 1920
+    base = Image.new("RGB", (W, H), bg)
+    d = ImageDraw.Draw(base)
+    big = ImageFont.truetype(font, round(150 * k))
+    small = ImageFont.truetype(font, round(56 * k))
+    for text, f, fill, cy in ((name.upper(), big, ink, H / 2 - round(50 * k)),
+                              ("THANKS FOR WATCHING", small, accent, H / 2 + round(90 * k))):
+        b = d.textbbox((0, 0), text, font=f)
+        d.text(((W - (b[2] - b[0])) / 2 - b[0], cy - (b[3] - b[1]) / 2 - b[1]), text, font=f, fill=fill)
+    n = round(seconds * fps)
+    proc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                             "-r", str(fps), "-i", "-", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+                             "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    ground = Image.new("RGB", (W, H), bg)
+    for i in range(n):
+        u = min(1.0, i / max(1, round(0.6 * fps)))        # the text fades up over 0.6 s
+        proc.stdin.write(Image.blend(ground, base, u * u * (3 - 2 * u)).tobytes())
+    proc.stdin.close()
+    err = proc.stderr.read().decode(errors="replace")
+    if proc.wait():
+        raise RuntimeError(f"outro encode: {err[-400:]}")
+
+
 def card_job(head, scene_clip, land, out, fps, W, H, look):
     pic = out + ".land.png"
     run(["ffmpeg", "-v", "error", "-y", "-i", scene_clip, "-vf", f"select='eq(n,{land})',scale={W}:{H}:flags=lanczos",
@@ -414,6 +445,10 @@ def main():
     ap.add_argument("--overlay-pos", action="append", default=[], help="scene_id=x,y (top-left fractions)")
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--only", help="comma-separated scene ids (cards for them too)")
+    ap.add_argument("--tail", type=float, default=0.0,
+                    help="seconds the last scene holds past the last word (build_timeline takes the same value)")
+    ap.add_argument("--outro", type=float, default=0.0,
+                    help="seconds of closing card written to <staging>/outro.mp4 (cream, the series name and a thank-you)")
     ap.add_argument("--grade", help="3D LUT (.cube) mixed over every hook clip and still")
     ap.add_argument("--grade-mix", type=float, default=1.0)
     ap.add_argument("--film-until", help="last scene_id with the film look and letterbox")
@@ -427,6 +462,8 @@ def main():
     for d in ("scenes", "cards"):
         os.makedirs(os.path.join(staging, d), exist_ok=True)
     rows = plan(project, staging, a.fps)
+    if a.tail:
+        rows[-1]["frames"] += round(a.tail * a.fps)   # the last scene holds past the last word
     hooks, words = hook_map(project), overlays(project)
     pos = {}
     for p in a.overlay_pos:
@@ -504,6 +541,9 @@ def main():
             jobs[ex.submit(card_job, targets[sid], clip, land, out, fps, W, H, card_look)] = \
                 (sid, out, card_frames, "card")
         collect(jobs)
+    if a.outro:
+        outro_job(project, os.path.join(staging, "outro.mp4"), a.outro, fps, W, H, series_look(project))
+        print(f"outro: {round(a.outro * fps)} frames -> {os.path.join(staging, 'outro.mp4')}")
     for t in glob.glob(os.path.join(staging, "*", "*.txt")):
         os.remove(t)
     print(f"rendered {n} into {staging}")

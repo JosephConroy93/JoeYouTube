@@ -133,17 +133,35 @@ Step 4 and the scorer docks Voice points for each.
   (British: -ise, colour, towards, grey, autumn, "got" never "gotten";
   dates day-month).
 - No em dashes; a full stop, comma or colon instead.
+- **Write every number and date as it is spoken**: "seventeen fifty-seven",
+  "the twenty-third of June", "two hundred and thirty-four thousand pounds".
+  Digits and long numerals come out of the TTS as noise. A figure too long to
+  say is rounded in-voice ("about one and a third million pounds") with the
+  exact number left in the research file. Level headings keep their digit
+  (`Level 6.`) because the card draws it; the voice step speaks it as a word.
 - No reveal-flip ("This isn't X. It is Y." / "not X, but Y"): state the
   true thing once.
 - No question-then-answer fragment ("The result? Ruin."); write the statement.
-- No coined epigram or mirrored-callback closing line; end on a concrete
-  detail. A format's per-level aphorism is a dry observation from inside the
-  rung ("The dead pay better"), never a polished mic-drop.
+- No coined epigram mid-script, and no polished mic-drop; a format's
+  per-level aphorism is a dry observation from inside the rung ("The dead pay
+  better"). **One** reflective closing sentence under 20 words is expected at
+  the very end, answering a question the video raised, never asserting a new
+  claim; the final beat after it is a concrete present-tense image.
 - No summary tag re-labelling the last sentence ("That's the difference.").
 - No characterised quote ("what sounded like mercy:"); quote, then the next fact.
 - No announced moves ("here's the thing", "let that sink in", "make no mistake").
 - Hedge words (kind of, very, really, perhaps) only where the companion
-  voice earns them, never as padding.
+  voice earns them, never as padding. At most **one soft-quantity hedge**
+  ("well over half", "by one count") per paragraph.
+- **Contractions are the default** in narration ("you're", "you've",
+  "don't"); keep the full form only for a deliberate formal beat.
+- **No fact stands alone.** A hard number or institutional fact is followed,
+  in the same or the next sentence, by what it costs a person on screen.
+- **Second person present holds to the end**, including the last two levels.
+  A real figure's history is cited inside a clause the protagonist reacts to,
+  never as a free-standing third-person paragraph.
+- A CTA, where `series.md` allows one, sits once at a chapter break about a
+  third of the way in; never in the opening or the last 60 seconds.
 - One deliberate fragment run per chapter; an inventory ("Beeswax. Plant
   oils. Resin.") is a list, not drama.
 - "You" may open consecutive sentences; any other word opens at most two

@@ -82,6 +82,12 @@ verification rule: `.claude/conventions.md`.
    `notes` still carry `overlay: "<word>"` gets a drawn word: `prerender.py` draws it in hand-lettered ink-dark type, centred, or at `--overlay-pos`
    when the blank patch sits off-centre. Check each overlay frame (a
    subagent) for the word sitting on the patch.
+5c-2. **The ending**: `prerender.py --tail <s> --outro <s>` holds the last
+   scene past the last word (1 s) and writes `<staging>/outro.mp4`, the cream
+   card with the series name and a thank-you, fading up over 0.6 s;
+   `build_timeline.py --tail <s>` extends the last scene by the same amount
+   and places the outro after it, with no audio under it. Without them a
+   video stops dead about 0.2 s after the last word.
 5d. **Spot SFX**: write `claude/sfx-plan.md` (schema in `conventions.md`)
    from the scenes that show a sounding action, searching
    `content/sfx/cinematic-bundle-metadata.tsv` descriptions, never

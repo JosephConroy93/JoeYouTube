@@ -63,8 +63,18 @@ dramatised in-scene, never as commentary about sources.
 
 ## Ending
 
-Reflective or cyclical: another person at another threshold about to make
-the same choice. Never a flat stop at the peak, never an outcome the
+Three beats, in this order (the shape the genre's best endings use):
+
+1. A callback image built only from concrete things already planted in the
+   script, never a restated list of facts or ranks.
+2. **One reflective sentence, under 20 words**, answering a question the
+   video has been building toward. Not a summary, not a new fact, not a
+   moral about history.
+3. A small ordinary final image in the present tense, cut cold. No sign-off
+   in the narration; the outro card carries the channel.
+
+Cyclical is the usual first beat: another person at another threshold about
+to make the same choice. Never a flat stop at the peak, never an outcome the
 research leaves unknown.
 
 ## Runtime
@@ -105,7 +115,8 @@ above applies, with these overrides:
   level's premise.
 - **Companion object** planted before 0:50 and returned in the last level;
   its meaning changes each time it reappears.
-- **Ending**: reversal, then the cyclical image, **no spoken moral**.
+- **Ending**: reversal, the cyclical image, the one reflective sentence,
+  then the final image. No moral about history, no sign-off.
 - **Hook**: no factual hook required in Level 1; a flash-forward stake or a
   withheld reversal carries it. A sourced hard fact still lands inside the
   first two levels.
