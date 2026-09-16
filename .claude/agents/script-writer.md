@@ -172,6 +172,10 @@ Step 4 and the scorer docks Voice points for each.
   beside the sentence it belongs to, never between two sentences about
   something else; a referent ("that much", "half that", "the one") reaches
   back one sentence at most, and never across a different number.
+- **A word that must carry stress ends a short sentence.** The voice has no
+  other way to stress it: `eleven_multilingual_v2` has no per-word emphasis,
+  and capitals and markdown do nothing. "The number was never yours", not
+  "It isn't *your* number". Write the stress into the position.
 - A CTA, where `series.md` allows one, sits once at a chapter break about a
   third of the way in; never in the opening or the last 60 seconds.
 - One deliberate fragment run per chapter; an inventory ("Beeswax. Plant
