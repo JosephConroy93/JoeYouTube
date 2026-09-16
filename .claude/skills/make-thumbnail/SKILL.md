@@ -32,8 +32,10 @@ Executed by `scripts/thumb.py`; colours and font are `series.md`'s `thumbnail.*`
 4. **Check `<name>-sizes.jpg`**: the text reads at 168 px, the card crop keeps
    the face or object, nothing sits in the bottom-right corner where YouTube
    puts the duration.
-5. **Record** the chosen file names in `video.md`'s `thumbnail` key; two names
-   are the Test & Compare pair, uploaded together at Step 11.
+5. **Record** each built file in `video.md`'s `thumbnail` key with the
+   `--scene`, `--centre` and `--line` arguments that made it, so it can be
+   re-cut without reverse-engineering the crop; two names are the Test &
+   Compare pair, uploaded together at Step 11.
 
 ## Boundaries
 

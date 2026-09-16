@@ -8,15 +8,16 @@ A line in [brackets] takes the accent colour. Colours and font come from series.
 1280, 360 and 168 px wide). An existing <name>.jpg is moved to thumbnails/_archive/ only with
 --replace; otherwise the script stops.
 """
-import argparse, re, shutil, sys, time
+import argparse, random, re, shutil, sys, time
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[4]
 W, H = 1280, 720
 CARD_W, CARD_AR, CARD_CX, CARD_CY, TILT, BORDER = 610, 1.23, 945, 360, -2.5, 10
 TEXT_X, TEXT_W, TEXT_H, LEAD = 48, 540, 600, 10
 MARK_SIZE, MARK_BOTTOM, TEXT_H_MARK = 52, H - 44, 520   # channel wordmark bottom-left; hook block stays above it
+GRAIN, MOTTLE, CREASES, PAPER_SEED = 5, 9, (0.24, 0.47, 0.79), 1904   # aged-paper texture under the cream; fixed seed so a rebuild is identical
 
 
 def series_keys(series):
@@ -32,6 +33,35 @@ def series_keys(series):
         sys.exit(f"series.md is missing {', '.join(missing)}")
     rgb = lambda v: tuple(int(v.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
     return rgb(keys[need[0]]), rgb(keys[need[1]]), rgb(keys[need[2]]), keys[need[3]]
+
+
+def _amp(layer, amp):
+    """Rescale a grey layer so it spans 128 +/- amp, whatever the blur left of its range."""
+    lo, hi = layer.getextrema()
+    if hi == lo:
+        return Image.new("L", layer.size, 128)
+    return layer.point(lambda v: round(128 - amp + (v - lo) / (hi - lo) * 2 * amp))
+
+
+def paper(bg):
+    """The cream ground as aged paper: fine grain, soft mottling, a few vertical creases.
+
+    Composited additively, not with ImageChops.overlay -- overlay scales a deviation by
+    2*(255-base)/255, which on cream is ~4% and leaves the texture invisible.
+    """
+    rnd = random.Random(PAPER_SEED)
+    noise = lambda w, h: Image.frombytes("L", (w, h), bytes(rnd.getrandbits(8) for _ in range(w * h)))
+    tex = noise(W, H).point(lambda v: round(128 + (v - 128) * GRAIN / 128))
+    mottle = _amp(noise(40, 23).resize((W, H), Image.BICUBIC).filter(ImageFilter.GaussianBlur(18)), MOTTLE)
+    tex = ImageChops.add(tex, mottle, scale=1, offset=-128)
+    creases = Image.new("L", (W, H), 128)
+    d = ImageDraw.Draw(creases)
+    for f in CREASES:
+        x = round(f * W)
+        d.line([(x - 3, 0), (x - 3, H)], fill=128 - 2 * MOTTLE, width=3)
+        d.line([(x, 0), (x, H)], fill=128 + 2 * MOTTLE, width=2)
+    tex = ImageChops.add(tex, creases.filter(ImageFilter.GaussianBlur(1.6)), scale=1, offset=-128)
+    return ImageChops.add(Image.new("RGB", (W, H), bg), tex.convert("RGB"), scale=1, offset=-128)
 
 
 def card(path, centre, ink):
@@ -113,7 +143,7 @@ if out.exists():
 out_dir.mkdir(parents=True, exist_ok=True)
 
 lines = [(t[1:-1], accent) if t.startswith("[") and t.endswith("]") else (t, ink) for t in a.line]
-canvas = Image.new("RGB", (W, H), bg)
+canvas = paper(bg)
 c = card(matches[0], a.centre, ink)
 pos = (CARD_CX - c.width // 2, CARD_CY - c.height // 2)
 shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))

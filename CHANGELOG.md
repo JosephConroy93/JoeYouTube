@@ -6,6 +6,11 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 
 ---
 
+## 2026-09-16 — Thumbnail cream ground is aged paper
+
+- **`make-thumbnail/scripts/thumb.py` — `paper()` replaces the flat cream fill.** The background is now fine grain, soft mottling and three vertical creases at a fixed seed, composited additively. Why: the flat fill read as a plain colour swatch; the operator asked for the card to be slightly distressed. `ImageChops.overlay` was the first attempt and is the trap — it scales a deviation by `2*(255-base)/255`, about 4% on cream, so the texture measured 6 grey levels of spread and was invisible; the additive composite measures 27.
+- **`make-thumbnail` Step 5 — record the build arguments, not just the file name.** Why: re-cutting one of this video's thumbnails needed `--scene` and `--centre` back, and neither was written down anywhere; recovering `--centre` took a brute-force match of every crop against the built JPEG.
+
 ## 2026-09-16 — Pinned comment at publish
 
 - **`WORKFLOW.md` Step 11 3c, `conventions.md` `publish/` files and `series.md` `pinned_comment`.** Every published video gets `publish/pinned-comment.md`, pinned from the channel account as soon as the video is public: a question the ending leaves the viewer holding, the sources line, one specific next video with its link, the subscribe link. Why: three videos were live with nothing pinned, so the comments had no prompt and no route to the next video.
