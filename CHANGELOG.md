@@ -6,6 +6,11 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 
 ---
 
+## 2026-09-16 — Thumbnail crop punches in on the subject
+
+- **`make-thumbnail/scripts/thumb.py` `--zoom` and `--ymid`, and a measurable crop rule in Step 3.** The card crop was always the still's full height, which at 168 px wide left a head about 9 px tall — texture, not an expression. Crop so the subject's head is at least 18 px at 168 px (`head_px = head_in_still * zoom * 0.0424` on a 2752-wide still), zoomed per still rather than to a fixed number. Why: Studio shows the thumbnails converting at 3.5% CTR, so artwork is not what caps the channel — but the figure genuinely does not read at browse size, and this is the cheap half of that critique. Defaults are unchanged and the default path was checked byte-identical against an existing build.
+- **Step 4 judges the 168 px panel, not the 1280 px one.** Why: the full-size render flatters a wide scene crop that carries nothing at the size the click is decided at.
+
 ## 2026-09-16 — Thumbnail cream ground is aged paper
 
 - **`make-thumbnail/scripts/thumb.py` — `paper()` replaces the flat cream fill.** The background is now fine grain, soft mottling and three vertical creases at a fixed seed, composited additively. Why: the flat fill read as a plain colour swatch; the operator asked for the card to be slightly distressed. `ImageChops.overlay` was the first attempt and is the trap — it scales a deviation by `2*(255-base)/255`, about 4% on cream, so the texture measured 6 grey levels of spread and was invisible; the additive composite measures 27.

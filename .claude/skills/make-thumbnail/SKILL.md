@@ -21,17 +21,24 @@ Executed by `scripts/thumb.py`; colours and font are `series.md`'s `thumbnail.*`
 3. **Build** one per candidate:
 
    ```
-   python .claude/skills/make-thumbnail/scripts/thumb.py <series>/<slug> --name <A-slug-of-line> --scene <id> --centre <0-1> --line WORD --line "[ACCENT]"
+   python .claude/skills/make-thumbnail/scripts/thumb.py <series>/<slug> --name <A-slug-of-line> --scene <id> --centre <0-1> --zoom <>=1> --ymid <0-1> --line WORD --line "[ACCENT]"
    ```
 
-   `--centre` is where the card's crop sits across the still (0 left, 1 right);
-   a `[bracketed]` line takes the accent colour. `--scene` takes only the
+   `--centre` is where the card's crop sits across the still (0 left, 1 right),
+   `--ymid` the same vertically, `--zoom` how far the crop punches in (1 is the
+   whole scene). **Crop so the subject's head is at least 18 px at 168 px wide** —
+   `head_px = head_in_still * zoom * 0.0424` for a 2752-wide still. A full-height
+   scene crop of a wide shot leaves a head around 9 px, which reads as texture,
+   not an expression. Zoom per still, not to a fixed number: a shot that already
+   fills the frame with a figure needs 1.2, a wide one needs 2.3.
+   A `[bracketed]` line takes the accent colour. `--scene` takes only the
    canonical still; `--still <file>` names another file in `scene-generation/`,
    such as an attempt whose QC flaw falls outside the crop. The script stops
    rather than overwrite; `--replace` archives the old file first.
-4. **Check `<name>-sizes.jpg`**: the text reads at 168 px, the card crop keeps
-   the face or object, nothing sits in the bottom-right corner where YouTube
-   puts the duration.
+4. **Check `<name>-sizes.jpg`**: the text reads at 168 px, the subject's face
+   reads at 168 px, nothing sits in the bottom-right corner where YouTube puts
+   the duration. Judge the 168 px panel, never the 1280 px one — that is the
+   size the click is decided at.
 5. **Record** each built file in `video.md`'s `thumbnail` key with the
    `--scene`, `--centre` and `--line` arguments that made it, so it can be
    re-cut without reverse-engineering the crop; two names are the Test &

@@ -64,12 +64,19 @@ def paper(bg):
     return ImageChops.add(Image.new("RGB", (W, H), bg), tex.convert("RGB"), scale=1, offset=-128)
 
 
-def card(path, centre, ink):
+def card(path, centre, ink, zoom=1.0, ymid=0.5):
+    """zoom > 1 punches the crop in so one face fills the card; ymid places it vertically.
+
+    A figure has to read at 168 px wide, where the whole card is only 80 px: a full-height
+    scene crop leaves a head about 9 px tall, which is texture, not an expression.
+    """
     im = Image.open(path).convert("RGB")
     w, h = im.size
-    cw = min(w, round(h * CARD_AR))
+    cw = min(w, round(h * CARD_AR / zoom))
+    ch = min(h, round(cw / CARD_AR))
     x0 = min(max(0, round(centre * w - cw / 2)), w - cw)
-    c = im.crop((x0, 0, x0 + cw, h)).resize((CARD_W, round(CARD_W / CARD_AR)), Image.LANCZOS)
+    y0 = min(max(0, round(ymid * h - ch / 2)), h - ch)
+    c = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((CARD_W, round(CARD_W / CARD_AR)), Image.LANCZOS)
     framed = Image.new("RGBA", (c.width + 2 * BORDER, c.height + 2 * BORDER), ink + (255,))
     framed.paste(c, (BORDER, BORDER))
     return framed.rotate(TILT, resample=Image.BICUBIC, expand=True)
@@ -116,6 +123,8 @@ src = ap.add_mutually_exclusive_group(required=True)
 src.add_argument("--scene", help="scene id or its numeric prefix; canonical still only")
 src.add_argument("--still", help="a named file in scene-generation/, e.g. an attempt whose flaw falls outside the crop")
 ap.add_argument("--centre", type=float, default=0.5, help="horizontal centre of the card crop, 0-1")
+ap.add_argument("--zoom", type=float, default=1.0, help="punch the crop in on the subject; 1 is the full-height scene")
+ap.add_argument("--ymid", type=float, default=0.5, help="vertical centre of the card crop, 0-1; a head usually sits above 0.5")
 ap.add_argument("--line", action="append", required=True)
 ap.add_argument("--replace", action="store_true")
 ap.add_argument("--mark", action="store_true", help="add the LIVED IT wordmark bottom-left")
@@ -144,7 +153,7 @@ out_dir.mkdir(parents=True, exist_ok=True)
 
 lines = [(t[1:-1], accent) if t.startswith("[") and t.endswith("]") else (t, ink) for t in a.line]
 canvas = paper(bg)
-c = card(matches[0], a.centre, ink)
+c = card(matches[0], a.centre, ink, a.zoom, a.ymid)
 pos = (CARD_CX - c.width // 2, CARD_CY - c.height // 2)
 shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 shadow.paste((0, 0, 0, 90), (pos[0] + 12, pos[1] + 16), c.split()[3])
