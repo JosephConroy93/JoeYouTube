@@ -45,6 +45,10 @@ dramatised in-scene, never delivered as commentary about sources.
 ## Opening
 
 - Cold-open straight onto the first level callout. No preamble.
+- **An animated hook earns its place only if the narration under it carries
+  the stake** (operator, 2026-09-16): the moving shots are not a substitute
+  for telling the viewer what is at risk. Say what this life costs inside the
+  first two sentences, and name a person by the fourth or fifth.
 - Open on status, not drama: withhold what the title promised; the hook
   question (the open loop the ending pays off) lands in the **first 8
   seconds** of narration after the callout, setup after it.
