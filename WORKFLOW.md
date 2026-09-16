@@ -288,7 +288,11 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
 
 1. Channel identity check: name, About copy, icon/banner match the series
    (`series.md` names the channel; `content/<series>/mascot/watcher-concept.md` holds its About copy).
-2. Description: citation list plus a "People & Sites Mentioned" section;
+2. Tags: **500 characters total across all tags**, commas and spaces included;
+   YouTube silently drops whatever runs past it, so write the list inside the
+   cap rather than trimming in Studio. Highest-value first: the subject, the
+   names a viewer would search, then the format terms.
+3. Description: citation list plus a "People & Sites Mentioned" section;
    disclose dramatised composites where the format uses them.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
    headings.
