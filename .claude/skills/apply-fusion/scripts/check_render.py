@@ -173,7 +173,11 @@ def main():
     for r in read_plan(project):
         s = by_id[r["scene_id"]]
         t0 = s["start_frame"] / fps + r["offset"]
-        dur = min(r["dur"] or 2.0, s["frames"] / fps - r["offset"])
+        # a row with `until` runs to the end of that scene: measure the whole held span,
+        # or the quiet second after it lands inside the sound and reads as a failure
+        last = by_id.get(r.get("until") or r["scene_id"], s)
+        span_end = (last["start_frame"] + last["frames"]) / fps
+        dur = min(r["dur"] or 2.0, span_end - t0) if r["dur"] else span_end - t0
         if t0 - 1.0 < m_in / fps or t0 + dur > (m_out + 1) / fps:
             continue
         span0, span1 = t0 - 1.0, min(t0 + dur + 1.0, (m_out + 1) / fps)
