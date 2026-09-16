@@ -5,7 +5,12 @@ description: Generates a video's narration with ElevenLabs from the locked scrip
 
 # generate-voiceover
 
-Invocation: `generate-voiceover <series>/<slug> [--segment NN] [--dry-run]`.
+Invocation: `generate-voiceover <series>/<slug> [--all] [--segment NN] [--dry-run]`.
+
+**First run on a video generates segment 1 only and stops.** The operator
+listens to it (WORKFLOW Step 5): every line that has failed at that point
+passed the lint and the score, because neither hears. Then `--all` generates
+every segment that has no audio yet; `--segment NN` re-voices one.
 Layout and schemas: `.claude/conventions.md`. Everything below is executed
 by `scripts/tts.ps1`; this file says what it does and what must be true.
 
@@ -57,6 +62,13 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
    means over-compression: back the gain off.
 4. Print each segment's duration and total runtime; append the voice used
    to `content/<series>/voice-register.md` and `video.md`.
+
+**Emphasis on one word.** `eleven_multilingual_v2` has no per-word emphasis:
+no SSML emphasis tag, no audio tags (those are `eleven_v3`), and the script's
+`*` and `_` are stripped before sending. Stress is placed by sentence
+position: put the stressed word at the end of a short sentence, or set it
+against a contrast ("The number was never yours."). Capitals are documented
+for v3 only; on v2 they are an experiment, judged by ear per take.
 
 `--segment NN` regenerates one segment only (same seed). Speed comes from
 `voice.speed` in `video.md` or `series.md` unless `--speed` is given; `--tag

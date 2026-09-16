@@ -42,6 +42,39 @@ AMERICAN = (r"\b(colou?r(?<!colour)s?|colored|honor(?:s|ed)?|favor(?:s|ed|ite)?|
             r"catalog|plow|mold|smolder|aluminum|math|toward|apartment|elevator|sidewalk|trash|garbage|mom|diaper|faucet|"
             r"movies?|candy|soccer|vacation|cookies?|gas station|parking lot|railroad|fall(?= of \d)|"
             r"[a-z]{3,}iz(?:e[sd]?|ing|ation))\b")
+# ear checks: constructions that pass every band above and still fail when spoken (Krays, 2026-09-16)
+YOU = re.compile(r"\byou(?:r|'re|'ve|'ll)?\b", re.I)
+REFERENT = re.compile(r"\b(?:that much|half that|those things|the one in|that number|none of those|either of them)\b", re.I)
+NUMWORD = re.compile(r"\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|"
+                     r"sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|"
+                     r"hundred|thousand|million)\b", re.I)
+ABSTRACT = re.compile(r"\b(?:thing|things|something|anything|nothing|everything|everybody|anybody|nobody|somebody|"
+                      r"whole|part|point|means|matters|worth)\b", re.I)
+
+
+def ear_checks(sents):
+    """Whole sentences, not snippets: the read-aloud pass judges each one at pace."""
+    ear = {}
+    ear["trailing which-clauses (the point arrives in a subordinate clause)"] = [
+        s for s in sents if re.search(r",\s+which\s+(?:is|was|are|were|isn't|wasn't|means)\b", s)]
+    appended = []
+    for s in sents:
+        if "," not in s:
+            continue
+        head, _, tail = s.rpartition(",")
+        # ", and you ..." is ordinary speech; the cheap-band signature is a subordinating clause
+        if re.match(r"\s*(?:which|so that|because)\b", tail) and YOU.search(tail) and not YOU.search(head):
+            appended.append(s)
+    ear["you-clauses appended to a third-person sentence (how the band gets hit cheaply)"] = appended
+    ear["referents held across a sentence (that much / half that / the one in)"] = [s for s in sents if REFERENT.search(s)]
+    numfrag, cur = [], 0
+    for i, s in enumerate(sents):
+        cur = cur + 1 if (len(s.split()) <= 6 and NUMWORD.search(s)) else 0
+        if cur == 3:
+            numfrag.append(" / ".join(sents[i - 2:i + 1]))
+    ear["number-fragment runs (3+ short sentences each carrying a number)"] = numfrag
+    ear["abstract density (2+ abstraction words in one sentence)"] = [s for s in sents if len(ABSTRACT.findall(s)) >= 2]
+    return ear
 
 
 def band(n):
@@ -132,7 +165,12 @@ def main():
         for s in fact_only[:5]:
             print("     " + s[:120])
     print()
-    for k, v in findings.items():
+    ear = ear_checks(sents)
+    print("ear checks (pass every band, fail when spoken; the read-aloud pass judges each at pace):")
+    for k, v in ear.items():
+        print(f"{len(v):>3}  {k}")
+    print()
+    for k, v in list(findings.items()) + list(ear.items()):
         if v:
             print(f"## {k}")
             for x in v: print("   " + x[:160])

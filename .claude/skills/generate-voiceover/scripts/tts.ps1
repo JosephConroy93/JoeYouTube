@@ -21,7 +21,8 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)] [string] $Project,     # <series>/<slug>
-  [int]    $Segment  = 0,                        # 0 = all
+  [int]    $Segment  = 0,                        # 0 = first run: segment 1 only; with -All: every segment without audio
+  [switch] $All,                                # generate every segment that has no MP3 yet (after the operator has heard segment 1)
   [switch] $DryRun,
   [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
   [double] $Speed = 0,                          # ElevenLabs voice_settings.speed (0.7-1.2); 0 = series.md/video.md voice.speed, else 1.0
@@ -174,7 +175,22 @@ for ($i = 0; $i -lt $segments.Count; $i++) {
 
 # ---------- generation ----------
 $endpointBase = 'https://api.elevenlabs.io/v1/text-to-speech'
-$todo = if ($Segment -gt 0) { @($Segment - 1) } else { 0..($segments.Count - 1) }
+$existing = @($labels | Where-Object { Test-Path (Join-Path $voDir "$_.mp3") })
+if ($Segment -gt 0) {
+  $todo = @($Segment - 1)
+} elseif ($DryRun -or $SkipGenerate) {
+  $todo = 0..($segments.Count - 1)
+} elseif ($existing.Count -eq 0 -and -not $All) {
+  # First run on a video: segment 1 only. The operator hears the voice before the rest is bought;
+  # every line that has failed at this step passed the lint and the score (WORKFLOW Step 5).
+  $todo = @(0)
+  Write-Host 'First run: generating segment 1 only. Listen to it, then rerun with -All for the rest.' -ForegroundColor Yellow
+} elseif ($All) {
+  $todo = @(0..($segments.Count - 1) | Where-Object { -not (Test-Path (Join-Path $voDir "$($labels[$_]).mp3")) })
+  if ($todo.Count -eq 0) { Write-Host 'Every segment already has audio. Use -Segment N to re-voice one.' }
+} else {
+  throw "Audio exists for $($existing.Count) segment(s). Use -All to generate the missing ones, or -Segment N to re-voice one."
+}
 foreach ($i in $todo) {
   $label = $labels[$i]
   if ($Tag) { $label = ('{0}_{1}' -f $label, $Tag) }

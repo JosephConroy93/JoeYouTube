@@ -160,6 +160,18 @@ Step 4 and the scorer docks Voice points for each.
 - **Second person present holds to the end**, including the last two levels.
   A real figure's history is cited inside a clause the protagonist reacts to,
   never as a free-standing third-person paragraph.
+- **Second-person density is earned inside the fact, never appended to it.**
+  Put the person where the fact lands: what it does to him, where he is
+  standing when it happens. A third-person sentence with ", which is … you"
+  bolted on hits the band and is the first thing the ear rejects.
+- **A reversal keeps its own sentence.** "Getting in is free. That's what
+  it's worth." When shortening would fold the turn into a trailing clause
+  ("…free, which is what it's worth"), keep two sentences. The bands are
+  measured on the page; the script is heard.
+- **A fact lands where it can be attached.** An age, a date or a figure sits
+  beside the sentence it belongs to, never between two sentences about
+  something else; a referent ("that much", "half that", "the one") reaches
+  back one sentence at most, and never across a different number.
 - A CTA, where `series.md` allows one, sits once at a chapter break about a
   third of the way in; never in the opening or the last 60 seconds.
 - One deliberate fragment run per chapter; an inventory ("Beeswax. Plant
@@ -214,6 +226,9 @@ The handoff notes carry:
 6. Nothing implies an outcome the research leaves unknown.
 7. Prose: zero em dashes, nothing from the Prose list, spelling and idiom
    per `voice.english`.
+8. Read aloud: every sentence survives being heard at the narrator's pace
+   (the Mode 4 checklist), and no sentence carries its point in a trailing
+   clause.
 
 State the result plainly. If something fails, fix it before returning;
 never return a draft with a known problem and a note about it.
@@ -231,7 +246,10 @@ middle sags").
 - Summarise what changed rather than returning a wall of text.
 - Push back once, clearly, if a change would weaken retention structure or
   flatten a hedge; then do it if the operator insists.
-- Re-run the self-check.
+- Re-run the self-check. **A pass that moved a band is where ear faults are
+  introduced**: a shorter sentence folds its turn into a clause, a "you"
+  gets appended instead of placed. Re-read every level touched as speech
+  before returning.
 
 ## Mode 3 — SCORE
 
@@ -277,6 +295,42 @@ Gate results first, then the dimension table with per-dimension reasoning,
 then the total, then whether floors were met. **Quote every offending line**
 for every gate failure and floor miss; a finding asserted without a quote is
 not a finding.
+
+## Mode 4 — READ ALOUD
+
+Judges one thing: whether each sentence survives being heard. Runs after
+the lint passes and before Mode 3. The lint measures the page and Mode 3
+scores structure and accuracy; neither hears, and both have passed scripts
+whose lines fell over the moment the narrator spoke them.
+
+Read every narration sentence once, as speech, at the narrator's pace, and
+flag:
+
+1. **Late landing** — a reversal or aphorism whose meaning arrives on the
+   last two or three words with no full stop before them to carry it
+   ("…free, which is what it's worth").
+2. **Held referent** — "that much", "half that", "the one", a bare "it",
+   reaching back more than one sentence, or across a different number.
+3. **Stranded fact** — an age, date or figure between two sentences about
+   something else ("Both of them are twenty" between the hall and its history).
+4. **Point in the tail** — the sentence's real argument in a trailing
+   subordinate clause ("…, which is the job you did").
+5. **Tense against the level** — a tense that contradicts the time the
+   level has established ("the man you'll work for" after "now you belong
+   to one of them").
+6. **Number pile** — three or more short consecutive sentences each
+   carrying a number; the voice runs them together.
+7. **Heard ambiguity** — a word with a second meaning when spoken and no
+   spelling to settle it ("beating", "ring", "right").
+8. **Abstract sentence** — nothing in it a camera could see: no object, no
+   place, no action ("Everything he does while you're standing there is
+   something you were there for").
+
+Output a table `| level | line | tier | sentence | fault |`. Tiers: **1**
+rewrite before voicing; **2** rewrite if that segment is being voiced
+anyway; **3** note for the next script. Quote each sentence whole. A
+sentence that trips a check and still works at pace is not a finding; say
+why in a clause. Never rewrite in this mode; findings go to Mode 2.
 
 ## Standing principles
 

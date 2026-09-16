@@ -123,9 +123,15 @@ gaps with a short capped web check.
 3. `python tools/script-lint/lint_script.py content/<series>/<slug>/claude/script.md`:
    counts the prose tells, digits (narration numbers are written as spoken
    words) and spellings off `voice.english`, quoting each line. Zero em dashes is a hard bar; the rest go to Mode 2 with the score.
-4. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
-   format module. Revise with Mode 2 until it passes. Lock.
-5. Set `status: scripted`.
+   Its **ear checks** block quotes the constructions that pass every band
+   and fail when spoken; they feed the next step.
+4. `script-writer` Mode 4 (READ ALOUD): the only pass that hears. Every
+   tier-1 finding goes to Mode 2 before scoring.
+5. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
+   format module. Revise with Mode 2 until it passes. **After any Mode 2
+   pass that moved a band, run 3 and 4 again** on the levels it touched: a
+   band fix is where ear faults are introduced. Lock.
+6. Set `status: scripted`.
 
 ## Step 5 — Voiceover and timing 🟡 (new position: straight after script lock)
 
@@ -134,14 +140,19 @@ gaps with a short capped web check.
    with the series voice, saves `voiceovers/<slug>_voice_NN.mp3` (raw, kept as source) plus the
    character-timestamp alignment, then normalises to **−16 LUFS, true peak
    ≤ −1.5 dBFS, 48 kHz, dual-mono stereo WAV** in `voiceovers/normalized/` (the only copy that
-   goes on the timeline).
-   Log the voice in `voice-register.md` and `video.md`.
-2. Listen to one segment before generating the rest.
-3. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
+   goes on the timeline). **On a video with no audio yet it generates
+   segment 1 only and stops; the tool enforces this.**
+2. **The operator listens to segment 1.** The lint and the scorer cannot;
+   every line that has failed here passed both. A line that fails is fixed
+   in the script and re-voiced with `-Segment 1`, and its fault is added to
+   the Mode 4 checklist if it is a new kind.
+3. `generate-voiceover <series>/<slug> -All`: the remaining segments;
+   existing ones are kept. Log the voice in `voice-register.md` and `video.md`.
+4. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
    chapter's manifest exists (it needs all the `script_bookmark`s); it is
    listed here because the audio it needs exists from this point. With API timestamps no
    transcription is needed; whisper remains the fallback.
-4. Set `status: voiced`.
+5. Set `status: voiced`.
 
 Hook clips (Step 9) are cut to the measured narration beats, never
 generated before the voiceover exists.
