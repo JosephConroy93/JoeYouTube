@@ -20,6 +20,10 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
   walking gives a flat clip, so it goes back to the prompt pass; `duration_s` ∈ {4, 6, 8};
   `beat` is the verbatim script text the shot covers (used to cut it to the
   measured narration).
+  Shots are not all in the cold open: a plan may place one on the **first
+  scene of a later chapter**, where `place-scenes` freezes the clip's first
+  frame under the chapter card and plays it as the card clears (so that beat
+  needs roughly 8 s). Clips still submit and trim identically.
 - Beat timings: `claude/scene-timing.md`. Runs at the end of Step 8, after
   every chapter is validated and `align-scenes` has run; never earlier.
 - `GEMINI_API_KEY` in the user environment.

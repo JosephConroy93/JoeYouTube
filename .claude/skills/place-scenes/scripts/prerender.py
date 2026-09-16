@@ -23,7 +23,8 @@ long enough to read (CARD_HOLD_S, over the spoken callout), then grows,
 straightens and fills the frame, its last frame identical to the scene's frame under it.
 It lands on the chapter's first scene (or the first scene after --film-until when the
 chapter opens inside the film); an all-hook chapter (the cold open) gets none. The landing
-scene holds still under the card, then pushes in (text-card rows stay still).
+scene holds still under the card, then pushes in (text-card rows stay still); a hook clip
+landing a card holds its own first frame for the card, then plays.
 
 --motion bakes each `claude/ken-burns-plan.md` move (In, Out, Focal, Pan with its ease) into the
 clip at the timeline size, so Resolve needs no Fusion comps; Static rows stay as they are.
@@ -424,14 +425,17 @@ def still_job(r, jpg, out, fps, W, H, word, pos, font, look, hold=0, curve=None)
          "-c:v", "libx264", "-crf", "18", *tune, "-pix_fmt", "yuv420p", "-an", out])
 
 
-def hook_job(r, clip, out, fps, W, H, look):
+def hook_job(r, clip, out, fps, W, H, look, card_hold=0):
+    """card_hold frames of the clip's own first frame first, so its motion starts as the card clears."""
     look = [x(W, H) if callable(x) else x for x in look]
     have = count_frames(clip)
-    hold = max(0, r["frames"] - have) / fps + 0.5
+    lead = card_hold / fps
+    tail = max(0, r["frames"] - card_hold - have) / fps + 0.5
+    pad = f"tpad=start_mode=clone:start_duration={lead:.3f}:stop_mode=clone:stop_duration={tail:.3f}"
     run(["ffmpeg", "-v", "error", "-y", "-i", clip, "-filter_complex",
-         ",".join([f"scale={W}:{H}:flags=lanczos,fps={fps},tpad=stop_mode=clone:stop_duration={hold:.3f}"] + look),
+         ",".join([f"scale={W}:{H}:flags=lanczos,fps={fps},{pad}"] + look),
          "-frames:v", str(r["frames"]), "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", "-an", out])
-    return have
+    return card_hold + have
 
 
 def main():
@@ -518,7 +522,7 @@ def main():
             out = os.path.join(staging, "scenes", sid + ".mp4")
             hold = card_frames if sid in targets else 0
             if sid in hooks:
-                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i))] = (sid, out, r["frames"], "hook")
+                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i), hold)] = (sid, out, r["frames"], "hook")
             else:
                 jpg = os.path.join(project, "scene-generation", sid + ".jpg")
                 if not os.path.isfile(jpg):

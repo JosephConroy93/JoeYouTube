@@ -49,6 +49,14 @@ dramatised in-scene, never delivered as commentary about sources.
   the stake** (operator, 2026-09-16): the moving shots are not a substitute
   for telling the viewer what is at risk. Say what this life costs inside the
   first two sentences, and name a person by the fourth or fifth.
+- **Split the animation budget** (operator, 2026-09-16): the same seconds buy
+  more when some of them sit later. Keep about two thirds of the clips in the
+  cold open and spend the rest on the **first scene of the early levels**, one
+  each, so motion returns the moment a level card clears. Levels 2-4 first,
+  because that is where the audience actually leaves; the fall does not need
+  motion, it needs a beat. An animated level opener needs a **beat of about 8
+  seconds** (the card covers 3.8 s, the clip plays after it), chosen at the
+  beat sheet, and `hook-plan.md` carries those shots alongside the cold open's.
 - Open on status, not drama: withhold what the title promised; the hook
   question (the open loop the ending pays off) lands in the **first 8
   seconds** of narration after the callout, setup after it.

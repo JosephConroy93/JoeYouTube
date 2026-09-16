@@ -1721,3 +1721,7 @@ around it (this project's standing "validate small" discipline).
   three-way test found all three tools reaching for a hard opening number and
   none having a sourced one — Sollo omitted it, VidIQ fabricated it, Claude
   fudged it. One research gap, three different failures.
+
+## 2026-09-16
+- `prerender.py`: a hook clip landing a chapter card now holds its own first frame for the card (3.8 s) and plays as the card clears, instead of running its motion underneath the card and then freezing. Why: the animation budget is being split so early levels open on a moving shot, and without the hold the motion is spent behind the card — the Cromwell held-last-frame fault. Measured: 91 frozen frames (mean pixel diff 0.02), motion from frame 91, 192/192 frames planned.
+- `rank-ladder.md`, `generate-hook`: split the animation budget — about two thirds of the clips in the cold open, the rest on the first scene of levels 2–4, one each, so motion returns as each level card clears. Why: retention dies in the first two minutes, and stacking every clip in the cold open spends the budget before the drop-off. An animated level opener needs a ~8 s beat, chosen at the beat sheet.
