@@ -67,8 +67,22 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
 no SSML emphasis tag, no audio tags (those are `eleven_v3`), and the script's
 `*` and `_` are stripped before sending. Stress is placed by sentence
 position: put the stressed word at the end of a short sentence, or set it
-against a contrast ("The number was never yours."). Capitals are documented
-for v3 only; on v2 they are an experiment, judged by ear per take.
+against a contrast ("The number was never yours."). Capitals did nothing on
+v2 when tested.
+
+**`eleven_v3` delivery controls** (its prompting guide, read 2026-09-16, for
+the next audition): capitals increase emphasis ("It was a VERY long day");
+ellipses carry a pause and weight, dashes a shorter and less consistent one;
+**no SSML break tags**; **no speed parameter** (pace comes from the text and
+`voice.tempo`); audio tags in square brackets before or after a phrase
+(`[whispers]`, `[sighs]`, `[exhales]`, `[curious]`, `[sarcastic]`, `[laughs]`),
+which the guide itself calls inconsistent across voices, so a tag is auditioned
+on Jim before a script relies on it; stability has three named modes,
+Creative (expressive, prone to hallucination), Natural (closest to the
+recording) and Robust (stable, less responsive to tags), and which numeric
+`voice.stability` each maps to is confirmed at the audition. Capitals and
+ellipses go into the segment text as written, so the script-writer's
+stress-by-position rule still applies: position first, capitals on top.
 
 `--segment NN` regenerates one segment only (same seed). Speed comes from
 `voice.speed` in `video.md` or `series.md` unless `--speed` is given; `--tag
