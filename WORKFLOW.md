@@ -189,7 +189,11 @@ line in the video's own period dress) straight from its cast line with
 run `generate-scenes/scripts/reference-heads.py` and look at the head
 crops: a nose, ear, neck or tinted head means re-render, because every
 scene that attaches the reference inherits it; re-roll a wrong one once,
-and otherwise let that figure run on its line alone. The extra is a real
+and otherwise let that figure run on its line alone. **A figure that must be
+identical to a rendered one except for one marker** (twins; glasses on and
+off; a disguise) is made by editing that reference,
+`generate-scenes/scripts/edit-image.py <in> <out> "add X; change nothing else"`,
+never by a second render, which cannot match it. The extra is a real
 costume of the era and place, never a bare or towel-clad stand-in, saved as
 `Extra-<Role>.jpg`. Settings and
 objects get no reference. Figures that recur without a reference (a
