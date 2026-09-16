@@ -229,7 +229,10 @@ For each chapter, in order:
 4. **Validate**: `validate-scenes` (three checks, Sonnet, one pass) or the
    operator's own look; either way the row gets `validated (n/m)`.
 5. **Fix**: a failure is resubmitted once; a second failure gets a
-   rewritten prompt. A failure seen three times in the video earns one
+   rewritten prompt, or, when the fault is something to remove or move
+   (lettering, a stray prop, a figure in the wrong place) and the rest of
+   the image passes, one `generate-scenes/scripts/edit-image.py` pass on the
+   best attempt, which keeps everything the instruction does not name. A failure seen three times in the video earns one
    rule line in `content/prompt-hardening-rules.md`.
 6. **Report**: one contact sheet of the chapter to the operator
    (`validate-scenes/scripts/contact-sheet.py --latest`). An
