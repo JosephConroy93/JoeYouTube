@@ -63,6 +63,7 @@ def table_value(path, key):
 
 def norm(text):
     text = text.replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
+    text = re.sub(r'<!--.*?-->', '', text, flags=re.S)   # comments are never spoken; a bookmark spans them
     text = re.sub(r'[*_]{1,2}', '', text)
     return re.sub(r'\s+', ' ', text).strip()
 
