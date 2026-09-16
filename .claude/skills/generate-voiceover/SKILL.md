@@ -32,7 +32,10 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
    per-request limit; enough context for continuity). Strip markdown; chapter headings are
    spoken unless `chapter.spoken: no` (then the card carries them). Write each segment to
    `claude/voiceover-segments/<slug>_voice_NN.txt` — this file is the exact text
-   sent, so a filename/content mismatch is detectable later.
+   sent, so a filename/content mismatch is detectable later, and a later script
+   edit is diffed against it to decide which segments genuinely need regenerating.
+   **`--dry-run` never writes it**, or the check destroys the evidence it exists
+   to protect.
 2. **Generate** each segment with
    `POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps`
    (`xi-api-key` header), `model_id` from config, `previous_text` /

@@ -165,7 +165,11 @@ if ($Style -lt 0) {
 
 Write-Host ("Segments: {0}  (chars: {1})" -f $segments.Count, (($segments | ForEach-Object Length) -join ', '))
 for ($i = 0; $i -lt $segments.Count; $i++) {
-  [IO.File]::WriteAllText((Join-Path $segDir "$($labels[$i]).txt"), $segments[$i], (New-Object System.Text.UTF8Encoding($false)))
+  # Never on a dry run: this file is the record of what was actually voiced, and a later
+  # regeneration decision is made by diffing against it. Overwriting it destroys that evidence.
+  if (-not $DryRun) {
+    [IO.File]::WriteAllText((Join-Path $segDir "$($labels[$i]).txt"), $segments[$i], (New-Object System.Text.UTF8Encoding($false)))
+  }
 }
 
 # ---------- generation ----------
