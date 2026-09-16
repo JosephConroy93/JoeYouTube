@@ -161,6 +161,17 @@ one marker), a `guard` phrase, and a list of at most five era don'ts a
 viewer would notice. **No bible.** In a costume-identity style the line is
 the identity.
 
+**Every line states hair, facial hair and headwear.** In a blank-head style
+the head is bald unless the line says otherwise, so "bald" is a choice to be
+made per figure, not a default to fall into - and hair is the strongest single
+marker the style has for telling figures apart. Write it as the style writes
+headwear: one simple bold solid shape, a named colour, never strands or
+texture ("black hair slicked flat back", "a dark quiff", "a short grey beard",
+"a flat cap"). Give it to the figures the period makes legible and leave it
+off where the role earns that. Two figures who must not be confused never get
+the same hair shape and colour - on a white head, dark hair dominates the
+silhouette.
+
 Then render **one reference per main character** (each `YOU-*` stage, each named recurring figure, and the `EXTRA`
 line in the video's own period dress) straight from its cast line with
 `channel-farmer/scripts/style-test.ps1 -Prompts`, into `reference-images/`;
