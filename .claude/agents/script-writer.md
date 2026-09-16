@@ -184,7 +184,16 @@ moment per sentence, never a figure standing, working quietly or walking.
 ### Output
 
 Write to `content/<series>/<slug>/claude/script.md` with a closing
-`## Handoff notes` section:
+`## Handoff notes` section.
+
+**Everything in the file that is not narration is an HTML comment.** The
+voiceover step speaks every line that is not a comment or a heading, so a
+plain-text note about the format, the register or the shot plan is read aloud
+in the narrator's voice. The title line and `## Level N.` headings are the only
+bare text above the handoff notes; format notes, shot markers and anything
+addressed to a later step go inside `<!-- -->`.
+
+The handoff notes carry:
 
 - Beats from the research deliberately left out, and why.
 - Where the research was thin and the script stayed vague.
