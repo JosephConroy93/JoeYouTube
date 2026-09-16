@@ -99,6 +99,19 @@ def main():
     if english == "british":
         findings["american spellings / words"] = [ctx(text, m, 25) for m in re.finditer(AMERICAN, text, re.I)]
 
+    # register bands measured from the POVrank corpus (research/artifacts/povrank-register-targets.md)
+    wc = len(text.split())
+    contractions = len(re.findall(r"\b\w+'(?:s|t|re|ve|ll|d|m)\b", text))
+    you = len(re.findall(r"\b(?:you|your|you're|you've|you'll)\b", text, re.I))
+    feeling = re.compile(r"\b(he|she|they|his|her|their|nobody|somebody|dies?|died|death|fear|afraid|"
+                         r"hungry|cold|sick|debt|owe|pay|paid|buy|bought|lose|lost|wait|hope|shame|grief|kill|"
+                         r"beat|carry|hold|walk|sign|stand|sit|watch|feel|felt)\b", re.I)
+    fact_only = [s for s in sents if re.search(r"\d|hundred|thousand|million|per cent", s, re.I) and not feeling.search(s)]
+    bands = [("mean sentence length", statistics.mean(lens), 8, 11, "words"),
+             ("contractions per 100 words", 100 * contractions / max(1, wc), 0.2, 99, "per 100"),
+             ("second-person density", 100 * you / max(1, wc), 5, 8, "per 100"),
+             ("fact-only sentences", 100 * len(fact_only) / max(1, len(sents)), 0, 20, "%")]
+
     runs, cur = 0, 1
     for a, b in zip(map(band, lens), map(band, lens[1:])):
         cur = cur + 1 if a == b else 1
@@ -108,6 +121,16 @@ def main():
           f"(sd {statistics.pstdev(lens):.1f}), same-length runs of 3+: {runs}, questions: {q}\n")
     for k, v in findings.items():
         print(f"{len(v):>3}  {k}")
+    print()
+    print("register bands (POVrank corpus; the fact-only figure uses this script's own stake-word list, so it reads lower than the study's):")
+    for name, got, lo, hi, unit in bands:
+        mark = "ok " if lo <= got <= hi else "OFF"
+        print(f"  {mark} {name}: {got:.1f} {unit} (band {lo}-{hi})" if hi < 99
+              else f"  {mark} {name}: {got:.1f} {unit} (at least {lo})")
+    if fact_only:
+        print(f"  fact-only sentences ({len(fact_only)}), the first few:")
+        for s in fact_only[:5]:
+            print("     " + s[:120])
     print()
     for k, v in findings.items():
         if v:

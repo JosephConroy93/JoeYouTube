@@ -415,7 +415,7 @@ def main():
     outro = build_outro(staging, a.fps, a.count_frames, scenes, total)
     video_total = total + sum(o["frames"] for o in outro)
     write_xml(a.out, name, a.fps, a.width, a.height, hook, scenes + outro, audio, video_total, cards, sfx)
-    nv, na, vf = validate(a.out, video_total, audio_end=total)
+    nv, na, vf = validate(a.out, video_total, audio_end=audio[-1]["end_frame"])
     print(f"wrote {a.out}")
     print(f"  sequence '{name}' @ {a.fps} fps: {video_total} frames ({timecode(video_total, a.fps)})"
           + (f"; {a.tail:g} s tail" if a.tail else "") + (f" + outro {outro[0]['frames']} frames" if outro else ""))
