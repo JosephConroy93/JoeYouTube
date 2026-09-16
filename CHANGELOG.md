@@ -6,6 +6,10 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 
 ---
 
+## 2026-09-16 — Pinned comment at publish
+
+- **`WORKFLOW.md` Step 11 3c, `conventions.md` `publish/` files and `series.md` `pinned_comment`.** Every published video gets `publish/pinned-comment.md`, pinned from the channel account as soon as the video is public: a question the ending leaves the viewer holding, the sources line, one specific next video with its link, the subscribe link. Why: three videos were live with nothing pinned, so the comments had no prompt and no route to the next video.
+
 ## 2026-09-15 — Film open, baked grade, −14 LUFS, captions step
 
 - **`place-scenes` `prerender.py`: `--grade`, `--grade-mix`, `--film-until`.** Operator picked a Super 8 opening from samples: a LUT mixed at 50% over every visual (the pack's 188 LUTs scored against the look; none within reach, so the look was exported as `content/styles/luts/LivedIt-Film.cube`), film look and 2.39:1 letterbox through the arrest night, bars opening at the flashback line. Baked by ffmpeg so it is scripted and measurable; replaces the Resolve CDL hook grade. Bars are sized from each clip's real frame (native-resolution stills put 1920×1080 bars in the wrong place).

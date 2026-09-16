@@ -300,6 +300,13 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
    the caption track. Never time captions from the TTS alignment: it drifts.
    `python .claude/skills/align-scenes/scripts/captions.py <series>/<slug>`
    writes it; spot-check a few cues against the video before uploading.
+3c. Pinned comment: write `publish/pinned-comment.md` from the series
+   template (`series.md`, "Pinned comment"): the first line is a question
+   the video's own ending leaves the viewer holding, answerable from the
+   video and never a trivia quiz; then the template's fixed lines. The
+   next-video line names one specific video with its link, never "watch
+   this next". Post it from the channel account as soon as the video is
+   public and pin it.
 4. Record `published_id` and publish date in `video.md`; add the title to
    the competitor-titles index under the channel's own section.
    Set `status: published`.

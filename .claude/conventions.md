@@ -39,6 +39,8 @@ content/
       hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)
       hook/shot-NN.mp4               hook clip trimmed to its scene's narration
       thumbnails/<name>.jpg          make-thumbnail output, with <name>-sizes.jpg (1280 / 360 / 168 px check)
+      publish/description.md         the Step 11 upload set as pasted: description, tags.txt, captions.srt
+      publish/pinned-comment.md      the comment pinned under the video (series.md template + the video's question)
       scene-generation/<scene_id>.jpg    exactly one canonical image per scene after finalize
       scene-generation/_archive/         attempts, superseded, manual-edit sources
       _archive/                          disposables swept by close-video (never auto-deleted)
@@ -77,6 +79,7 @@ A key/value table. Keys:
 | `staging_path` | local non-OneDrive path pattern for Resolve media, e.g. `C:\Users\<user>\Videos\<slug>-<fps>` |
 | `fps_default`, `resolution_default` | timeline defaults |
 | `thumbnail.background`, `thumbnail.ink`, `thumbnail.accent`, `thumbnail.font` | the locked thumbnail template read by `make-thumbnail`: hex colours for the ground, the text and the accent line, and a font file path |
+| `pinned_comment` | a "Pinned comment" section in `series.md`: the fixed lines of the comment pinned under every video (sources line, one specific next video with its link, subscribe link); Step 11 fills the video's question line into `publish/pinned-comment.md` |
 
 ## `video.md`
 
