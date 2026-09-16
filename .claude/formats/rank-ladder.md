@@ -32,9 +32,15 @@ cream chapter card with the `LEVEL N` label.
 
 ## Register
 
-Second person, present tense, dry. Wry and understated, never portentous.
-The narrator is a companion, not a documentary voiceover. Hedges are
-dramatised in-scene, never as commentary about sources.
+Second person, present tense. The narrator is a companion telling one
+person's story, not a documentary voiceover. Warm, plain-spoken, and close
+to the person it happens to: every beat says what the moment costs them.
+Contractions are normal speech here.
+
+Restraint is understatement, never absence of feeling. What is forbidden is
+melodrama, portent, narrator opinion about history, adjectives doing work the
+facts should do, and any feeling the research cannot support. Hedges are
+dramatised in-scene, never delivered as commentary about sources.
 
 ## Opening
 
@@ -91,7 +97,7 @@ script and say so.
 | Opening, first 30 s: withholds the title's promise (8) · hard sourced fact delivered casually (8) · multiple small open loops (7) · voice established immediately (7) | 30 | 18 |
 | Ending: reflective/cyclical (8) · lands the interpretive angle (7) · does not overstate the research (5) | 20 | 12 |
 | Body: escalation holds (7) · first reveal as a scene ~60–90 s (6) · open loops paid off (6) · pacing varies (6) | 25 | — |
-| Voice: second-person present sustained (5) · dry not portentous (5) · consistent register; a hedge delivered as meta-commentary, a prose tell or a spelling off `voice.english` loses points here (5) | 15 | — |
+| Voice: second-person present sustained (5) · felt stakes carried with restraint, never flat, clinical or portentous (5) · consistent register; a hedge delivered as meta-commentary, a prose tell or a spelling off `voice.english` loses points here (5) | 15 | — |
 | Research utilisation: obscure specifics over generic ones (5) · hedges handled as features (5) | 10 | — |
 
 A script below either floor fails regardless of total.

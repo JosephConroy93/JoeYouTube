@@ -45,6 +45,7 @@ stay in [research/inventory.md](research/inventory.md). Newest first.
 - **`write-prompts`: dress a figure in off-white rather than pure white** in a blank-head style, with one darker accent. Why: white cloth against a blank white egg head loses the figure (operator, watching the East India Company cut).
 - **`align.py` keys its whisper cache on the audio's size and mtime, not the path.** Why: after a re-voice the segments kept their names, so the aligner reused the old transcript and aborted with timing that ended 6 s short.
 - **Re-voice only the segments whose text changed.** Why: a numbers pass edited every segment of East India Company and the whole script was regenerated (about 19k characters); diffing `claude/voiceover-segments/*.txt` against the archived copies would have spared the untouched ones.
+- **Register rewritten in both format modules, both Voice rubric rows and `series.md`: warm and close under restraint, no longer "dry".** Why: the operator's verdict on the East India Company cut was that it lacks emotion and reads clinically, and the cause was in the config, not the draft: "dry" was stated in the Register line and awarded 5 points in the rubric, so a warmer draft scored lower. The register is now defined by what it forbids (melodrama, portent, narrator opinion, unsupported feeling) rather than by the absence of feeling.
 
 ## 2026-09-14 — Lightweight process (branch `process/lightweight`)
 
