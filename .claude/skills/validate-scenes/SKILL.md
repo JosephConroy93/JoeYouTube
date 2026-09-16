@@ -58,6 +58,14 @@ scene ("Contract" on a contract, a plausible ledger heading). It fails only
 when the words are wrong for it: anachronistic, contradicting the narration,
 or garbled text that reads as a mistake.
 
+## Writing the batch log
+
+`batch-log.md` has one writer at a time. A QC agent rewrites whole rows, so
+the driving session must not submit or fetch a batch while one is running:
+a submit's new row is lost under the agent's rewrite and its images are never
+fetched (an orphaned batch is recovered with `get-scenes -BatchId <id>`).
+QC a chapter, then submit the next; never both at once.
+
 ## Dispatch
 
 Subagents on **Sonnet**, 5–8 images each, returning per image `PASS` or

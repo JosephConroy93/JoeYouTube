@@ -51,6 +51,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .claude/skills/generate-
   -Action submit -Project <series>/<slug> -Chapter <file> [-SceneIds 012,013] [-Notes "..."]
 ```
 
+A submit appends to `batch-log.md`: never run one while a `validate-scenes`
+agent is writing that file, or the new row is lost under its rewrite.
+
 **Always wait for the batch (hard rule).** A slow or stalled batch is waited
 out, however long it takes (the API allows up to 24 hours); never cancel it
 to go faster. `-Direct` (one interactive `generateContent` call per row, about
