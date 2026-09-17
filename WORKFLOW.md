@@ -346,7 +346,10 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
    headings.
 3b. Captions, **burned into the picture as standard** (operator, 2026-09-16):
-   build the SRT with `--max-lines 1`, then burn it into the upload copy with
+   the burn-in starts as soon as the master's measurements pass, not after
+   the watch-through — it is background CPU, so starting it early costs
+   nothing and a re-cut only costs the same encode again.
+   Build the SRT with `--max-lines 1`, then burn it into the upload copy with
    ffmpeg (`subtitles=...:force_style='Fontname=Arial Black,FontSize=17,Bold=1,
    Outline=2,Alignment=2,MarginV=16'` at 1080p) and encode for delivery, not
    speed: `-preset slow -crf 15 -maxrate 16M`, which lands near 8 Mbps and
