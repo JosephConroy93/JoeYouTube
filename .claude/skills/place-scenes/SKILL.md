@@ -121,6 +121,13 @@ verification rule: `.claude/conventions.md`.
    (V1 = scenes, V2 = chapter cards, one audio track per voice segment, then
    SFX tracks packed without overlaps) and re-parses it to check video end
    = audio end = planned total.
+6b. **Media replaced on disk means a fresh project.** Resolve caches a
+   clip's properties when it first reads it, and a project that has seen
+   the old file renders the new one wrong — not offline, not obviously
+   broken, just wrong. Re-cutting a video after re-voicing, re-normalising
+   or padding its WAVs therefore imports into a **new project**, never on
+   top of the old one, and the old project is left alone rather than
+   repaired. `media_pool.refresh()` does not clear it.
 7. **Import.** Bins first (`add_subfolder` + `set_current_folder`: Hook /
    Scenes / Voiceover), then `timeline.import_timeline_checked(path,
    sanitize_media: false, require_temp_path: false)`. On Windows the
