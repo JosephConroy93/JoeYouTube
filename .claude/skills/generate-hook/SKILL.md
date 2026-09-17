@@ -48,7 +48,17 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 2. **Cut to beats** (`python scripts/trim-hook.py <series>/<slug>`): trim each raw clip to the measured length of its beat (never stretch; if the beat is longer than the
    clip, hold the last frame and report it) into `hook/shot-NN.mp4`; the
    last shot is never trimmed to fit.
-3. Report per shot: model, duration requested vs delivered, cost.
+3. **Hard QC, every clip, no exceptions** (`python scripts/check-hook.py <series>/<slug> --dir staged --staging <dir>`): samples the
+   staged clip every 0.25 s and fails on either fault —
+   **hang**, half a second or more where the picture does not change, and
+   **glitch**, a single step more than 5x the clip's own median. It runs on
+   the *staged* clips because those are what ship: a card-landing shot is
+   re-timed by `place-scenes` around its card, so judging `hook/` overstates
+   it, and a static run starting at 0 s there is the card hold by design.
+   A hang means the clip is shorter than its beat: **regenerate it longer,
+   never accept the held frame.** A shot's duration must cover its beat, or
+   its beat minus the card seconds when a chapter card lands on it.
+4. Report per shot: model, duration requested vs delivered, cost.
 
 `--dry-run` writes the request JSON to the scratch dir and exits.
 `--shot N` regenerates one shot. A plain rerun skips shots already in

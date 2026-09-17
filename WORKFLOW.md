@@ -270,7 +270,9 @@ chapters are still in QC: Veo lite allows about four submissions a day, so a
 longer hook spans the reset and a late start costs a day. After the last
 chapter: `finalize-scenes/scripts/promote-latest.py --apply` (each scene's
 passing attempt takes the canonical name), `finalize-scenes`,
-`align-scenes --source api`, then the hook trim (`generate-hook` step 2).
+`align-scenes --source api`, then the hook trim (`generate-hook` step 2) and
+its hard QC (step 3, `check-hook.py`): no clip ships with a hang or a
+glitch, and a hang is fixed by regenerating longer, never by accepting it.
 Set `status: generated`.
 
 ## Step 9 — Edit 🟢
