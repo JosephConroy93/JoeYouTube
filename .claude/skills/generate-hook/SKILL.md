@@ -82,7 +82,12 @@ quota resets.
   steer the emotion when it matters ("he mutters, frowning") or the model
   picks one, e.g. anger; ask for a
   "continuous, constant-speed push-in over the whole clip" or the push
-  front-loads and stalls; never request an action the still already shows.
+  front-loads and stalls; never request an action the still already shows. A figure told to stay
+  somewhere drifts anyway unless he is given an action that completes
+  there (a camera rising and a flash firing anchored a photographer at the
+  far table where "stays bent over it" did not), and when every figure
+  must hold, lock the camera off rather than asking for a track, which
+  carries the model past them.
 - Cost (Gemini list price, £): lite 720p ≈ £0.04/s, lite 1080p ≈ £0.06/s,
   fast 1080p ≈ £0.09/s, standard ≈ £0.31/s. A 7-shot hook of about 35 s on
   lite 720p ≈ £1.30.
