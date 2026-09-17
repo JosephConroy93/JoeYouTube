@@ -67,7 +67,7 @@ A key/value table. Keys:
 | `format` | default format module name |
 | `voice.provider`, `voice.name`, `voice.id`, `voice.model` | TTS voice actually used |
 | `voice.english` | National English the narration is written in (`British`, `American`): spelling, vocabulary and idiom follow it |
-| `voice.chapter_gap` | Seconds of silence at the end of each chapter's voice segment (one segment per chapter), the breath before the next chapter card; default 0 |
+| `voice.chapter_gap` | Seconds of silence at the end of each chapter's voice segment (one segment per chapter), the breath before the next chapter card; default 0. **0 whenever `chapter.spoken` is `yes`**: a spoken callout already lands on its own sentence pause, and an added gap reads as a delay. Only an unspoken heading needs one, because nothing else gives the viewer time to read the card. A non-zero gap is set as a whole number of frames at the video's fps (1.25 s at 24, not 1.2), or every scene after it re-rounds by a frame when the gap changes. |
 | `voice.speed`, `voice.stability`, `voice.style`, `voice.tempo` | ElevenLabs voice settings (defaults 1.0, 0.5, 0) and a post-generation time-stretch (default 1.0; pitch kept, alignment scaled to match; the only pace control on `eleven_v3`, which ignores `speed`); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |

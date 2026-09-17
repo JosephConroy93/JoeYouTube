@@ -18,6 +18,7 @@ cream chapter card with the `LEVEL N` label.
 | `chapter.heading` | `Level N. <Rank>.` |
 | `chapter.file` | `level-NN.md` |
 | `chapter.spoken` | `yes` |
+| `voice.chapter_gap` | `0` — the callout is spoken, so the sentence's own pause is the breath before the card; an added gap reads as a delay |
 
 ## Two categories — classify the concept before research
 
