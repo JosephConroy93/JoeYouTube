@@ -248,10 +248,14 @@ chapter `written` after its own `check-manifest.py` run), and generation
 and QC of one wave overlap with the next wave's prompts. A fix found in a
 wave is applied to the next wave's rows before they generate.
 
-After the last chapter: `finalize-scenes/scripts/promote-latest.py --apply`
-(each scene's passing attempt takes the canonical name), `finalize-scenes`,
-`align-scenes --source api`, then `generate-hook` (Veo lite allows about four
-submissions a day, so a longer hook spans the reset). Set `status: generated`.
+The hook's Veo submissions (`generate-hook` step 1) start as soon as every
+still the hook plan names is validated and canonical, usually while later
+chapters are still in QC: Veo lite allows about four submissions a day, so a
+longer hook spans the reset and a late start costs a day. After the last
+chapter: `finalize-scenes/scripts/promote-latest.py --apply` (each scene's
+passing attempt takes the canonical name), `finalize-scenes`,
+`align-scenes --source api`, then the hook trim (`generate-hook` step 2).
+Set `status: generated`.
 
 ## Step 9 — Edit 🟢
 

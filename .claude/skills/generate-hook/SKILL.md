@@ -24,8 +24,11 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
   scene of a later chapter**, where `place-scenes` freezes the clip's first
   frame under the chapter card and plays it as the card clears (so that beat
   needs roughly 8 s). Clips still submit and trim identically.
-- Beat timings: `claude/scene-timing.md`. Runs at the end of Step 8, after
-  every chapter is validated and `align-scenes` has run; never earlier.
+- Beat timings: `claude/scene-timing.md`, needed only by the trim (step 2),
+  so the trim waits for `align-scenes`; never earlier. Submission (step 1)
+  needs only the plan's stills, validated and canonical, and runs as soon
+  as they are, before the later chapters close: the daily Veo quota spans
+  a reset for any hook over four shots, so a late start costs a day.
 - `GEMINI_API_KEY` in the user environment.
 
 Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
