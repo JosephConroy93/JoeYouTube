@@ -14,7 +14,10 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[4]
 W, H = 1280, 720
+CARD_SCALE = [1.0]
 CARD_W, CARD_AR, CARD_CX, CARD_CY, TILT, BORDER = 610, 1.23, 945, 360, -2.5, 10
+# --card scales the tilted card about its own centre. The text block keeps its place,
+# so a card much over 1.3 starts to crowd it; check the 168 px panel, not the big one.
 TEXT_X, TEXT_W, TEXT_H, LEAD = 48, 540, 600, 10
 MARK_SIZE, MARK_BOTTOM, TEXT_H_MARK = 52, H - 44, 520   # channel wordmark bottom-left; hook block stays above it
 GRAIN, MOTTLE, CREASES, PAPER_SEED = 5, 9, (0.24, 0.47, 0.79), 1904   # aged-paper texture under the cream; fixed seed so a rebuild is identical
@@ -76,7 +79,8 @@ def card(path, centre, ink, zoom=1.0, ymid=0.5):
     ch = min(h, round(cw / CARD_AR))
     x0 = min(max(0, round(centre * w - cw / 2)), w - cw)
     y0 = min(max(0, round(ymid * h - ch / 2)), h - ch)
-    c = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((CARD_W, round(CARD_W / CARD_AR)), Image.LANCZOS)
+    card_w = round(CARD_W * CARD_SCALE[0])
+    c = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((card_w, round(card_w / CARD_AR)), Image.LANCZOS)
     framed = Image.new("RGBA", (c.width + 2 * BORDER, c.height + 2 * BORDER), ink + (255,))
     framed.paste(c, (BORDER, BORDER))
     return framed.rotate(TILT, resample=Image.BICUBIC, expand=True)
@@ -126,9 +130,11 @@ ap.add_argument("--centre", type=float, default=0.5, help="horizontal centre of 
 ap.add_argument("--zoom", type=float, default=1.0, help="punch the crop in on the subject; 1 is the full-height scene")
 ap.add_argument("--ymid", type=float, default=0.5, help="vertical centre of the card crop, 0-1; a head usually sits above 0.5")
 ap.add_argument("--line", action="append", required=True)
+ap.add_argument("--card", type=float, default=1.0, help="scale the tilted card, 1 is the standard layout")
 ap.add_argument("--replace", action="store_true")
 ap.add_argument("--mark", action="store_true", help="add the LIVED IT wordmark bottom-left")
 a = ap.parse_args()
+CARD_SCALE[0] = a.card
 
 series, slug = a.project.split("/")
 bg, ink, accent, font = series_keys(series)
@@ -154,7 +160,10 @@ out_dir.mkdir(parents=True, exist_ok=True)
 lines = [(t[1:-1], accent) if t.startswith("[") and t.endswith("]") else (t, ink) for t in a.line]
 canvas = paper(bg)
 c = card(matches[0], a.centre, ink, a.zoom, a.ymid)
-pos = (CARD_CX - c.width // 2, CARD_CY - c.height // 2)
+# a bigger card grows both ways from its centre and would eat the text block,
+# so it slides right as it grows, letting its outer edge bleed off the frame
+cx = CARD_CX + round((CARD_SCALE[0] - 1.0) * 200)
+pos = (cx - c.width // 2, CARD_CY - c.height // 2)
 shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 shadow.paste((0, 0, 0, 90), (pos[0] + 12, pos[1] + 16), c.split()[3])
 shadow = shadow.filter(ImageFilter.GaussianBlur(14))

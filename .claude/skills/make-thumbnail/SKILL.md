@@ -11,9 +11,18 @@ Executed by `scripts/thumb.py`; colours and font are `series.md`'s `thumbnail.*`
 ## Steps
 
 1. **Pick the line.** 2–3 words, one per line where they fit, readable at 168 px
-   wide. Check it against the research file's fact-check section exactly as a
-   script line is checked; a contested point becomes a question, never a
-   resolution. The line adds the stake and never restates the title.
+   wide, and **it has to land cold**, on a viewer with no context: a line
+   distilled from the script's own conclusions reads as nothing to a
+   scroller, however well it summarises the video. Take a concrete fact
+   from the subject instead.
+   **A checkable claim is checked; a characterisation is not.** A number, a
+   date, an event or an attribution goes through the research file's
+   fact-check section exactly as a script line does, and a contested point
+   becomes a question, never a resolution. An opinion or a framing
+   ("London's most dangerous gang") is not a claim and needs no source:
+   a title and a thumbnail exist to earn the click, and the operator has
+   ruled characterisation fair there, though it stays forbidden in
+   narration. The line adds the stake and never restates the title.
 2. **Pick the still.** One validated `scene-generation/` image: the protagonist
    with a strong emotion, or one striking object the line points at. Choose from
    a contact sheet of shortlisted ids (grep the beat sheet for the line's
@@ -31,6 +40,10 @@ Executed by `scripts/thumb.py`; colours and font are `series.md`'s `thumbnail.*`
    scene crop of a wide shot leaves a head around 9 px, which reads as texture,
    not an expression. Zoom per still, not to a fixed number: a shot that already
    fills the frame with a figure needs 1.2, a wide one needs 2.3.
+   `--card` scales the tilted card (1 is the standard layout); it slides
+   right as it grows so it does not eat the text block, and its outer edge
+   bleeds off the frame. Above about 1.3 the text clips anyway - check the
+   168 px panel, not the big one.
    A `[bracketed]` line takes the accent colour. `--scene` takes only the
    canonical still; `--still <file>` names another file in `scene-generation/`,
    such as an attempt whose QC flaw falls outside the crop. The script stops
