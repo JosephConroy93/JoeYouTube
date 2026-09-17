@@ -8,7 +8,7 @@ A line in [brackets] takes the accent colour. Colours and font come from series.
 1280, 360 and 168 px wide). An existing <name>.jpg is moved to thumbnails/_archive/ only with
 --replace; otherwise the script stops.
 """
-import argparse, random, re, shutil, sys, time
+import argparse, os, random, re, shutil, sys, time
 from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
@@ -126,12 +126,15 @@ ap = argparse.ArgumentParser()
 ap.add_argument("project", help="<series>/<slug>")
 ap.add_argument("--name", required=True)
 src = ap.add_mutually_exclusive_group(required=True)
+src.add_argument("--import", dest="imp", metavar="FILE",
+                 help="size a finished thumbnail made elsewhere (e.g. in an image model): exact 16:9 crop, 1280x720, "
+                      "JPEG under YouTube's 2 MB cap, plus the size-check sheet. No text or card is drawn.")
 src.add_argument("--scene", help="scene id or its numeric prefix; canonical still only")
 src.add_argument("--still", help="a named file in scene-generation/, e.g. an attempt whose flaw falls outside the crop")
 ap.add_argument("--centre", type=float, default=0.5, help="horizontal centre of the card crop, 0-1")
 ap.add_argument("--zoom", type=float, default=1.0, help="punch the crop in on the subject; 1 is the full-height scene")
 ap.add_argument("--ymid", type=float, default=0.5, help="vertical centre of the card crop, 0-1; a head usually sits above 0.5")
-ap.add_argument("--line", action="append", required=True)
+ap.add_argument("--line", action="append")
 ap.add_argument("--card", type=float, default=1.0, help="scale the tilted card, 1 is the standard layout")
 ap.add_argument("--card-ar", type=float, default=None, dest="card_ar",
                 help="card aspect ratio; default 1.23. The stills are 1.79, so the default throws away a third of the width — pass ~1.6-1.79 to keep a wide composition whole")
@@ -139,11 +142,40 @@ ap.add_argument("--replace", action="store_true")
 ap.add_argument("--mark", action="store_true", help="add the LIVED IT wordmark bottom-left")
 a = ap.parse_args()
 CARD_SCALE[0] = a.card
+
 CARD_AR_OVERRIDE[0] = a.card_ar
 
 series, slug = a.project.split("/")
 bg, ink, accent, font = series_keys(series)
 video = ROOT / "content" / series / slug
+(video / "thumbnails").mkdir(parents=True, exist_ok=True)
+if a.imp:
+    im = Image.open(a.imp).convert("RGB")
+    w, h = im.size
+    if abs(w / h - 16 / 9) > 1e-4:   # crop first, or the resize stretches the lettering
+        if w / h > 16 / 9:
+            nw = round(h * 16 / 9); im = im.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+        else:
+            nh = round(w * 9 / 16); im = im.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+        print(f"cropped {w}x{h} -> {im.size[0]}x{im.size[1]} for exact 16:9")
+    im = im.resize((1280, 720), Image.LANCZOS)
+    out = os.path.join(str(ROOT / 'content' / a.project.split('/')[0] / a.project.split('/')[1] / 'thumbnails'), a.name + ".jpg")
+    for q in (95, 92, 90, 88, 85, 82):
+        im.save(out, quality=q, optimize=True, progressive=True)
+        if os.path.getsize(out) <= 2_000_000:
+            break
+    else:
+        sys.exit(f"{out}: still over YouTube's 2 MB cap at quality 82")
+    sheet = Image.new("RGB", (1280 + 420, 740), "black")
+    sheet.paste(im, (0, 10))
+    sheet.paste(im.resize((360, 202), Image.LANCZOS), (1290, 10))
+    sheet.paste(im.resize((168, 94), Image.LANCZOS), (1290, 230))
+    sheet.save(os.path.join(str(ROOT / 'content' / a.project.split('/')[0] / a.project.split('/')[1] / 'thumbnails'), a.name + "-sizes.jpg"), quality=88)
+    print(f"{out}  1280x720  {os.path.getsize(out):,} bytes (cap 2,097,152)  q{q}")
+    print("check the 168 px panel in the -sizes sheet: that is the size the click is decided at")
+    sys.exit(0)
+if not a.line:
+    sys.exit("--line is required unless --import is used")
 if a.still:
     matches = [video / "scene-generation" / a.still]
     if not matches[0].is_file():
@@ -154,6 +186,8 @@ else:
     if len(matches) != 1:
         sys.exit(f"scene {a.scene!r} matched {len(matches)} canonical images in scene-generation/")
 out_dir = video / "thumbnails"
+out_dir.mkdir(parents=True, exist_ok=True)
+
 out = out_dir / f"{a.name}.jpg"
 if out.exists():
     if not a.replace:

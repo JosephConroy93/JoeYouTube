@@ -8,6 +8,30 @@ description: Builds a video's thumbnail in the series' locked cream-card layout 
 Invocation: `make-thumbnail <series>/<slug>`. Layout: `.claude/conventions.md`.
 Executed by `scripts/thumb.py`; colours and font are `series.md`'s `thumbnail.*` keys.
 
+## Where the art comes from
+
+**Art direction is the operator's, and it does not belong in this script.** A
+thumbnail is one image a video; iterating on it visually in an image model is
+faster and better than any compositor we would have to keep extending with
+texture and font options. What the pipeline owns is the mechanical part a
+human eye misses: exact 16:9, 1280x720, and YouTube's **2 MB cap**, which a
+model's own export blows past routinely (both Krays candidates arrived at
+~2.5 MB and would have been rejected on upload).
+
+```
+python scripts/thumb.py <series>/<slug> --name <slug> --import <file> [--replace]
+```
+
+crops to exact 16:9 first (a naive resize stretches lettering when the source
+is off-ratio), writes 1280x720 JPEG stepping the quality down until it is
+under the cap, and builds the size-check sheet. No text or card is drawn.
+
+**Never let a model render the words when it can be avoided.** The compositor
+below draws text from a font file, so spelling is exact by construction; a
+model rendering text is a proofreading job every time - the first Krays
+thumbnail came back "LONDONS" with no apostrophe. Read every word at full
+size before shipping art made elsewhere.
+
 ## Steps
 
 1. **Pick the line.** 2–3 words, one per line where they fit, readable at 168 px
