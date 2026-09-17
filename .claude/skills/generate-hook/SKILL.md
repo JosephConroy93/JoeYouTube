@@ -23,7 +23,12 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
   Shots are not all in the cold open: a plan may place one on the **first
   scene of a later chapter**, where `place-scenes` freezes the clip's first
   frame under the chapter card and plays it as the card clears (so that beat
-  needs roughly 8 s). Clips still submit and trim identically.
+  needs roughly 8 s). Clips still submit and trim identically: `trim-hook.py`
+  cuts a card-landing clip to its full beat like any other, and
+  `place-scenes` holds its first frame for the card and bounds the output
+  at the beat, so only the clip's first (beat minus card) seconds ever
+  play, about 4 s of a 6 s clip; plan that shot's motion to finish inside
+  that window, and never subtract the card hold in the trim.
 - Beat timings: `claude/scene-timing.md`, needed only by the trim (step 2),
   so the trim waits for `align-scenes`; never earlier. Submission (step 1)
   needs only the plan's stills, validated and canonical, and runs as soon
