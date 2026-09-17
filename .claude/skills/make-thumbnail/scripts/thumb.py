@@ -15,6 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 ROOT = Path(__file__).resolve().parents[4]
 W, H = 1280, 720
 CARD_SCALE = [1.0]
+CARD_AR_OVERRIDE = [None]
 CARD_W, CARD_AR, CARD_CX, CARD_CY, TILT, BORDER = 610, 1.23, 945, 360, -2.5, 10
 # --card scales the tilted card about its own centre. The text block keeps its place,
 # so a card much over 1.3 starts to crowd it; check the 168 px panel, not the big one.
@@ -75,12 +76,13 @@ def card(path, centre, ink, zoom=1.0, ymid=0.5):
     """
     im = Image.open(path).convert("RGB")
     w, h = im.size
-    cw = min(w, round(h * CARD_AR / zoom))
-    ch = min(h, round(cw / CARD_AR))
+    ar = CARD_AR_OVERRIDE[0] or CARD_AR
+    cw = min(w, round(h * ar / zoom))
+    ch = min(h, round(cw / ar))
     x0 = min(max(0, round(centre * w - cw / 2)), w - cw)
     y0 = min(max(0, round(ymid * h - ch / 2)), h - ch)
     card_w = round(CARD_W * CARD_SCALE[0])
-    c = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((card_w, round(card_w / CARD_AR)), Image.LANCZOS)
+    c = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((card_w, round(card_w / ar)), Image.LANCZOS)
     framed = Image.new("RGBA", (c.width + 2 * BORDER, c.height + 2 * BORDER), ink + (255,))
     framed.paste(c, (BORDER, BORDER))
     return framed.rotate(TILT, resample=Image.BICUBIC, expand=True)
@@ -131,10 +133,13 @@ ap.add_argument("--zoom", type=float, default=1.0, help="punch the crop in on th
 ap.add_argument("--ymid", type=float, default=0.5, help="vertical centre of the card crop, 0-1; a head usually sits above 0.5")
 ap.add_argument("--line", action="append", required=True)
 ap.add_argument("--card", type=float, default=1.0, help="scale the tilted card, 1 is the standard layout")
+ap.add_argument("--card-ar", type=float, default=None, dest="card_ar",
+                help="card aspect ratio; default 1.23. The stills are 1.79, so the default throws away a third of the width — pass ~1.6-1.79 to keep a wide composition whole")
 ap.add_argument("--replace", action="store_true")
 ap.add_argument("--mark", action="store_true", help="add the LIVED IT wordmark bottom-left")
 a = ap.parse_args()
 CARD_SCALE[0] = a.card
+CARD_AR_OVERRIDE[0] = a.card_ar
 
 series, slug = a.project.split("/")
 bg, ink, accent, font = series_keys(series)

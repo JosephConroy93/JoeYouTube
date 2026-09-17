@@ -40,6 +40,12 @@ Executed by `scripts/thumb.py`; colours and font are `series.md`'s `thumbnail.*`
    scene crop of a wide shot leaves a head around 9 px, which reads as texture,
    not an expression. Zoom per still, not to a fixed number: a shot that already
    fills the frame with a figure needs 1.2, a wide one needs 2.3.
+   `--card-ar` sets the card's aspect ratio. The default 1.23 is near 4:3
+   while every still is 16:9, so filling the card discards about a third of
+   the width - that is what slices figures at the sides, and no amount of
+   `--centre` tuning recovers it. Pass ~1.6-1.79 to keep a wide composition
+   whole, at the cost of smaller faces; punch in with `--zoom` instead when
+   one face has to carry the frame.
    `--card` scales the tilted card (1 is the standard layout); it slides
    right as it grows so it does not eat the text block, and its outer edge
    bleeds off the frame. Above about 1.3 the text clips anyway - check the
