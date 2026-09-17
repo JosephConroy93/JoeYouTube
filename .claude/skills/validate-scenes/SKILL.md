@@ -51,6 +51,10 @@ One verdict per image, coarse, at the size a viewer sees:
    References are stricter: a reference with any nose line is
    re-rendered, because every scene that attaches it copies it.
 3. **Malformed**: extra or missing limbs, warped anatomy, garbled hands,
+   **counting the arms on every foreground figure** — a third arm reads as
+   furniture at a glance and survives a check that only looks at hands and
+   fingers, and it is likeliest where a figure holds something with both
+   hands beside an open window, door or sill (rule R22),
    nonsense composition.
 
 A `text-card` row passes with scribble, or with legible words that fit the
