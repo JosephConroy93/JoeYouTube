@@ -131,15 +131,22 @@ gaps with a short capped web check.
    format module. Revise with Mode 2 until it passes. **After any Mode 2
    pass that moved a band, run 3 and 4 again** on the levels it touched: a
    band fix is where ear faults are introduced.
-6. **External review, before the voice step.** The operator runs the
-   scored script through the external reviewer (its analysis is free; its
-   rewrite is paid and is never bought — Mode 2 does the rewriting) and
-   saves the feedback to `claude/script-review.md`. Mode 2 applies the
-   drop-off triggers and the lowest-scoring pillar; re-run 4 and 3 on the
-   levels it touched. This sits before Step 5 because after voicing a
-   finding costs ElevenLabs credits and a re-voiced segment, so a review
-   read late becomes a note for the next script instead of a fix — which
-   is what happened on East India and the Krays. Lock.
+6. **External score, before the voice step.** The operator runs the scored
+   script through the external reviewer's **score** (unlimited and free)
+   and records the three pillars in `video.md` `script_review`. It is a
+   second opinion on retention, not a gate: a pillar below the last
+   video's is a reason to look, and Mode 2 fixes what it finds. Anything
+   read here is free to act on; after Step 5 the same finding costs
+   ElevenLabs credits and a re-voiced segment, which is why both reviews
+   so far became notes for the next script instead of fixes.
+   The reviewer's **deep report** is scarce (the count is in
+   `research/index.md`) and its rewrite tier is never bought — Mode 2 does
+   the rewriting. Spend a deep report only on a script written wholly
+   under the current rules, to find what our own checks still miss;
+   spending one on known faults buys a list we already have. Its output
+   is filed at `claude/script-review.md` (PDF beside it), and a fault it
+   names that the previous report also named becomes a rule in
+   `script-writer`, not a fix. Lock.
 7. Set `status: scripted`.
 
 ## Step 5 — Voiceover and timing 🟡 (new position: straight after script lock)

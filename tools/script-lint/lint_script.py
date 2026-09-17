@@ -74,6 +74,24 @@ def ear_checks(sents):
             numfrag.append(" / ".join(sents[i - 2:i + 1]))
     ear["number-fragment runs (3+ short sentences each carrying a number)"] = numfrag
     ear["abstract density (2+ abstraction words in one sentence)"] = [s for s in sents if len(ABSTRACT.findall(s)) >= 2]
+    # a term whose definition arrives before its consequence: "…a printed pass with the seal on it, called a dastak"
+    named_late = []
+    for s in sents:
+        m = re.search(r"(?<![A-Za-z])called (?:a|an|the) [a-z]", s)
+        if m and m.start() > len(s) * 0.45:
+            named_late.append(s)
+    ear["term named after its definition (the viewer holds an unnamed thing meanwhile)"] = named_late
+    # motif fatigue: the same long phrase returning verbatim, level callouts excluded
+    words, seen, repeats = [], {}, []
+    for s in sents:
+        if re.match(r"\s*Level \w+[.,]", s):
+            continue
+        words += re.findall(r"[a-z']+", s.lower())
+    for i in range(len(words) - 5):
+        g = " ".join(words[i:i + 6])
+        seen[g] = seen.get(g, 0) + 1
+    repeats = [f"{g!r} x{n}" for g, n in seen.items() if n > 1]
+    ear["phrases returning verbatim (a motif should change its angle, not its wording)"] = sorted(repeats)
     return ear
 
 
