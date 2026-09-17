@@ -70,10 +70,23 @@ def duration(path):
                                           "stream=duration", "-of", "csv=p=0", path]).decode().strip())
 
 
-def bake(src, out, t_in, dur, gain_db):
+# place-scenes gives every audio clip +5 dB in the XML (mono-fold compensation plus the
+# loudness step), so a clip baked with a true peak above this ceiling clips the master.
+TP_CEILING = -8.0
+
+
+def true_peak(path):
+    r = subprocess.run(["ffmpeg", "-nostats", "-i", path, "-af", "ebur128=peak=true", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    m = re.findall(r"Peak:\s+(-?[\d.]+|-inf)", r.stderr)
+    return float(m[-1]) if m and m[-1] != "-inf" else float("-inf")
+
+
+def bake(src, out, t_in, dur, gain_db, limit_db=None):
     fade_out = min(0.4, dur / 3)
+    lim = f",alimiter=limit={10 ** (limit_db / 20.0):.6f}:level=disabled:attack=1:release=30" if limit_db is not None else ""
     af = (f"aresample=48000,pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1,afade=t=in:d={min(0.05, dur / 10):.3f},"
-          f"afade=t=out:st={dur - fade_out:.3f}:d={fade_out:.3f},volume={gain_db:.2f}dB")
+          f"afade=t=out:st={dur - fade_out:.3f}:d={fade_out:.3f},volume={gain_db:.2f}dB{lim}")
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{t_in:.3f}", "-t", f"{dur:.3f}", "-i", src,
                     "-af", af, "-ac", "2", "-ar", "48000", "-c:a", "pcm_s16le", out], check=True)
 
@@ -115,10 +128,20 @@ def main():
         bake(src, out, r["in"], dur, 0.0)
         i0, _ = measure(out)
         bake(src, out, r["in"], dur, r["lufs"] - i0)
+        tp = true_peak(out)
+        capped = tp > TP_CEILING
+        if capped:
+            # A short impact carries nearly all its energy in the transient, so limiting it
+            # to the ceiling drags its gated loudness down and pumps the shape. Attenuate
+            # cleanly instead and let the loudness land where it lands: what a listener
+            # hears in a half-second bang is its peak, not its 400 ms average.
+            bake(src, out, r["in"], dur, r["lufs"] - i0 - (tp - TP_CEILING))
+            tp = true_peak(out)
         i1, rms = measure(out)
-        ok = abs(i1 - r["lufs"]) <= 1.0 and len(rms) == 2 and all(x > -60 for x in rms)
+        ok = (len(rms) == 2 and all(x > -60 for x in rms) and tp <= TP_CEILING + 0.5
+              and (abs(i1 - r["lufs"]) <= 1.0 or capped))
         print(f"{'ok ' if ok else 'BAD'} {sid}: {dur:.2f} s at +{r['offset']:.2f} s, "
-              f"I {i1:.1f} LUFS (target {r['lufs']}), RMS L {rms[0] if rms else '?':.1f} / "
+              f"I {i1:.1f} LUFS (target {r['lufs']}{' , peak-capped' if capped else ''}), TP {tp:.1f} dBFS, RMS L {rms[0] if rms else '?':.1f} / "
               f"R {rms[1] if len(rms) > 1 else float('nan'):.1f} dB")
         if not ok:
             problems.append(f"{sid}: measured I {i1:.1f}, RMS {rms}")
