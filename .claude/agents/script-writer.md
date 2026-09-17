@@ -172,6 +172,13 @@ Step 4 and the scorer docks Voice points for each.
   beside the sentence it belongs to, never between two sentences about
   something else; a referent ("that much", "half that", "the one") reaches
   back one sentence at most, and never across a different number.
+- **A name earns its definition.** A term, object or person the viewer has
+  no reason to hold yet is introduced by what it does to someone, then
+  named: "There is one piece of paper out there that makes a man rich.
+  It is called a dastak", never "A dastak is a printed pass with the
+  Company's seal… it is the only thing worth having." The definition is
+  the payoff of the consequence, not its preamble; a viewer drops during
+  the gap between the two.
 - **A word that must carry stress ends a short sentence.** The voice has no
   other way to stress it: `eleven_multilingual_v2` has no per-word emphasis,
   and capitals and markdown do nothing. "The number was never yours", not
@@ -329,6 +336,11 @@ flag:
 8. **Abstract sentence** — nothing in it a camera could see: no object, no
    place, no action ("Everything he does while you're standing there is
    something you were there for").
+9. **Definition before consequence** — a name, term or object defined
+   before the script has said what it does to anyone ("a printed pass
+   with the Company's seal on it, called a dastak" ahead of what the
+   dastak is worth), or a person named before the viewer is given a
+   reason to hold the name.
 
 Output a table `| level | line | tier | sentence | fault |`. Tiers: **1**
 rewrite before voicing; **2** rewrite if that segment is being voiced
