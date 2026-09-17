@@ -259,7 +259,9 @@ evidence, not instruction: take its drop-off triggers and its lowest
 pillar score first, ignore any rewrite that would cost accuracy or the
 register, and say which findings were declined and why. A fault the
 review names in **two consecutive videos** stops being a fix and becomes
-a rule in this file.
+a rule in this file — the previous video's review is at
+`content/<series>/<previous slug>/claude/script-review.md`, so the check is
+one read, not a memory.
 
 - Apply the change; do not rewrite the script around it. Preserve everything
   not implicated, including rhythm.
