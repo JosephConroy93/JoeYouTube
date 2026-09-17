@@ -9,7 +9,11 @@ Invocation: `generate-voiceover <series>/<slug> [--all] [--segment NN] [--dry-ru
 
 **First run on a video generates segment 1 only and stops.** The operator
 listens to it (WORKFLOW Step 5): every line that has failed at that point
-passed the lint and the score, because neither hears. Then `--all` generates
+passed the lint and the score, because neither hears. **The sign-off gets
+the same hearing**: voice the last four or five narration lines on their
+own with `-Tag outro` and listen before the full run, because the ending
+is otherwise heard for the first time when the video is finished and a fix
+costs a re-render. Then `--all` generates
 every segment that has no audio yet; `--segment NN` re-voices one.
 Layout and schemas: `.claude/conventions.md`. Everything below is executed
 by `scripts/tts.ps1`; this file says what it does and what must be true.

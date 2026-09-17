@@ -162,6 +162,14 @@ gaps with a short capped web check.
    every line that has failed here passed both. A line that fails is fixed
    in the script and re-voiced with `-Segment 1`, and its fault is added to
    the Mode 4 checklist if it is a new kind.
+2b. **And to the sign-off**, the last four or five narration lines, voiced
+   on their own with `-Tag outro` before the full run. The ending carries
+   the format's Peak-End points and is the one stretch nobody re-checks,
+   because by the time it exists the video is finished and a fix costs a
+   re-render; on the Krays it was only caught at the watch-through. Listen
+   for the close landing on the wrong beat as much as for the delivery: if
+   a reflective last line is followed by an archival or factual coda, the
+   coda deflates it, and that is a script fix (Mode 2), not a voice one.
 3. `generate-voiceover <series>/<slug> -All`: the remaining segments;
    existing ones are kept. Log the voice in `voice-register.md` and `video.md`.
 4. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
