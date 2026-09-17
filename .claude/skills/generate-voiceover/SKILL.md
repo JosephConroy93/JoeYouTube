@@ -40,7 +40,10 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
    sent, so a filename/content mismatch is detectable later, and a later script
    edit is diffed against it to decide which segments genuinely need regenerating.
    **`--dry-run` never writes it**, or the check destroys the evidence it exists
-   to protect.
+   to protect. A re-split that lands on fewer segments leaves the old
+   highest-numbered `.txt` behind with no audio beside it: archive it there
+   and then, because `align-scenes` ignores such a file while
+   `captions.py` aborts on it at publish.
 2. **Generate** each segment with
    `POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps`
    (`xi-api-key` header), `model_id` from config, `previous_text` /
