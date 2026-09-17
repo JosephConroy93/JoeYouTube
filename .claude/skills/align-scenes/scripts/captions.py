@@ -2,7 +2,7 @@
 """captions.py -- publish/captions.srt: the script's own words, timed by whisper on the timeline audio.
 
 Usage:
-    captions.py <series>/<slug> [--max-line 42] [--out PATH]
+    captions.py <series>/<slug> [--max-line 42] [--max-lines 2] [--out PATH]
 
 Reads   claude/voiceover-segments/<stem>.txt     the exact text voiced per segment (sorted = playback order)
         claude/transcripts/<stem>.json           whisper word timestamps of the timeline WAV (align.py)
@@ -11,7 +11,8 @@ Writes  publish/captions.srt
 
 Each script word takes the time of the whisper word it lines up with (difflib over normalised
 tokens); unmatched words are interpolated between matched neighbours. Cues are sentence pieces
-of at most two lines of --max-line characters, split at commas when a sentence is too long.
+of at most --max-lines lines of --max-line characters, split at commas when a sentence is too
+long. --max-lines 1 puts one line on screen at a time, the way the genre's channels caption.
 """
 import argparse
 import difflib
@@ -66,10 +67,10 @@ def timed_words(text, heard):
     return list(zip(raw, times))
 
 
-def cues(words, max_line):
-    """Group words into sentence pieces no longer than two lines."""
+def cues(words, max_line, max_lines=2):
+    """Group words into sentence pieces no longer than max_lines lines."""
     out, cur = [], []
-    limit = 2 * max_line
+    limit = max_lines * max_line
     for w, t in words:
         if cur and len(" ".join(x for x, _ in cur + [(w, t)])) > limit:
             cut = max((i for i, (x, _) in enumerate(cur) if x.endswith((",", ";", ":"))), default=len(cur) - 1)
@@ -84,8 +85,8 @@ def cues(words, max_line):
     return out
 
 
-def wrap(text, max_line):
-    if len(text) <= max_line:
+def wrap(text, max_line, max_lines=2):
+    if max_lines == 1 or len(text) <= max_line:
         return text
     words, best = text.split(), None
     for i in range(1, len(words)):
@@ -105,6 +106,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("project")
     ap.add_argument("--max-line", type=int, default=42)
+    ap.add_argument("--max-lines", type=int, default=2, help="lines on screen per cue; 1 = one line at a time")
     ap.add_argument("--out")
     a = ap.parse_args()
     project = resolve_project(a.project)
@@ -121,7 +123,7 @@ def main():
             sys.exit(f"ABORT: {tj} was not timed on the timeline WAV (run align.py)")
         text = open(os.path.join(seg_dir, stem + ".txt"), encoding="utf-8").read()
         text = re.sub(r"\[[^\]]*\]", " ", text)  # v3 audio tags are not spoken
-        for c in cues(timed_words(text, words_from_whisper(data)), a.max_line):
+        for c in cues(timed_words(text, words_from_whisper(data)), a.max_line, a.max_lines):
             all_cues.append([offset + c[0][1][0], offset + c[-1][1][1], " ".join(w for w, _ in c)])
         offset += seconds(wav)
     for i, c in enumerate(all_cues):
@@ -131,7 +133,7 @@ def main():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         for i, (s, e, t) in enumerate(all_cues, 1):
-            f.write(f"{i}\n{stamp(s)} --> {stamp(e)}\n{wrap(t, a.max_line)}\n\n")
+            f.write(f"{i}\n{stamp(s)} --> {stamp(e)}\n{wrap(t, a.max_line, a.max_lines)}\n\n")
     print(f"wrote {out}: {len(all_cues)} cues, {offset:.1f} s of narration")
 
 

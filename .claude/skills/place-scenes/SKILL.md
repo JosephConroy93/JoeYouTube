@@ -62,8 +62,9 @@ verification rule: `.claude/conventions.md`.
    trims it to the scene's frames, or holds its last frame when shorter; the
    staging `hook/` folder stays empty. **Never trim the last hook clip to make
    a total fit.**
-5b. **Chapter cards**: after the scene clips, `prerender.py` renders a 2.2 s
-   card per chapter in the thumbnail layout (`series.md` `thumbnail.*`):
+5b. **Chapter cards**: after the scene clips, `prerender.py` renders a
+   card per chapter (2 s still and readable over the spoken callout, then a
+   1.8 s grow) in the thumbnail layout (`series.md` `thumbnail.*`):
    cream ground, `CHAPTER N` in the accent colour over the chapter name from
    the `## ` heading, and the scene the card lands on as a tilted outlined
    card on the right. The card grows, straightens and fills the frame; its
@@ -76,11 +77,17 @@ verification rule: `.claude/conventions.md`.
    only of hook clips is the cold open and gets no card. Beat files split as
    `chapter-05a/05b` count as one chapter. Check one card's landing: its last
    frame against the scene clip's frame under it (SSIM ≥ 0.97).
-5c. **Text-card words**: a `text-card` row's carrier image is generated
-   blank; `prerender.py` draws its `overlay: "<word>"` (from the row's
-   `notes`) in hand-lettered ink-dark type, centred, or at `--overlay-pos`
+5c. **Text-card words** (legacy): text-card carriers now show illegible
+   handwriting generated in the image and need nothing here. Only a row whose
+   `notes` still carry `overlay: "<word>"` gets a drawn word: `prerender.py` draws it in hand-lettered ink-dark type, centred, or at `--overlay-pos`
    when the blank patch sits off-centre. Check each overlay frame (a
    subagent) for the word sitting on the patch.
+5c-2. **The ending**: `prerender.py --tail <s> --outro <s>` holds the last
+   scene past the last word (1 s) and writes `<staging>/outro.mp4`, the cream
+   card with the series name and a thank-you, fading up over 0.6 s;
+   `build_timeline.py --tail <s>` extends the last scene by the same amount
+   and places the outro after it, with no audio under it. Without them a
+   video stops dead about 0.2 s after the last word.
 5d. **Spot SFX**: write `claude/sfx-plan.md` (schema in `conventions.md`)
    from the scenes that show a sounding action, searching
    `content/sfx/cinematic-bundle-metadata.tsv` descriptions, never
@@ -114,6 +121,13 @@ verification rule: `.claude/conventions.md`.
    (V1 = scenes, V2 = chapter cards, one audio track per voice segment, then
    SFX tracks packed without overlaps) and re-parses it to check video end
    = audio end = planned total.
+6b. **Media replaced on disk means a fresh project.** Resolve caches a
+   clip's properties when it first reads it, and a project that has seen
+   the old file renders the new one wrong — not offline, not obviously
+   broken, just wrong. Re-cutting a video after re-voicing, re-normalising
+   or padding its WAVs therefore imports into a **new project**, never on
+   top of the old one, and the old project is left alone rather than
+   repaired. `media_pool.refresh()` does not clear it.
 7. **Import.** Bins first (`add_subfolder` + `set_current_folder`: Hook /
    Scenes / Voiceover), then `timeline.import_timeline_checked(path,
    sanitize_media: false, require_temp_path: false)`. On Windows the

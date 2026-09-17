@@ -28,7 +28,7 @@ Read before writing, in this order:
    else `series.md`'s. It supplies register, opening, structure, ending,
    runtime, the Stage 2 rubric and its own mandatory reads. Read those too,
    only the sections the module names.
-3. **`series.md`** — `voice.*`, `wpm_measured`, `cta`, and
+3. **`series.md`** — `voice.*` (including `voice.english`), `wpm_measured`, `cta`, and
    `concepts_location` (whether `concepts.md`/`sources.md` sit at series or
    slug level). From `concepts.md` read **only this video's concept
    section** (find its heading with grep); from `sources.md` only this
@@ -123,6 +123,79 @@ Write every sentence originally. Secondary sources are for verification
 only, never phrasing. Quoted primary-source translations are the sole
 exception and are always presented as quotes.
 
+### Prose
+
+The register rules set the voice; these keep the surface clean of the habits
+that mark machine writing. `tools/script-lint/lint_script.py` counts them at
+Step 4 and the scorer docks Voice points for each.
+
+- Spelling, vocabulary and idiom follow `series.md` `voice.english`
+  (British: -ise, colour, towards, grey, autumn, "got" never "gotten";
+  dates day-month).
+- No em dashes; a full stop, comma or colon instead.
+- **Write every number and date as it is spoken**: "seventeen fifty-seven",
+  "the twenty-third of June", "two hundred and thirty-four thousand pounds".
+  Digits and long numerals come out of the TTS as noise. A figure too long to
+  say is rounded in-voice ("about one and a third million pounds") with the
+  exact number left in the research file. Level headings keep their digit
+  (`Level 6.`) because the card draws it; the voice step speaks it as a word.
+- No reveal-flip ("This isn't X. It is Y." / "not X, but Y"): state the
+  true thing once.
+- No question-then-answer fragment ("The result? Ruin."); write the statement.
+- No coined epigram mid-script, and no polished mic-drop; a format's
+  per-level aphorism is a dry observation from inside the rung ("The dead pay
+  better"). **One** reflective closing sentence under 20 words is expected at
+  the very end, answering a question the video raised, never asserting a new
+  claim; the final beat after it is a concrete present-tense image.
+- No summary tag re-labelling the last sentence ("That's the difference.").
+- No characterised quote ("what sounded like mercy:"); quote, then the next fact.
+- No announced moves ("here's the thing", "let that sink in", "make no mistake").
+- Hedge words (kind of, very, really, perhaps) only where the companion
+  voice earns them, never as padding. At most **one soft-quantity hedge**
+  ("well over half", "by one count") per paragraph.
+- **Contractions are the default** in narration ("you're", "you've",
+  "don't"); keep the full form only for a deliberate formal beat.
+- **No fact stands alone.** A hard number or institutional fact is followed,
+  in the same or the next sentence, by what it costs a person on screen.
+- **Second person present holds to the end**, including the last two levels.
+  A real figure's history is cited inside a clause the protagonist reacts to,
+  never as a free-standing third-person paragraph.
+- **Second-person density is earned inside the fact, never appended to it.**
+  Put the person where the fact lands: what it does to him, where he is
+  standing when it happens. A third-person sentence with ", which is … you"
+  bolted on hits the band and is the first thing the ear rejects.
+- **A reversal keeps its own sentence.** "Getting in is free. That's what
+  it's worth." When shortening would fold the turn into a trailing clause
+  ("…free, which is what it's worth"), keep two sentences. The bands are
+  measured on the page; the script is heard.
+- **A fact lands where it can be attached.** An age, a date or a figure sits
+  beside the sentence it belongs to, never between two sentences about
+  something else; a referent ("that much", "half that", "the one") reaches
+  back one sentence at most, and never across a different number.
+- **A name earns its definition.** A term, object or person the viewer has
+  no reason to hold yet is introduced by what it does to someone, then
+  named: "There is one piece of paper out there that makes a man rich.
+  It is called a dastak", never "A dastak is a printed pass with the
+  Company's seal… it is the only thing worth having." The definition is
+  the payoff of the consequence, not its preamble; a viewer drops during
+  the gap between the two.
+- **A term outside common English is glossed where it first lands.** A
+  foreign, period or trade word (`banian`, `lakh`, `khilat`, `long firm`)
+  carries a two- or three-word apposition the first time it is used:
+  "your banian, your own money man, at the desk in the corner". One gloss,
+  at first use only; after that the word stands alone and the viewer owns
+  it. An unglossed term is a stop, and the listener cannot look it up.
+- **A word that must carry stress ends a short sentence.** The voice has no
+  other way to stress it: `eleven_multilingual_v2` has no per-word emphasis,
+  and capitals and markdown do nothing. "The number was never yours", not
+  "It isn't *your* number". Write the stress into the position.
+- A CTA, where `series.md` allows one, sits once at a chapter break about a
+  third of the way in; never in the opening or the last 60 seconds.
+- One deliberate fragment run per chapter; an inventory ("Beeswax. Plant
+  oils. Resin.") is a list, not drama.
+- "You" may open consecutive sentences; any other word opens at most two
+  in a row.
+
 ### Shape
 
 Apply the register, opening, structure, ending and runtime rules from the
@@ -140,7 +213,16 @@ moment per sentence, never a figure standing, working quietly or walking.
 ### Output
 
 Write to `content/<series>/<slug>/claude/script.md` with a closing
-`## Handoff notes` section:
+`## Handoff notes` section.
+
+**Everything in the file that is not narration is an HTML comment.** The
+voiceover step speaks every line that is not a comment or a heading, so a
+plain-text note about the format, the register or the shot plan is read aloud
+in the narrator's voice. The title line and `## Level N.` headings are the only
+bare text above the handoff notes; format notes, shot markers and anything
+addressed to a later step go inside `<!-- -->`.
+
+The handoff notes carry:
 
 - Beats from the research deliberately left out, and why.
 - Where the research was thin and the script stayed vague.
@@ -159,6 +241,11 @@ Write to `content/<series>/<slug>/claude/script.md` with a closing
    draft. **Do not read another script before writing.**
 5. The opening does not give away what the title promised.
 6. Nothing implies an outcome the research leaves unknown.
+7. Prose: zero em dashes, nothing from the Prose list, spelling and idiom
+   per `voice.english`.
+8. Read aloud: every sentence survives being heard at the narrator's pace
+   (the Mode 4 checklist), and no sentence carries its point in a trailing
+   clause.
 
 State the result plainly. If something fails, fix it before returning;
 never return a draft with a known problem and a note about it.
@@ -166,7 +253,15 @@ never return a draft with a known problem and a note about it.
 ## Mode 2 — REVISE
 
 Triggered by feedback on an existing script ("tighten the opening", "the
-middle sags").
+middle sags"), including an **external script review** pasted or exported
+into `claude/script-review.md` (WORKFLOW Step 4.5). A review is read as
+evidence, not instruction: take its drop-off triggers and its lowest
+pillar score first, ignore any rewrite that would cost accuracy or the
+register, and say which findings were declined and why. A fault the
+review names in **two consecutive videos** stops being a fix and becomes
+a rule in this file — the previous video's review is at
+`content/<series>/<previous slug>/claude/script-review.md`, so the check is
+one read, not a memory.
 
 - Apply the change; do not rewrite the script around it. Preserve everything
   not implicated, including rhythm.
@@ -176,7 +271,10 @@ middle sags").
 - Summarise what changed rather than returning a wall of text.
 - Push back once, clearly, if a change would weaken retention structure or
   flatten a hedge; then do it if the operator insists.
-- Re-run the self-check.
+- Re-run the self-check. **A pass that moved a band is where ear faults are
+  introduced**: a shorter sentence folds its turn into a clause, a "you"
+  gets appended instead of placed. Re-read every level touched as speech
+  before returning.
 
 ## Mode 3 — SCORE
 
@@ -213,6 +311,8 @@ kind of fact it is:
 Load the dimension table and floors from the format module. A script below
 any floor fails regardless of total. A hedge delivered as meta-commentary
 costs Voice points, not G4 — the fact is accurate, only the voice breaks.
+So does each prose tell (the Prose list) and each spelling off
+`voice.english`; the lint's counts are evidence, the quoted line is the finding.
 
 ### Output
 
@@ -220,6 +320,51 @@ Gate results first, then the dimension table with per-dimension reasoning,
 then the total, then whether floors were met. **Quote every offending line**
 for every gate failure and floor miss; a finding asserted without a quote is
 not a finding.
+
+## Mode 4 — READ ALOUD
+
+Judges one thing: whether each sentence survives being heard. Runs after
+the lint passes and before Mode 3. The lint measures the page and Mode 3
+scores structure and accuracy; neither hears, and both have passed scripts
+whose lines fell over the moment the narrator spoke them.
+
+Read every narration sentence once, as speech, at the narrator's pace, and
+flag:
+
+1. **Late landing** — a reversal or aphorism whose meaning arrives on the
+   last two or three words with no full stop before them to carry it
+   ("…free, which is what it's worth").
+2. **Held referent** — "that much", "half that", "the one", a bare "it",
+   reaching back more than one sentence, or across a different number.
+3. **Stranded fact** — an age, date or figure between two sentences about
+   something else ("Both of them are twenty" between the hall and its history).
+4. **Point in the tail** — the sentence's real argument in a trailing
+   subordinate clause ("…, which is the job you did").
+5. **Tense against the level** — a tense that contradicts the time the
+   level has established ("the man you'll work for" after "now you belong
+   to one of them").
+6. **Number pile** — three or more short consecutive sentences each
+   carrying a number; the voice runs them together.
+7. **Heard ambiguity** — a word with a second meaning when spoken and no
+   spelling to settle it ("beating", "ring", "right").
+8. **Abstract sentence** — nothing in it a camera could see: no object, no
+   place, no action ("Everything he does while you're standing there is
+   something you were there for").
+9. **Definition before consequence** — a name, term or object defined
+   before the script has said what it does to anyone ("a printed pass
+   with the Company's seal on it, called a dastak" ahead of what the
+   dastak is worth), or a person named before the viewer is given a
+   reason to hold the name.
+10. **Unglossed term** — a foreign, period or trade word used with no
+    two- or three-word apposition at its first appearance (`banian`,
+    `gomastah`, `lakh`, `vakil`, `durbar`, `khilat` all ran unglossed in
+    one script and took its wide-appeal score to 6/10).
+
+Output a table `| level | line | tier | sentence | fault |`. Tiers: **1**
+rewrite before voicing; **2** rewrite if that segment is being voiced
+anyway; **3** note for the next script. Quote each sentence whole. A
+sentence that trips a check and still works at pace is not a finding; say
+why in a clause. Never rewrite in this mode; findings go to Mode 2.
 
 ## Standing principles
 

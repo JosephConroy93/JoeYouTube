@@ -38,7 +38,10 @@ those ids. `fetch -DryRun
   `fetch` reads `response.inlinedResponses.inlinedResponses[]`, each
   `{metadata.key, response.candidates[0].content.parts[].inlineData{mimeType,data}}`,
   and decodes every image to `scene-generation/<metadata.key>.jpg` (a result
-  with no image part is a refused prompt: rewrite it, don't resubmit), or to
+  with no image part is a refused prompt: rewrite it, don't resubmit — unless
+  its error is `{"code":13,"message":"Internal error encountered."}`, which is
+  the server's fault, not the prompt's: resubmit the rows unchanged, and if a
+  whole job comes back that way resubmit the chapter), or to
   `<scene_id>.attempt-N.jpg` (next unused N, from 2) when that file already
   exists. Nothing is ever overwritten. The row becomes `fetched` with
   `fetched_at`; any result lacking an image part is named in `notes`.

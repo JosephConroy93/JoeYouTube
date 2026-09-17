@@ -261,7 +261,7 @@ def covers(words, seconds):
 
 
 def transcribe(project, stem, model):
-    """whisper on the timeline audio, word timestamps; the JSON records which audio it timed."""
+    """whisper on the timeline audio, word timestamps; the JSON records which audio it timed, and its stamp."""
     tdir = os.path.join(project, "claude", "transcripts")
     os.makedirs(tdir, exist_ok=True)
     audio = timeline_audio(project, stem)
@@ -275,15 +275,23 @@ def transcribe(project, stem, model):
         sys.exit(f"ABORT: whisper failed on {stem} (exit {r.returncode})")
     data = json.load(open(path, encoding="utf-8"))
     data["timed_audio"] = os.path.relpath(audio, project).replace("\\", "/")
+    data["timed_audio_stamp"] = audio_stamp(audio)
     json.dump(data, open(path, "w", encoding="utf-8"))
     return data
 
 
+def audio_stamp(path):
+    """size and mtime: a re-voiced segment keeps its name, so the path alone is not the cache key."""
+    st = os.stat(path)
+    return [st.st_size, round(st.st_mtime, 3)]
+
+
 def whisper_words(project, stem, model):
     path = os.path.join(project, "claude", "transcripts", stem + ".json")
-    want = os.path.relpath(timeline_audio(project, stem), project).replace("\\", "/")
+    audio = timeline_audio(project, stem)
+    want = os.path.relpath(audio, project).replace("\\", "/")
     data = json.load(open(path, encoding="utf-8")) if os.path.isfile(path) else None
-    if not data or data.get("timed_audio") != want:
+    if not data or data.get("timed_audio") != want or data.get("timed_audio_stamp") != audio_stamp(audio):
         data = transcribe(project, stem, model)
     return words_from_whisper(data)
 

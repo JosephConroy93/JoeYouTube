@@ -120,9 +120,34 @@ gaps with a short capped web check.
    for register and structure only; say which part is being reused.
 2. `script-writer` Mode 1 (WRITE) with the format from `video.md` →
    `claude/script.md` with handoff notes.
-3. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
-   format module. Revise with Mode 2 until it passes. Lock.
-4. Set `status: scripted`.
+3. `python tools/script-lint/lint_script.py content/<series>/<slug>/claude/script.md`:
+   counts the prose tells, digits (narration numbers are written as spoken
+   words) and spellings off `voice.english`, quoting each line. Zero em dashes is a hard bar; the rest go to Mode 2 with the score.
+   Its **ear checks** block quotes the constructions that pass every band
+   and fail when spoken; they feed the next step.
+4. `script-writer` Mode 4 (READ ALOUD): the only pass that hears. Every
+   tier-1 finding goes to Mode 2 before scoring.
+5. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
+   format module. Revise with Mode 2 until it passes. **After any Mode 2
+   pass that moved a band, run 3 and 4 again** on the levels it touched: a
+   band fix is where ear faults are introduced.
+6. **External score, before the voice step.** The operator runs the scored
+   script through the external reviewer's **score** (unlimited and free)
+   and records the three pillars in `video.md` `script_review`. It is a
+   second opinion on retention, not a gate: a pillar below the last
+   video's is a reason to look, and Mode 2 fixes what it finds. Anything
+   read here is free to act on; after Step 5 the same finding costs
+   ElevenLabs credits and a re-voiced segment, which is why both reviews
+   so far became notes for the next script instead of fixes.
+   The reviewer's **deep report** is scarce (the count is in
+   `research/index.md`) and its rewrite tier is never bought — Mode 2 does
+   the rewriting. Spend a deep report only on a script written wholly
+   under the current rules, to find what our own checks still miss;
+   spending one on known faults buys a list we already have. Its output
+   is filed at `claude/script-review.md` (PDF beside it), and a fault it
+   names that the previous report also named becomes a rule in
+   `script-writer`, not a fix. Lock.
+7. Set `status: scripted`.
 
 ## Step 5 — Voiceover and timing 🟡 (new position: straight after script lock)
 
@@ -131,14 +156,27 @@ gaps with a short capped web check.
    with the series voice, saves `voiceovers/<slug>_voice_NN.mp3` (raw, kept as source) plus the
    character-timestamp alignment, then normalises to **−16 LUFS, true peak
    ≤ −1.5 dBFS, 48 kHz, dual-mono stereo WAV** in `voiceovers/normalized/` (the only copy that
-   goes on the timeline).
-   Log the voice in `voice-register.md` and `video.md`.
-2. Listen to one segment before generating the rest.
-3. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
+   goes on the timeline). **On a video with no audio yet it generates
+   segment 1 only and stops; the tool enforces this.**
+2. **The operator listens to segment 1.** The lint and the scorer cannot;
+   every line that has failed here passed both. A line that fails is fixed
+   in the script and re-voiced with `-Segment 1`, and its fault is added to
+   the Mode 4 checklist if it is a new kind.
+2b. **And to the sign-off**, the last four or five narration lines, voiced
+   on their own with `-Tag outro` before the full run. The ending carries
+   the format's Peak-End points and is the one stretch nobody re-checks,
+   because by the time it exists the video is finished and a fix costs a
+   re-render; on the Krays it was only caught at the watch-through. Listen
+   for the close landing on the wrong beat as much as for the delivery: if
+   a reflective last line is followed by an archival or factual coda, the
+   coda deflates it, and that is a script fix (Mode 2), not a voice one.
+3. `generate-voiceover <series>/<slug> -All`: the remaining segments;
+   existing ones are kept. Log the voice in `voice-register.md` and `video.md`.
+4. `align-scenes <series>/<slug>` runs **at the end of Step 8**, once every
    chapter's manifest exists (it needs all the `script_bookmark`s); it is
    listed here because the audio it needs exists from this point. With API timestamps no
    transcription is needed; whisper remains the fallback.
-4. Set `status: voiced`.
+5. Set `status: voiced`.
 
 Hook clips (Step 9) are cut to the measured narration beats, never
 generated before the voiceover exists.
@@ -158,13 +196,28 @@ one marker), a `guard` phrase, and a list of at most five era don'ts a
 viewer would notice. **No bible.** In a costume-identity style the line is
 the identity.
 
+**Every line states hair, facial hair and headwear.** In a blank-head style
+the head is bald unless the line says otherwise, so "bald" is a choice to be
+made per figure, not a default to fall into - and hair is the strongest single
+marker the style has for telling figures apart. Write it as the style writes
+headwear: one simple bold solid shape, a named colour, never strands or
+texture ("black hair slicked flat back", "a dark quiff", "a short grey beard",
+"a flat cap"). Give it to the figures the period makes legible and leave it
+off where the role earns that. Two figures who must not be confused never get
+the same hair shape and colour - on a white head, dark hair dominates the
+silhouette.
+
 Then render **one reference per main character** (each `YOU-*` stage, each named recurring figure, and the `EXTRA`
 line in the video's own period dress) straight from its cast line with
 `channel-farmer/scripts/style-test.ps1 -Prompts`, into `reference-images/`;
 run `generate-scenes/scripts/reference-heads.py` and look at the head
 crops: a nose, ear, neck or tinted head means re-render, because every
 scene that attaches the reference inherits it; re-roll a wrong one once,
-and otherwise let that figure run on its line alone. The extra is a real
+and otherwise let that figure run on its line alone. **A figure that must be
+identical to a rendered one except for one marker** (twins; glasses on and
+off; a disguise) is made by editing that reference,
+`generate-scenes/scripts/edit-image.py <in> <out> "add X; change nothing else"`,
+never by a second render, which cannot match it. The extra is a real
 costume of the era and place, never a bare or towel-clad stand-in, saved as
 `Extra-<Role>.jpg`. Settings and
 objects get no reference. Figures that recur without a reference (a
@@ -179,7 +232,7 @@ Set `visual_guardrails` to `claude/cast.md` and
 verbatim bookmarks, a ten-word beat per row, hook-shot marks in chapter 1,
 `content_prompt` empty, every chapter `beats`. Run
 `generate-scenes/scripts/check-manifest.py`; a floor band well over ~10%
-means `merge-floor.py` (sub-floor rows join a neighbour, ids renumber);
+means `merge-floor.py` (sub-floor rows join a neighbour, over-ceiling rows split at a sentence, ids renumber);
 any FAIL goes back as a Mode 3 edit. Under ten minutes.
 
 ## Step 8 — Prompts and generation, one chapter per loop 🟡
@@ -200,7 +253,10 @@ For each chapter, in order:
 4. **Validate**: `validate-scenes` (three checks, Sonnet, one pass) or the
    operator's own look; either way the row gets `validated (n/m)`.
 5. **Fix**: a failure is resubmitted once; a second failure gets a
-   rewritten prompt. A failure seen three times in the video earns one
+   rewritten prompt, or, when the fault is something to remove or move
+   (lettering, a stray prop, a figure in the wrong place) and the rest of
+   the image passes, one `generate-scenes/scripts/edit-image.py` pass on the
+   best attempt, which keeps everything the instruction does not name. A failure seen three times in the video earns one
    rule line in `content/prompt-hardening-rules.md`.
 6. **Report**: one contact sheet of the chapter to the operator
    (`validate-scenes/scripts/contact-sheet.py --latest`). An
@@ -216,10 +272,16 @@ chapter `written` after its own `check-manifest.py` run), and generation
 and QC of one wave overlap with the next wave's prompts. A fix found in a
 wave is applied to the next wave's rows before they generate.
 
-After the last chapter: `finalize-scenes/scripts/promote-latest.py --apply`
-(each scene's passing attempt takes the canonical name), `finalize-scenes`,
-`align-scenes --source api`, then `generate-hook` (Veo lite allows about four
-submissions a day, so a longer hook spans the reset). Set `status: generated`.
+The hook's Veo submissions (`generate-hook` step 1) start as soon as every
+still the hook plan names is validated and canonical, usually while later
+chapters are still in QC: Veo lite allows about four submissions a day, so a
+longer hook spans the reset and a late start costs a day. After the last
+chapter: `finalize-scenes/scripts/promote-latest.py --apply` (each scene's
+passing attempt takes the canonical name), `finalize-scenes`,
+`align-scenes --source api`, then the hook trim (`generate-hook` step 2) and
+its hard QC (step 3, `check-hook.py`): no clip ships with a hang or a
+glitch, and a hang is fixed by regenerating longer, never by accepting it.
+Set `status: generated`.
 
 ## Step 9 — Edit 🟢
 
@@ -285,11 +347,24 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
 
 1. Channel identity check: name, About copy, icon/banner match the series
    (`series.md` names the channel; `content/<series>/mascot/watcher-concept.md` holds its About copy).
-2. Description: citation list plus a "People & Sites Mentioned" section;
+2. Tags: **500 characters total across all tags**, commas and spaces included;
+   YouTube silently drops whatever runs past it, so write the list inside the
+   cap rather than trimming in Studio. Highest-value first: the subject, the
+   names a viewer would search, then the format terms.
+3. Description: citation list plus a "People & Sites Mentioned" section;
    disclose dramatised composites where the format uses them.
 3. Title from Step 2, thumbnail from Step 10, chapters from the chapter
    headings.
-3b. Captions: build `publish/captions.srt` with the script's own words
+3b. Captions, **burned into the picture as standard** (operator, 2026-09-16):
+   the burn-in starts as soon as the master's measurements pass, not after
+   the watch-through — it is background CPU, so starting it early costs
+   nothing and a re-cut only costs the same encode again.
+   Build the SRT with `--max-lines 1`, then burn it into the upload copy with
+   ffmpeg (`subtitles=...:force_style='Fontname=Arial Black,FontSize=17,Bold=1,
+   Outline=2,Alignment=2,MarginV=16'` at 1080p) and encode for delivery, not
+   speed: `-preset slow -crf 15 -maxrate 16M`, which lands near 8 Mbps and
+   measures SSIM 0.995 against the master. Upload the SRT to YouTube as well.
+   Build `publish/captions.srt` with the script's own words
    timed by the whisper word timestamps of the timeline audio
    (`claude/transcripts/<segment>.json`, the same timing `align-scenes`
    used) plus each segment's offset (the sum of the normalized WAV
@@ -297,6 +372,13 @@ After the edit, so a real frame or moment can be used. Run `make-thumbnail`.
    the caption track. Never time captions from the TTS alignment: it drifts.
    `python .claude/skills/align-scenes/scripts/captions.py <series>/<slug>`
    writes it; spot-check a few cues against the video before uploading.
+3c. Pinned comment: write `publish/pinned-comment.md` from the series
+   template (`series.md`, "Pinned comment"): the first line is a question
+   the video's own ending leaves the viewer holding, answerable from the
+   video and never a trivia quiz; then the template's fixed lines. The
+   next-video line names one specific video with its link, never "watch
+   this next". Post it from the channel account as soon as the video is
+   public and pin it.
 4. Record `published_id` and publish date in `video.md`; add the title to
    the competitor-titles index under the channel's own section.
    Set `status: published`.

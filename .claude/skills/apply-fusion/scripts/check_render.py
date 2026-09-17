@@ -10,7 +10,7 @@ The render must start at timeline frame --mark-in. Checks, each printed with its
   audio    integrated LUFS within 1.5 LU of --lufs (when given), and per-channel RMS: no
            silent channel, L and R within 1 dB
   motion   every scene wholly in range: SSIM between an early and a late frame. A moving row
-           (In/Out/Focal/Pan) must change (SSIM < 0.97); a Static still must not (> 0.99);
+           (In/Out/Focal/Pan) must change (SSIM < 0.97); a Static still must not (> 0.982: encoder noise on a still sits near 0.985);
            hook clips and film-open scenes (weave, grain, flicker) are reported only. A chapter card's landing scene is sampled after the
            card and must move (its push-in is baked), unless it is a text-card.
   cards    every chapter card in range: 0.3 s in, the top-left corner (clear of the text) is the
@@ -148,7 +148,7 @@ def main():
             print(f"motion  --  {sid[:3]} {'hook clip' if sid in hooks else 'film open'} SSIM {v:.3f}")
             continue
         moving = kind in ("In", "Out", "Focal", "Pan") or (sid in cards and sid not in text_cards)
-        ok = v < 0.97 if moving else v > 0.99
+        ok = v < 0.97 if moving else v > 0.982   # x264 noise on a flat still lands about 0.985; below that it really moved
         print(f"motion  {'ok ' if ok else 'BAD'} {sid[:3]} {kind:6s} SSIM {v:.3f}")
         if not ok:
             fails.append(f"motion {sid[:3]}")
@@ -173,7 +173,11 @@ def main():
     for r in read_plan(project):
         s = by_id[r["scene_id"]]
         t0 = s["start_frame"] / fps + r["offset"]
-        dur = min(r["dur"] or 2.0, s["frames"] / fps - r["offset"])
+        # a row with `until` runs to the end of that scene: measure the whole held span,
+        # or the quiet second after it lands inside the sound and reads as a failure
+        last = by_id.get(r.get("until") or r["scene_id"], s)
+        span_end = (last["start_frame"] + last["frames"]) / fps
+        dur = min(r["dur"] or 2.0, span_end - t0) if r["dur"] else span_end - t0
         if t0 - 1.0 < m_in / fps or t0 + dur > (m_out + 1) / fps:
             continue
         span0, span1 = t0 - 1.0, min(t0 + dur + 1.0, (m_out + 1) / fps)

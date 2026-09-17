@@ -63,6 +63,7 @@ def table_value(path, key):
 
 def norm(text):
     text = text.replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
+    text = re.sub(r'<!--.*?-->', '', text, flags=re.S)   # comments are never spoken; a bookmark spans them
     text = re.sub(r'[*_]{1,2}', '', text)
     return re.sub(r'\s+', ' ', text).strip()
 
@@ -95,7 +96,11 @@ def main():
         fail(f'video.md style "{style}" has no "## {style}" entry in the style bible')
     hook = (table_value(os.path.join(vdir, 'video.md'), 'hook') or '').strip()
     mascot = (table_value(os.path.join(sdir, 'series.md'), 'mascot.bible') or '')
+    fmt_cell = table_value(os.path.join(vdir, 'video.md'), 'format') or table_value(os.path.join(sdir, 'series.md'), 'format') or ''
+    fmt_name = re.sub(r'[`*]', '', fmt_cell.split()[0]) if fmt_cell.split() else ''
+    fmt_path = os.path.join(a.root, '.claude', 'formats', fmt_name + '.md')  # the format's Naming table sits between video.md and series.md
     spoken = (table_value(os.path.join(vdir, 'video.md'), 'chapter.spoken')
+              or (table_value(fmt_path, 'chapter.spoken') if os.path.exists(fmt_path) else None)
               or table_value(os.path.join(sdir, 'series.md'), 'chapter.spoken') or 'yes').strip(' `').lower() != 'no'
 
     # blocks
@@ -262,8 +267,8 @@ def main():
                 if o > len(refs):
                     fail(f'{sid}: prompt names the attached reference #{o} but only {len(refs)} are attached')
             if r['type'] == 'text-card':
-                if not re.search(r'overlay:\s*"[^"]+"', r['notes']):
-                    warn(f'{sid}: text-card without an overlay: "<word>" note')
+                if not re.search(r'illegible', prompt, re.I):
+                    warn(f'{sid}: text-card prompt should ask for illegible handwriting or figures on its carrier')
                 if re.search(r'\b(reading|lettering|inscribed)\b', prompt, re.I) and re.search(r'"[^"]+"', prompt):
                     fail(f'{sid}: text-card asks the image model for text; generate the carrier blank')
         tot = sum(shots.values())

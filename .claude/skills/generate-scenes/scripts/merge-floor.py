@@ -1,4 +1,4 @@
-"""Merge sub-floor beat rows into a neighbour, renumber, rewrite index ranges.
+"""Merge sub-floor beat rows into a neighbour, split over-ceiling rows, renumber, rewrite index ranges.
 
     python merge-floor.py <series>/<slug> [--floor N] [--ceiling N] [--root <project root>]
 
@@ -11,7 +11,10 @@ series.md). Bookmarks concatenate, beats
 join with "; ", ids renumber continuously from the first beats chapter, and
 the index ranges follow. The prompt pass reads every joined beat and picks
 the image for the moment the line lands. Run after scene-prompter Mode 2
-when check-manifest.py reports a floor band well over ~10%.
+when check-manifest.py reports a floor band well over ~10%, or any
+ceiling FAIL: a row over --ceiling (hook rows excepted) splits at the
+sentence boundary nearest its middle when both halves reach --floor; the
+second half keeps the type and characters, and its beat is marked "(cont.)".
 """
 import argparse
 import os
@@ -75,7 +78,7 @@ def main():
             nums = re.findall(r'\d{3}', ch['range'])
             if nums:
                 nxt = max(nxt, int(nums[-1]) + 1)
-    merged_total = 0
+    merged_total = split_total = 0
     ranges = {}
     for ch in beats:
         p = os.path.join(cdir, 'scene-prompts', ch['file'])
@@ -106,6 +109,26 @@ def main():
                         break
                 if changed:
                     break
+        i = 0
+        while i < len(rows):
+            c = rows[i]
+            if words(c[2]) > a.ceiling and 'hook:' not in c[7]:
+                sents = re.findall(r'[^.!?]+[.!?]+["”’)]*\s*', c[2].strip()) or [c[2].strip()]
+                best = None
+                for k in range(1, len(sents)):
+                    left, right = ''.join(sents[:k]).strip(), ''.join(sents[k:]).strip()
+                    if words(left) >= a.floor and words(right) >= a.floor:
+                        score = abs(words(left) - words(right))
+                        if best is None or score < best[0]:
+                            best = (score, left, right)
+                if best:
+                    one, two = list(c), list(c)
+                    one[2], two[2] = f' {best[1]} ', f' {best[2]} '
+                    two[7] = ' ' + c[7].strip().rstrip('.') + ' (cont.) '
+                    rows[i:i + 1] = [one, two]
+                    split_total += 1
+                    continue
+            i += 1
         start = nxt
         for c in rows:
             c[1] = f' {nxt:03d}_{slug(c[2])} '
@@ -124,7 +147,7 @@ def main():
         rng = f'{b:03d}–{e:03d}'
         s = re.sub(rf'(\| [^|]+\| {re.escape(f)} \| )[^|]+(\| beats \|)', lambda m: m.group(1) + rng + ' ' + m.group(2), s)
     open(index, 'w', encoding='utf-8', newline='\n').write(s)
-    print(f'merged {merged_total} rows; ' + ', '.join(f'{f} {b:03d}-{e:03d} ({n})' for f, (b, e, n) in ranges.items()))
+    print(f'merged {merged_total} rows, split {split_total}; ' + ', '.join(f'{f} {b:03d}-{e:03d} ({n})' for f, (b, e, n) in ranges.items()))
     return 0
 
 

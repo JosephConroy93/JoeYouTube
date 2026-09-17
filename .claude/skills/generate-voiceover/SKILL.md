@@ -5,7 +5,16 @@ description: Generates a video's narration with ElevenLabs from the locked scrip
 
 # generate-voiceover
 
-Invocation: `generate-voiceover <series>/<slug> [--segment NN] [--dry-run]`.
+Invocation: `generate-voiceover <series>/<slug> [--all] [--segment NN] [--dry-run]`.
+
+**First run on a video generates segment 1 only and stops.** The operator
+listens to it (WORKFLOW Step 5): every line that has failed at that point
+passed the lint and the score, because neither hears. **The sign-off gets
+the same hearing**: voice the last four or five narration lines on their
+own with `-Tag outro` and listen before the full run, because the ending
+is otherwise heard for the first time when the video is finished and a fix
+costs a re-render. Then `--all` generates
+every segment that has no audio yet; `--segment NN` re-voices one.
 Layout and schemas: `.claude/conventions.md`. Everything below is executed
 by `scripts/tts.ps1`; this file says what it does and what must be true.
 
@@ -24,12 +33,21 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
 
 ## What it does
 
-1. **Segment** the script: split at chapter boundaries, merging chapters
+1. **Segment** the script: split at chapter boundaries. With `voice.chapter_gap`
+   set (seconds; `-ChapterGap`), every chapter is its own segment and its
+   normalised WAV ends on that much silence (not the last), so each chapter
+   card gets a breath before it on the timeline; otherwise merge chapters
    until a segment reaches ~4,500 characters (well inside the model's
    per-request limit; enough context for continuity). Strip markdown; chapter headings are
    spoken unless `chapter.spoken: no` (then the card carries them). Write each segment to
    `claude/voiceover-segments/<slug>_voice_NN.txt` — this file is the exact text
-   sent, so a filename/content mismatch is detectable later.
+   sent, so a filename/content mismatch is detectable later, and a later script
+   edit is diffed against it to decide which segments genuinely need regenerating.
+   **`--dry-run` never writes it**, or the check destroys the evidence it exists
+   to protect. A re-split that lands on fewer segments leaves the old
+   highest-numbered `.txt` behind with no audio beside it: archive it there
+   and then, because `align-scenes` ignores such a file while
+   `captions.py` aborts on it at publish.
 2. **Generate** each segment with
    `POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps`
    (`xi-api-key` header), `model_id` from config, `previous_text` /
@@ -52,6 +70,27 @@ hosted ElevenLabs MCP; the id and settings are written to `series.md` or
 4. Print each segment's duration and total runtime; append the voice used
    to `content/<series>/voice-register.md` and `video.md`.
 
+**Emphasis on one word.** `eleven_multilingual_v2` has no per-word emphasis:
+no SSML emphasis tag, no audio tags (those are `eleven_v3`), and the script's
+`*` and `_` are stripped before sending. Stress is placed by sentence
+position: put the stressed word at the end of a short sentence, or set it
+against a contrast ("The number was never yours."). Capitals did nothing on
+v2 when tested.
+
+**`eleven_v3` delivery controls** (its prompting guide, read 2026-09-16, for
+the next audition): capitals increase emphasis ("It was a VERY long day");
+ellipses carry a pause and weight, dashes a shorter and less consistent one;
+**no SSML break tags**; **no speed parameter** (pace comes from the text and
+`voice.tempo`); audio tags in square brackets before or after a phrase
+(`[whispers]`, `[sighs]`, `[exhales]`, `[curious]`, `[sarcastic]`, `[laughs]`),
+which the guide itself calls inconsistent across voices, so a tag is auditioned
+on Jim before a script relies on it; stability has three named modes,
+Creative (expressive, prone to hallucination), Natural (closest to the
+recording) and Robust (stable, less responsive to tags), and which numeric
+`voice.stability` each maps to is confirmed at the audition. Capitals and
+ellipses go into the segment text as written, so the script-writer's
+stress-by-position rule still applies: position first, capitals on top.
+
 `--segment NN` regenerates one segment only (same seed). Speed comes from
 `voice.speed` in `video.md` or `series.md` unless `--speed` is given; `--tag
 x` suffixes test takes (`<slug>_voice_NN_x`) so they never overwrite the real
@@ -72,6 +111,10 @@ the API.
 ## Rules
 
 - Generate and listen to **one segment first**; only then the rest.
+- **After a script edit, re-voice only what changed**: write the segment texts
+  with `--dry-run`, diff them against the previous run's copies, and pass
+  `--segment NN` for each one that differs. A whole-script regeneration for a
+  few edited lines burns the month's characters.
 - Gain never changes timing; tempo does, which is why the timeline
   alignment is rewritten whenever `voice.tempo` is not 1.
 - Never send the script in one request: segment boundaries are what let a

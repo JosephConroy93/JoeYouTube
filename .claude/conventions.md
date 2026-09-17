@@ -39,6 +39,8 @@ content/
       hook/raw/shot-NN.mp4           Veo output as delivered (audio stripped at use)
       hook/shot-NN.mp4               hook clip trimmed to its scene's narration
       thumbnails/<name>.jpg          make-thumbnail output, with <name>-sizes.jpg (1280 / 360 / 168 px check)
+      publish/description.md         the Step 11 upload set as pasted: description, tags.txt, captions.srt
+      publish/pinned-comment.md      the comment pinned under the video (series.md template + the video's question)
       scene-generation/<scene_id>.jpg    exactly one canonical image per scene after finalize
       scene-generation/_archive/         attempts, superseded, manual-edit sources
       _archive/                          disposables swept by close-video (never auto-deleted)
@@ -64,10 +66,12 @@ A key/value table. Keys:
 | `series`, `display_name` | slug and human name |
 | `format` | default format module name |
 | `voice.provider`, `voice.name`, `voice.id`, `voice.model` | TTS voice actually used |
+| `voice.english` | National English the narration is written in (`British`, `American`): spelling, vocabulary and idiom follow it |
+| `voice.chapter_gap` | Seconds of silence at the end of each chapter's voice segment (one segment per chapter), the breath before the next chapter card; default 0. **0 whenever `chapter.spoken` is `yes`**: a spoken callout already lands on its own sentence pause, and an added gap reads as a delay. Only an unspoken heading needs one, because nothing else gives the viewer time to read the card. A non-zero gap is set as a whole number of frames at the video's fps (1.25 s at 24, not 1.2), or every scene after it re-rounds by a frame when the gap changes. |
 | `voice.speed`, `voice.stability`, `voice.style`, `voice.tempo` | ElevenLabs voice settings (defaults 1.0, 0.5, 0) and a post-generation time-stretch (default 1.0; pitch kept, alignment scaled to match; the only pace control on `eleven_v3`, which ignores `speed`); `video.md` overrides, set from the Step 5 audition |
 | `wpm_measured` | last measured narration pace (planning only; timing is always measured) |
 | `style_default` | style-bible entry name, or `per-video` |
-| `chapter.unit`, `chapter.heading`, `chapter.file`, `chapter.spoken` | e.g. `chapter`, `Chapter N. <Name>.`, `chapter-NN.md`, `no`; `chapter.spoken: no` puts the heading on the chapter card only (not narrated, not bookmarked), `yes` (default) narrates it as a callout; `video.md` may override any `chapter.*` key |
+| `chapter.unit`, `chapter.heading`, `chapter.file`, `chapter.spoken` | set by the format module's Naming table (rank-ladder: `level`, `Level N. <Rank>.`, `level-NN.md`, `yes`; life-story: `chapter`, `Chapter N. <Name>.`, `chapter-NN.md`, `no`); `video.md` overrides, `series.md` is the last fallback; `chapter.spoken: no` puts the heading on the chapter card only (not narrated, not bookmarked), `yes` (default) narrates it as a callout; `video.md` may override any `chapter.*` key |
 | `protagonist` | optional: a reused series "you" figure (`content/<series>/protagonist/` holds its cast line and reference); Step 6 copies it into the video's cast sheet and re-dresses it per rung |
 | `mascot.bible`, `mascot.reference`, `mascot.cameo` | optional; `cameo` = `manual` (operator picks the row at QC) or `none` |
 | `cta` | `none` or the house CTA text/placement |
@@ -75,6 +79,7 @@ A key/value table. Keys:
 | `staging_path` | local non-OneDrive path pattern for Resolve media, e.g. `C:\Users\<user>\Videos\<slug>-<fps>` |
 | `fps_default`, `resolution_default` | timeline defaults |
 | `thumbnail.background`, `thumbnail.ink`, `thumbnail.accent`, `thumbnail.font` | the locked thumbnail template read by `make-thumbnail`: hex colours for the ground, the text and the accent line, and a font file path |
+| `pinned_comment` | a "Pinned comment" section in `series.md`: the fixed lines of the comment pinned under every video (sources line, one specific next video with its link, subscribe link); Step 11 fills the video's question line into `publish/pinned-comment.md` |
 
 ## `video.md`
 
@@ -102,9 +107,11 @@ in). Chapter file columns:
 `| scene_id | script_bookmark | scene_type | content_prompt | style | characters_present / reference_images | notes |`
 
 - `scene_id` = `NNN_<kebab-slug>`; its image is `scene-generation/<scene_id>.jpg`.
-- `scene_type` = `illustrated`, or `text-card`: a blank carrier object whose
-  word (`overlay: "<word>"` in `notes`) is drawn at the edit, never by the
-  image model.
+- `scene_type` = `illustrated`, or `text-card`: a carrier object (letter,
+  ledger, page) covered in illegible handwriting generated in the image; legible words
+  that fit the scene are acceptable; the narration carries the words and
+  nothing is drawn at the edit. A legacy
+  `overlay: "<word>"` note still makes `prerender.py` draw the word.
 - `script_bookmark` = the verbatim script text the scene covers (parse the
   cell by column boundary, never by quote pair).
 - `style` = a bare style-bible entry name; never expanded text.
@@ -120,7 +127,7 @@ in). Chapter file columns:
 The cast sheet. A table `| block | text | guard |`, one row per figure
 (`YOU-<stage>` per costume stage of the protagonist, e.g. `YOU-BOY`, `YOU-CLERK`; `FATHER`; `ID.variant` binds to `ID`'s reference), an
 optional row per recurring setting (`YARD`), and `_closing`; then a short
-list of era don'ts and an overlays table `| scene | text |`. Written by hand
+list of era don'ts. Written by hand
 in Step 6; `gemini-batch.ps1` reads the table (falls back to a legacy
 `prompt-blocks.md`).
 

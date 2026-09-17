@@ -21,7 +21,8 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)] [string] $Project,     # <series>/<slug>
-  [int]    $Segment  = 0,                        # 0 = all
+  [int]    $Segment  = 0,                        # 0 = first run: segment 1 only; with -All: every segment without audio
+  [switch] $All,                                # generate every segment that has no MP3 yet (after the operator has heard segment 1)
   [switch] $DryRun,
   [switch] $SkipGenerate,                       # normalise existing MP3s only (no API call)
   [double] $Speed = 0,                          # ElevenLabs voice_settings.speed (0.7-1.2); 0 = series.md/video.md voice.speed, else 1.0
@@ -32,6 +33,7 @@ param(
   [double] $Style = -1,                         # voice_settings.style; -1 = voice.style from config, else 0
   [double] $Tempo = 0,                          # post-generation time-stretch (pitch kept), e.g. 1.10 for eleven_v3, which ignores speed; 0 = voice.tempo from config, else 1
   [int]    $MaxChars = 4500,
+  [double] $ChapterGap = -1,                    # seconds of silence after each chapter (one segment per chapter); -1 = voice.chapter_gap from config, else 0 (merge to MaxChars)
   [int]    $Seed     = 0,                        # 0 = derive from slug (stable)
   [string] $Root = ''
 )
@@ -85,11 +87,14 @@ if (-not $apiKey) { $apiKey = $env:ELEVENLABS_API_KEY }
 if (-not $apiKey -and -not $DryRun) { throw "ELEVENLABS_API_KEY not set in the user environment" }
 
 # ---------- segmentation ----------
-$spokenCfg = if ($vid['chapter.spoken']) { $vid['chapter.spoken'] } else { $cfg['chapter.spoken'] }
+$fmtName = ((Cfg-Token $(if ($vid['format']) { $vid['format'] } else { $cfg['format'] })) -replace '[`*]', '')
+$fmt = Read-ConfigTable (Join-Path $Root ".claude\formats\$fmtName.md")   # the format module's Naming table sits between video.md and series.md
+$spokenCfg = if ($vid['chapter.spoken']) { $vid['chapter.spoken'] } elseif ($fmt['chapter.spoken']) { $fmt['chapter.spoken'] } else { $cfg['chapter.spoken'] }
 $headingsSpoken = -not ($spokenCfg -and $spokenCfg.Trim().ToLower() -eq 'no')
 $raw = Get-Content $script -Raw -Encoding UTF8
 # drop handoff notes and any front matter
 $raw = ($raw -split '(?m)^## Handoff notes')[0]
+$raw = [regex]::Replace($raw, '(?s)<!--.*?-->', '')   # HTML comments are notes to the pipeline, never narration
 # chapters: a markdown heading or a --- rule starts a new chunk
 $chunks = [System.Collections.Generic.List[string]]::new()
 $cur = [System.Text.StringBuilder]::new()
@@ -97,7 +102,13 @@ foreach ($line in ($raw -split "`r?`n")) {
   if ($line -match '^#\s') { continue }   # the document title (H1) is never spoken
   if ($line -match '^(#{1,6}\s|---\s*$)') {
     if ($cur.Length -gt 0) { $chunks.Add($cur.ToString().Trim()); $cur.Clear() | Out-Null }
-    if ($headingsSpoken -and $line -match '^#{1,6}\s+(.*)$') { $cur.AppendLine($matches[1].Trim()) | Out-Null }  # spoken heading (e.g. "Level 1. The Vat Boy."); chapter.spoken: no leaves it to the card
+    if ($headingsSpoken -and $line -match '^#{1,6}\s+(.*)$') {
+      $head = $matches[1].Trim()
+      # a heading's number is spoken, so write it as a word: the card keeps the digit for its label
+      $numWords = @('zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty')
+      $head = [regex]::Replace($head, '^(\w+)\s+(\d{1,2})\.', { param($m) "$($m.Groups[1].Value) $($numWords[[int]$m.Groups[2].Value])." })
+      $cur.AppendLine($head) | Out-Null
+    }  # spoken heading (e.g. "Level 1. The Vat Boy."); chapter.spoken: no leaves it to the card
     continue
   }
   $cur.AppendLine($line) | Out-Null
@@ -112,6 +123,12 @@ function Clean-Text([string] $t) {
   $t = $t -replace '(?m)^\s*>\s?', ''          # blockquotes
   return ($t -replace "[ \t]+`n", "`n").Trim()
 }
+
+if ($ChapterGap -lt 0) {
+  $cfgGap = if ($vid['voice.chapter_gap']) { $vid['voice.chapter_gap'] } else { $cfg['voice.chapter_gap'] }
+  $ChapterGap = Cfg-Num $cfgGap 0
+}
+if ($ChapterGap -gt 0) { $MaxChars = 1 }   # one segment per chapter, so each chapter's WAV can end on its own silence
 
 # merge chunks until MaxChars
 $segments = [System.Collections.Generic.List[string]]::new()
@@ -149,12 +166,31 @@ if ($Style -lt 0) {
 
 Write-Host ("Segments: {0}  (chars: {1})" -f $segments.Count, (($segments | ForEach-Object Length) -join ', '))
 for ($i = 0; $i -lt $segments.Count; $i++) {
-  [IO.File]::WriteAllText((Join-Path $segDir "$($labels[$i]).txt"), $segments[$i], (New-Object System.Text.UTF8Encoding($false)))
+  # Never on a dry run: this file is the record of what was actually voiced, and a later
+  # regeneration decision is made by diffing against it. Overwriting it destroys that evidence.
+  if (-not $DryRun) {
+    [IO.File]::WriteAllText((Join-Path $segDir "$($labels[$i]).txt"), $segments[$i], (New-Object System.Text.UTF8Encoding($false)))
+  }
 }
 
 # ---------- generation ----------
 $endpointBase = 'https://api.elevenlabs.io/v1/text-to-speech'
-$todo = if ($Segment -gt 0) { @($Segment - 1) } else { 0..($segments.Count - 1) }
+$existing = @($labels | Where-Object { Test-Path (Join-Path $voDir "$_.mp3") })
+if ($Segment -gt 0) {
+  $todo = @($Segment - 1)
+} elseif ($DryRun -or $SkipGenerate) {
+  $todo = 0..($segments.Count - 1)
+} elseif ($existing.Count -eq 0 -and -not $All) {
+  # First run on a video: segment 1 only. The operator hears the voice before the rest is bought;
+  # every line that has failed at this step passed the lint and the score (WORKFLOW Step 5).
+  $todo = @(0)
+  Write-Host 'First run: generating segment 1 only. Listen to it, then rerun with -All for the rest.' -ForegroundColor Yellow
+} elseif ($All) {
+  $todo = @(0..($segments.Count - 1) | Where-Object { -not (Test-Path (Join-Path $voDir "$($labels[$_]).mp3")) })
+  if ($todo.Count -eq 0) { Write-Host 'Every segment already has audio. Use -Segment N to re-voice one.' }
+} else {
+  throw "Audio exists for $($existing.Count) segment(s). Use -All to generate the missing ones, or -Segment N to re-voice one."
+}
 foreach ($i in $todo) {
   $label = $labels[$i]
   if ($Tag) { $label = ('{0}_{1}' -f $label, $Tag) }
@@ -212,14 +248,15 @@ foreach ($i in $todo) {
   $gain = [math]::Round(-16 - $lufs, 2)
   $wav = Join-Path $normDir "$label.wav"
   $tempoFilter = if ($Tempo -ne 1) { "atempo=$Tempo," } else { '' }
-  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+  $gapFilter = if ($ChapterGap -gt 0 -and $i -lt $segments.Count - 1) { ",apad=pad_dur=$ChapterGap" } else { '' }   # the breath before the next chapter card; loudness gating ignores silence
+  $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50${gapFilter}`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
   if (-not (Test-Path $wav)) { throw "normalise failed for $label" }
   $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
   $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
   if ([math]::Abs([double]$chk + 16) -gt 0.3) {
     # second pass: the measured output misses the target (eleven_v3 lands ~1 dB low), so correct the gain once
     $gain = [math]::Round($gain + (-16 - [double]$chk), 2)
-    $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
+    $null = Run-Ff "ffmpeg -hide_banner -loglevel error -y -i `"$mp3`" -af `"${tempoFilter}volume=${gain}dB,alimiter=limit=0.8414:level=disabled:attack=5:release=50${gapFilter}`" -ar 48000 -ac 2 -c:a pcm_s24le `"$wav`""
     $check = Run-Ff "ffmpeg -hide_banner -i `"$wav`" -af ebur128=peak=true -f null -"
     $cm = [regex]::Matches($check, 'I:\s+(-?[\d.]+) LUFS'); $chk = $cm[$cm.Count - 1].Groups[1].Value
   }
@@ -234,6 +271,6 @@ foreach ($i in $todo) {
 if (-not $DryRun) {
   $total = 0.0
   Get-ChildItem $normDir -Filter *.wav | Sort-Object Name | ForEach-Object { $total += [double]((Run-Ff "ffprobe -v error -show_entries format=duration -of csv=p=0 `"$($_.FullName)`"").Trim()) }
-  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}, tempo {8}." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style, $Tempo)
+  Write-Host ("Total narration: {0:N1}s ({1:N1} min). Seed {2}. Voice {3} / {4}, speed {5}, stability {6}, style {7}, tempo {8}, chapter gap {9}s." -f $total, ($total / 60), $Seed, $voiceId, $voiceModel, $Speed, $Stability, $Style, $Tempo, $ChapterGap)
   Write-Host "Now: log the voice in voice-register.md and video.md; then scene-prompter Mode 2, then align-scenes --source api."
 }

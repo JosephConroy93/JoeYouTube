@@ -14,7 +14,7 @@ are written from what the previous chapter's QC found, so read that first.
 
 - The chapter file at status `beats` (rows, bookmarks, beat in
   `notes`, hook marks), from `claude/scene-prompts.md`.
-- `claude/cast.md`: the `[[ID]]` blocks, era don'ts, overlays.
+- `claude/cast.md`: the `[[ID]]` blocks and era don'ts.
 - The style entry in `content/styles/style-bible.md`: its emotion and
   gesture vocabulary and its `Source frames` (glance at two).
 - `content/prompt-hardening-rules.md` (the rules table, one screen).
@@ -61,10 +61,15 @@ clause, 2–3 props, dressed] [light].`
 - **An object insert says so**: a row with no figure (a document, a
   text-card carrier, a table of objects) ends its setting clause with "no
   people anywhere in the frame"; without it the model adds someone.
+- **A white garment on a blank white head loses the figure**: in a
+  blank-head style, dress a figure in off-white, ecru, cream or unbleached
+  linen rather than pure white, and keep one darker accent (a sash, a
+  border, a shadowed fold) so the head still reads against the cloth.
 - **No words in the image.** Name a document by what it is, not what it
   says ("a rolled papyrus tied with string", never "a contract"): the
-  model writes the word on it in English. A `text-card` row describes its carrier blank;
-  the word is in `overlay:` and drawn at the edit.
+  model writes the word on it in English. A `text-card` row describes its carrier covered in
+  "dense illegible handwriting" (or "columns of illegible figures" for a
+  ledger); the narration carries the words, and nothing is drawn at the edit.
 - Nothing from the bible or research beyond the cast line; the narration
   carries the facts, the image carries the atmosphere.
 - A beat joined from two rows (`; ` in `notes`, from `merge-floor.py`) gets

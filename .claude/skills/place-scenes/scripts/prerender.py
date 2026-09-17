@@ -15,14 +15,16 @@ Reads   claude/scene-timing.md             frame plan (same rule as build_timeli
         claude/script.md                   `## ` chapter headings (before Handoff notes) -> chapter cards
         ../series.md                       `thumbnail.*` colours and font for the cards
 Writes  <staging>/scenes/<scene_id>.mp4    one clip per timing row, exactly its planned frames
-        <staging>/cards/<scene_id>.mp4     2.2 s chapter card landing on that scene
+        <staging>/cards/<scene_id>.mp4     chapter card (CARD_HOLD_S still, then CARD_GROW_S) landing on that scene
 
 A chapter card is the thumbnail layout: cream ground, `CHAPTER N` and the chapter name on
-the left, the scene it lands on as a tilted outlined card on the right. The card grows,
+the left, the scene it lands on as a tilted outlined card on the right. The card holds still
+long enough to read (CARD_HOLD_S, over the spoken callout), then grows,
 straightens and fills the frame, its last frame identical to the scene's frame under it.
 It lands on the chapter's first scene (or the first scene after --film-until when the
 chapter opens inside the film); an all-hook chapter (the cold open) gets none. The landing
-scene holds still under the card, then pushes in (text-card rows stay still).
+scene holds still under the card, then pushes in (text-card rows stay still); a hook clip
+landing a card holds its own first frame for the card, then plays.
 
 --motion bakes each `claude/ken-burns-plan.md` move (In, Out, Focal, Pan with its ease) into the
 clip at the timeline size, so Resolve needs no Fusion comps; Static rows stay as they are.
@@ -78,7 +80,8 @@ def esc_path(p):
 
 
 BAR_OPEN_S = 0.6
-CARD_S, PUSH = 2.2, 0.08
+CARD_HOLD_S, CARD_GROW_S, PUSH = 2.0, 1.8, 0.08   # card readable and still for 2 s, then grows into the scene
+CARD_S = CARD_HOLD_S + CARD_GROW_S
 
 
 def letterbox_bar(W, H):
@@ -286,6 +289,37 @@ def card_frame(still, text, p, look):
     return canvas
 
 
+def outro_job(project, out, seconds, fps, W, H, look):
+    """The closing card: the cream ground, the series name, and a thank-you, still then fading up."""
+    bg, ink, accent, font = look
+    name = ""
+    for line in open(os.path.join(os.path.dirname(project), "series.md"), encoding="utf-8"):
+        m = re.match(r"\|\s*`display_name`\s*\|\s*(.+?)\s*\|\s*$", line)
+        if m:
+            name = m.group(1).strip()
+    k = W / 1920
+    base = Image.new("RGB", (W, H), bg)
+    d = ImageDraw.Draw(base)
+    big = ImageFont.truetype(font, round(150 * k))
+    small = ImageFont.truetype(font, round(56 * k))
+    for text, f, fill, cy in ((name.upper(), big, ink, H / 2 - round(50 * k)),
+                              ("THANKS FOR WATCHING", small, accent, H / 2 + round(90 * k))):
+        b = d.textbbox((0, 0), text, font=f)
+        d.text(((W - (b[2] - b[0])) / 2 - b[0], cy - (b[3] - b[1]) / 2 - b[1]), text, font=f, fill=fill)
+    n = round(seconds * fps)
+    proc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                             "-r", str(fps), "-i", "-", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+                             "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    ground = Image.new("RGB", (W, H), bg)
+    for i in range(n):
+        u = min(1.0, i / max(1, round(0.6 * fps)))        # the text fades up over 0.6 s
+        proc.stdin.write(Image.blend(ground, base, u * u * (3 - 2 * u)).tobytes())
+    proc.stdin.close()
+    err = proc.stderr.read().decode(errors="replace")
+    if proc.wait():
+        raise RuntimeError(f"outro encode: {err[-400:]}")
+
+
 def card_job(head, scene_clip, land, out, fps, W, H, look):
     pic = out + ".land.png"
     run(["ffmpeg", "-v", "error", "-y", "-i", scene_clip, "-vf", f"select='eq(n,{land})',scale={W}:{H}:flags=lanczos",
@@ -295,11 +329,12 @@ def card_job(head, scene_clip, land, out, fps, W, H, look):
     os.remove(pic)
     text = card_text(W, H, head, look)
     n = round(CARD_S * fps)
+    hold = round(CARD_HOLD_S * fps)
     proc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
                              "-r", str(fps), "-i", "-", "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
                              "-an", out], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     for i in range(n):
-        u = i / (n - 1)
+        u = max(0, i - hold) / max(1, n - 1 - hold)
         s = u * u * (3 - 2 * u)
         proc.stdin.write(card_frame(still, text, s ** 3, look).tobytes())
     proc.stdin.close()
@@ -390,14 +425,17 @@ def still_job(r, jpg, out, fps, W, H, word, pos, font, look, hold=0, curve=None)
          "-c:v", "libx264", "-crf", "18", *tune, "-pix_fmt", "yuv420p", "-an", out])
 
 
-def hook_job(r, clip, out, fps, W, H, look):
+def hook_job(r, clip, out, fps, W, H, look, card_hold=0):
+    """card_hold frames of the clip's own first frame first, so its motion starts as the card clears."""
     look = [x(W, H) if callable(x) else x for x in look]
     have = count_frames(clip)
-    hold = max(0, r["frames"] - have) / fps + 0.5
+    lead = card_hold / fps
+    tail = max(0, r["frames"] - card_hold - have) / fps + 0.5
+    pad = f"tpad=start_mode=clone:start_duration={lead:.3f}:stop_mode=clone:stop_duration={tail:.3f}"
     run(["ffmpeg", "-v", "error", "-y", "-i", clip, "-filter_complex",
-         ",".join([f"scale={W}:{H}:flags=lanczos,fps={fps},tpad=stop_mode=clone:stop_duration={hold:.3f}"] + look),
+         ",".join([f"scale={W}:{H}:flags=lanczos,fps={fps},{pad}"] + look),
          "-frames:v", str(r["frames"]), "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", "-an", out])
-    return have
+    return card_hold + have
 
 
 def main():
@@ -411,6 +449,10 @@ def main():
     ap.add_argument("--overlay-pos", action="append", default=[], help="scene_id=x,y (top-left fractions)")
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--only", help="comma-separated scene ids (cards for them too)")
+    ap.add_argument("--tail", type=float, default=0.0,
+                    help="seconds the last scene holds past the last word (build_timeline takes the same value)")
+    ap.add_argument("--outro", type=float, default=0.0,
+                    help="seconds of closing card written to <staging>/outro.mp4 (cream, the series name and a thank-you)")
     ap.add_argument("--grade", help="3D LUT (.cube) mixed over every hook clip and still")
     ap.add_argument("--grade-mix", type=float, default=1.0)
     ap.add_argument("--film-until", help="last scene_id with the film look and letterbox")
@@ -424,6 +466,8 @@ def main():
     for d in ("scenes", "cards"):
         os.makedirs(os.path.join(staging, d), exist_ok=True)
     rows = plan(project, staging, a.fps)
+    if a.tail:
+        rows[-1]["frames"] += round(a.tail * a.fps)   # the last scene holds past the last word
     hooks, words = hook_map(project), overlays(project)
     pos = {}
     for p in a.overlay_pos:
@@ -478,7 +522,7 @@ def main():
             out = os.path.join(staging, "scenes", sid + ".mp4")
             hold = card_frames if sid in targets else 0
             if sid in hooks:
-                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i))] = (sid, out, r["frames"], "hook")
+                jobs[ex.submit(hook_job, r, hooks[sid], out, fps, W, H, look(i), hold)] = (sid, out, r["frames"], "hook")
             else:
                 jpg = os.path.join(project, "scene-generation", sid + ".jpg")
                 if not os.path.isfile(jpg):
@@ -501,6 +545,9 @@ def main():
             jobs[ex.submit(card_job, targets[sid], clip, land, out, fps, W, H, card_look)] = \
                 (sid, out, card_frames, "card")
         collect(jobs)
+    if a.outro:
+        outro_job(project, os.path.join(staging, "outro.mp4"), a.outro, fps, W, H, series_look(project))
+        print(f"outro: {round(a.outro * fps)} frames -> {os.path.join(staging, 'outro.mp4')}")
     for t in glob.glob(os.path.join(staging, "*", "*.txt")):
         os.remove(t)
     print(f"rendered {n} into {staging}")

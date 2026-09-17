@@ -20,8 +20,20 @@ Layout and credentials: `.claude/conventions.md`. Executed by `scripts/veo.ps1`.
   walking gives a flat clip, so it goes back to the prompt pass; `duration_s` ∈ {4, 6, 8};
   `beat` is the verbatim script text the shot covers (used to cut it to the
   measured narration).
-- Beat timings: `claude/scene-timing.md`. Runs at the end of Step 8, after
-  every chapter is validated and `align-scenes` has run; never earlier.
+  Shots are not all in the cold open: a plan may place one on the **first
+  scene of a later chapter**, where `place-scenes` freezes the clip's first
+  frame under the chapter card and plays it as the card clears (so that beat
+  needs roughly 8 s). Clips still submit and trim identically: `trim-hook.py`
+  cuts a card-landing clip to its full beat like any other, and
+  `place-scenes` holds its first frame for the card and bounds the output
+  at the beat, so only the clip's first (beat minus card) seconds ever
+  play, about 4 s of a 6 s clip; plan that shot's motion to finish inside
+  that window, and never subtract the card hold in the trim.
+- Beat timings: `claude/scene-timing.md`, needed only by the trim (step 2),
+  so the trim waits for `align-scenes`; never earlier. Submission (step 1)
+  needs only the plan's stills, validated and canonical, and runs as soon
+  as they are, before the later chapters close: the daily Veo quota spans
+  a reset for any hook over four shots, so a late start costs a day.
 - `GEMINI_API_KEY` in the user environment.
 
 Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
@@ -36,7 +48,17 @@ Stop if a `scene_id` has no canonical image or the plan has more than 8 shots.
 2. **Cut to beats** (`python scripts/trim-hook.py <series>/<slug>`): trim each raw clip to the measured length of its beat (never stretch; if the beat is longer than the
    clip, hold the last frame and report it) into `hook/shot-NN.mp4`; the
    last shot is never trimmed to fit.
-3. Report per shot: model, duration requested vs delivered, cost.
+3. **Hard QC, every clip, no exceptions** (`python scripts/check-hook.py <series>/<slug> --dir staged --staging <dir>`): samples the
+   staged clip every 0.25 s and fails on either fault —
+   **hang**, half a second or more where the picture does not change, and
+   **glitch**, a single step more than 5x the clip's own median. It runs on
+   the *staged* clips because those are what ship: a card-landing shot is
+   re-timed by `place-scenes` around its card, so judging `hook/` overstates
+   it, and a static run starting at 0 s there is the card hold by design.
+   A hang means the clip is shorter than its beat: **regenerate it longer,
+   never accept the held frame.** A shot's duration must cover its beat, or
+   its beat minus the card seconds when a chapter card lands on it.
+4. Report per shot: model, duration requested vs delivered, cost.
 
 `--dry-run` writes the request JSON to the scratch dir and exits.
 `--shot N` regenerates one shot. A plain rerun skips shots already in
@@ -75,7 +97,12 @@ quota resets.
   steer the emotion when it matters ("he mutters, frowning") or the model
   picks one, e.g. anger; ask for a
   "continuous, constant-speed push-in over the whole clip" or the push
-  front-loads and stalls; never request an action the still already shows.
+  front-loads and stalls; never request an action the still already shows. A figure told to stay
+  somewhere drifts anyway unless he is given an action that completes
+  there (a camera rising and a flash firing anchored a photographer at the
+  far table where "stays bent over it" did not), and when every figure
+  must hold, lock the camera off rather than asking for a track, which
+  carries the model past them.
 - Cost (Gemini list price, £): lite 720p ≈ £0.04/s, lite 1080p ≈ £0.06/s,
   fast 1080p ≈ £0.09/s, standard ≈ £0.31/s. A 7-shot hook of about 35 s on
   lite 720p ≈ £1.30.

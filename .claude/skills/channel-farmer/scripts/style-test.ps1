@@ -73,7 +73,15 @@ foreach ($p in $promptList) {
   Write-Host ("Rendering {0}/{1} with {2} @ {3}..." -f $n, $promptList.Count, $Model, $Resolution)
   $resp = Invoke-RestMethod -Method Post -Uri $uri -Headers @{ 'x-goog-api-key' = $apiKey; 'Content-Type' = 'application/json' } -Body ([Text.Encoding]::UTF8.GetBytes($body))
   $saved = $false
-  foreach ($part in $resp.candidates[0].content.parts) {
+  $cand = if ($resp.PSObject.Properties['candidates'] -and @($resp.candidates).Count -gt 0) { $resp.candidates[0] } else { $null }
+  $parts = @()
+  if ($cand -and $cand.PSObject.Properties['content'] -and $cand.content.PSObject.Properties['parts']) { $parts = @($cand.content.parts) }
+  if ($parts.Count -eq 0) {
+    $why = if ($cand -and $cand.PSObject.Properties['finishReason']) { $cand.finishReason } else { 'no candidate' }
+    $fb = if ($resp.PSObject.Properties['promptFeedback']) { ($resp.promptFeedback | ConvertTo-Json -Compress) } else { '' }
+    Write-Warning "prompt $n returned no image parts (finishReason: $why $fb); response saved, continuing"
+  }
+  foreach ($part in $parts) {
     $inl = $null
     if ($part.PSObject.Properties['inlineData']) { $inl = $part.inlineData } elseif ($part.PSObject.Properties['inline_data']) { $inl = $part.inline_data }
     if ($inl) {

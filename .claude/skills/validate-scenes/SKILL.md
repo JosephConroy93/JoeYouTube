@@ -51,10 +51,24 @@ One verdict per image, coarse, at the size a viewer sees:
    References are stricter: a reference with any nose line is
    re-rendered, because every scene that attaches it copies it.
 3. **Malformed**: extra or missing limbs, warped anatomy, garbled hands,
+   **counting the arms on every foreground figure** — a third arm reads as
+   furniture at a glance and survives a check that only looks at hands and
+   fingers, and it is likeliest where a figure holds something with both
+   hands beside an open window, door or sill (rule R22),
    nonsense composition.
 
-A `text-card` row passes when its carrier object is blank; the word is
-drawn at the edit.
+A `text-card` row passes with scribble, or with legible words that fit the
+scene ("Contract" on a contract, a plausible ledger heading). It fails only
+when the words are wrong for it: anachronistic, contradicting the narration,
+or garbled text that reads as a mistake.
+
+## Writing the batch log
+
+`batch-log.md` has one writer at a time. A QC agent rewrites whole rows, so
+the driving session must not submit or fetch a batch while one is running:
+a submit's new row is lost under the agent's rewrite and its images are never
+fetched (an orphaned batch is recovered with `get-scenes -BatchId <id>`).
+QC a chapter, then submit the next; never both at once.
 
 ## Dispatch
 
