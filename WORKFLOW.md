@@ -130,8 +130,17 @@ gaps with a short capped web check.
 5. `script-writer` Mode 3 (SCORE): gates G1–G4 must pass; floors from the
    format module. Revise with Mode 2 until it passes. **After any Mode 2
    pass that moved a band, run 3 and 4 again** on the levels it touched: a
-   band fix is where ear faults are introduced. Lock.
-6. Set `status: scripted`.
+   band fix is where ear faults are introduced.
+6. **External review, before the voice step.** The operator runs the
+   scored script through the external reviewer (its analysis is free; its
+   rewrite is paid and is never bought — Mode 2 does the rewriting) and
+   saves the feedback to `claude/script-review.md`. Mode 2 applies the
+   drop-off triggers and the lowest-scoring pillar; re-run 4 and 3 on the
+   levels it touched. This sits before Step 5 because after voicing a
+   finding costs ElevenLabs credits and a re-voiced segment, so a review
+   read late becomes a note for the next script instead of a fix — which
+   is what happened on East India and the Krays. Lock.
+7. Set `status: scripted`.
 
 ## Step 5 — Voiceover and timing 🟡 (new position: straight after script lock)
 

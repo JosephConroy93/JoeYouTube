@@ -77,6 +77,17 @@ dramatised in-scene, never delivered as commentary about sources.
   immediately.
 - Per level: what changed, what it costs, one concrete grounded specific only
   that rung would know.
+- **A level's first beat after the callout is a problem, not a description.**
+  The rung is introduced by something that is already going wrong on it —
+  a demand, a cost, a thing withheld — and the description of the rung
+  follows. A level that opens by explaining what the rung is spends its
+  best seconds on exposition, which is where a viewer leaves (an external
+  review put the structure score at 7/10 for exactly this).
+- **A motif changes its angle every time it returns.** A ladder repeats its
+  own engine (men die and you move up; nobody says the number), and the
+  repetition is the point — but each return comes at it from a different
+  side: whose death, what it bought, who noticed. The same phrasing twice
+  reads as thematic repetition and costs the repetition score.
 - Stack small open loops; first real reveal lands as a scene ~60–90 s in.
 - The arc rises then falls; the last level is loss or collapse. A ladder that
   only ascends has no ending.

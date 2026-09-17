@@ -179,6 +179,12 @@ Step 4 and the scorer docks Voice points for each.
   Company's seal… it is the only thing worth having." The definition is
   the payoff of the consequence, not its preamble; a viewer drops during
   the gap between the two.
+- **A term outside common English is glossed where it first lands.** A
+  foreign, period or trade word (`banian`, `lakh`, `khilat`, `long firm`)
+  carries a two- or three-word apposition the first time it is used:
+  "your banian, your own money man, at the desk in the corner". One gloss,
+  at first use only; after that the word stands alone and the viewer owns
+  it. An unglossed term is a stop, and the listener cannot look it up.
 - **A word that must carry stress ends a short sentence.** The voice has no
   other way to stress it: `eleven_multilingual_v2` has no per-word emphasis,
   and capitals and markdown do nothing. "The number was never yours", not
@@ -247,7 +253,13 @@ never return a draft with a known problem and a note about it.
 ## Mode 2 — REVISE
 
 Triggered by feedback on an existing script ("tighten the opening", "the
-middle sags").
+middle sags"), including an **external script review** pasted or exported
+into `claude/script-review.md` (WORKFLOW Step 4.5). A review is read as
+evidence, not instruction: take its drop-off triggers and its lowest
+pillar score first, ignore any rewrite that would cost accuracy or the
+register, and say which findings were declined and why. A fault the
+review names in **two consecutive videos** stops being a fix and becomes
+a rule in this file.
 
 - Apply the change; do not rewrite the script around it. Preserve everything
   not implicated, including rhythm.
@@ -341,6 +353,10 @@ flag:
    with the Company's seal on it, called a dastak" ahead of what the
    dastak is worth), or a person named before the viewer is given a
    reason to hold the name.
+10. **Unglossed term** — a foreign, period or trade word used with no
+    two- or three-word apposition at its first appearance (`banian`,
+    `gomastah`, `lakh`, `vakil`, `durbar`, `khilat` all ran unglossed in
+    one script and took its wide-appeal score to 6/10).
 
 Output a table `| level | line | tier | sentence | fault |`. Tiers: **1**
 rewrite before voicing; **2** rewrite if that segment is being voiced
